@@ -527,9 +527,534 @@ export interface IngestionEvent {
 \`\`\`
 `,
   },
+  {
+    id: "doc-angular-showcase",
+    title: "🅰️ Angular Ivy Live Showcase",
+    icon: "🅰️",
+    createdAt: Date.now() - 5400000,
+    updatedAt: Date.now() - 45000,
+    content: `# 🅰️ Angular Ivy Live Showcase & Architecture
+
+Selene includes full first-class live rendering for **Angular** components running through an optimized Ivy in-memory compiler with real-time template compilation, emulated view encapsulation, dependency injection, and Tailwind utility class integration!
+
+> [!NOTE]
+> **Zero Configuration & In-Memory Ivy Compilation**:
+> Standard TypeScript code fences with language \`angular\` compile directly inside Selene's isolated Sandpack Ivy engine. You can also connect to a local Angular CLI project (\`ng serve\` on port \`4200\`) using the **Engine Switcher** at the top right.
+
+---
+
+## ⚡ 1. Angular Mission Control Telemetry Card
+
+This component demonstrates reactive state binding, dynamic calculations, badge state transitions, and component-scoped CSS:
+
+\`\`\`angular
+import { Component } from "@angular/core";
+
+@Component({
+  selector: "app-root",
+  template: \`
+    <div class="mission-card">
+      <div class="card-header">
+        <div class="logo-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <h3>Selene Artemis Lunar Station</h3>
+          <p class="subtitle">Angular Ivy Engine • Port 4200</p>
+        </div>
+        <span class="status-pill" [class.active]="shieldActive">
+          {{ shieldActive ? 'SHIELDS ONLINE' : 'SHIELDS OFFLINE' }}
+        </span>
+      </div>
+
+      <div class="telemetry-grid">
+        <div class="metric-box">
+          <span class="metric-label">Orbital Velocity</span>
+          <span class="metric-value">{{ velocity }} km/s</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Lunar Altitude</span>
+          <span class="metric-value">{{ altitude }} km</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Reactor Core</span>
+          <span class="metric-value" [style.color]="coreTemp > 90 ? '#ef4444' : '#10b981'">
+            {{ coreTemp }}°C
+          </span>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <button (click)="boostThrusters()" class="btn-primary">
+          🚀 Thruster Boost (+0.5 km/s)
+        </button>
+        <button (click)="toggleShields()" [class.shield-btn-on]="shieldActive" class="btn-secondary">
+          🛡️ {{ shieldActive ? 'Lower Shields' : 'Raise Shields' }}
+        </button>
+      </div>
+
+      <div class="footer-bar">
+        <span>⚡ Emulated View Encapsulation</span>
+        <span>Reactive Ivy Runtime</span>
+      </div>
+    </div>
+  \`,
+  styles: [\`
+    .mission-card {
+      background: #090d16;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      color: #f1f5f9;
+      max-width: 480px;
+      margin: 0 auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+    .logo-badge {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, #e11d48, #be123c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
+    }
+    .logo-badge svg {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .subtitle {
+      margin: 0;
+      font-size: 0.7rem;
+      color: #fb7185;
+      font-family: monospace;
+    }
+    .status-pill {
+      margin-left: auto;
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: monospace;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      transition: all 0.2s ease;
+    }
+    .status-pill.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .metric-box {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 0.75rem 0.5rem;
+      border-radius: 0.75rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .metric-label {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .metric-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      font-family: monospace;
+      color: #fff;
+    }
+    .controls-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: #e11d48;
+      color: white;
+      box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+    }
+    .btn-primary:hover {
+      background: #f43f5e;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+    }
+    .btn-secondary.shield-btn-on {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #34d399;
+    }
+    .footer-bar {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid #1e293b;
+      padding-top: 0.75rem;
+      font-size: 0.65rem;
+      color: #64748b;
+      font-family: monospace;
+    }
+  \`]
+})
+export class AppComponent {
+  velocity = 7.68;
+  altitude = 112;
+  coreTemp = 64;
+  shieldActive = true;
+
+  boostThrusters() {
+    this.velocity = +(this.velocity + 0.5).toFixed(2);
+    this.altitude = +(this.altitude + 4.2).toFixed(1);
+    this.coreTemp = Math.min(120, this.coreTemp + 8);
+  }
+
+  toggleShields() {
+    this.shieldActive = !this.shieldActive;
+    if (!this.shieldActive) {
+      this.coreTemp = Math.max(40, this.coreTemp - 15);
+    }
+  }
+}
+\`\`\`
+
+---
+
+## 🔬 2. Angular CLI Dev Server Integration
+
+When working on a real Angular workspace:
+1. Run \`ng serve\` in your project directory (defaults to port \`4200\`).
+2. In Selene, switch the header **Engine Switcher** to **Project Server**.
+3. Selene maps any code files matching \`src/app/.../*.component.ts\` to the corresponding Angular route with instant live preview.
+`,
+  },
+  {
+    id: "doc-flutter-showcase",
+    title: "🎯 Flutter & Dart Web Showcase",
+    icon: "🎯",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 30000,
+    content: `# 🎯 Flutter & Dart Web Showcase & Hardware Engine
+
+Selene provides a state-of-the-art **Flutter & Dart Web Rendering Engine** powered by WebAssembly and the CanvasKit / Skia graphics pipeline.
+
+> [!TIP]
+> **Cross-Platform Responsive Simulator**:
+> The live Flutter frame includes a device emulator bar at the top:
+> - **iPhone 15 Pro** (393 × 852)
+> - **Google Pixel 8** (412 × 915)
+> - **iPad Mini** (768 × 1024)
+> - **Desktop Canvas** (100% Fluid)
+> - **Device Orientation Toggle** (Portrait / Landscape)
+> - **Local Flutter Dev Tunnel**: Connect directly to your local \`flutter run -d web-server --web-port=8080\` process!
+
+---
+
+## 📱 1. Material 3 Lunar Telemetry App
+
+This interactive Flutter widget demonstrates Material 3 theme seeding, elevated action buttons, animated state counters, and dark celestial styling:
+
+\`\`\`flutter
+import 'package:flutter/material.dart';
+
+void main() => runApp(const SeleneLunarApp());
+
+class SeleneLunarApp extends StatelessWidget {
+  const SeleneLunarApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF070A14),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF38BDF8),
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: const LunarDashboardScreen(),
+    );
+  }
+}
+
+class LunarDashboardScreen extends StatefulWidget {
+  const LunarDashboardScreen({super.key});
+
+  @override
+  State<LunarDashboardScreen> createState() => _LunarDashboardScreenState();
+}
+
+class _LunarDashboardScreenState extends State<LunarDashboardScreen> {
+  int _collectedSamples = 14;
+  double _batteryLevel = 0.88;
+  bool _roverDeployed = true;
+
+  void _gatherSample() {
+    setState(() {
+      _collectedSamples++;
+      _batteryLevel = (_batteryLevel - 0.03).clamp(0.05, 1.0);
+    });
+  }
+
+  void _rechargeBattery() {
+    setState(() {
+      _batteryLevel = 1.0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Selene Lunar Station',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF0F172A),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _roverDeployed ? Icons.radar : Icons.radar_outlined,
+              color: const Color(0xFF38BDF8),
+            ),
+            onPressed: () {
+              setState(() => _roverDeployed = !_roverDeployed);
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Status Card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0x4438BDF8), width: 1.5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x2238BDF8),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0x2238BDF8),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.nightlight_round, color: Color(0xFF38BDF8)),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Mare Tranquillitatis',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              Text(
+                                'Latitude: 0.6740° N, 23.4720° E',
+                                style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontFamily: 'monospace'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _roverDeployed ? const Color(0x3310B981) : const Color(0x33EF4444),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _roverDeployed ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                          ),
+                        ),
+                        child: Text(
+                          _roverDeployed ? 'ACTIVE' : 'STANDBY',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _roverDeployed ? const Color(0xFF34D399) : const Color(0xFFF87171),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Solar Battery Level',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                            ),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: _batteryLevel,
+                                minHeight: 8,
+                                backgroundColor: const Color(0xFF334155),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  _batteryLevel > 0.3 ? const Color(0xFF38BDF8) : const Color(0xFFEF4444),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        '\${(_batteryLevel * 100).toInt()}%',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Stats Counter Tile
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF1E293B)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      const Text('Regolith Samples', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                      const SizedBox(height: 4),
+                      Text('\$_collectedSamples', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ],
+                  ),
+                  Container(width: 1, height: 36, color: const Color(0xFF1E293B)),
+                  Column(
+                    children: [
+                      const Text('Telemetry Ping', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                      const SizedBox(height: 4),
+                      const Text('1.28 sec', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF38BDF8))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Action Buttons
+            ElevatedButton.icon(
+              onPressed: _batteryLevel > 0.05 ? _gatherSample : null,
+              icon: const Icon(Icons.science, size: 18),
+              label: Text('Drill Regolith Sample (\$_collectedSamples logged)'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _rechargeBattery,
+              icon: const Icon(Icons.solar_power, size: 18),
+              label: const Text('Align Solar Panels (Full Charge)'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF38BDF8),
+                side: const BorderSide(color: Color(0xFF0284C7)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+\`\`\`
+
+---
+
+## 🎨 2. Cupertino iOS Styling & Custom Canvas
+
+Selene supports Cupertino iOS widgets and Flutter \`CustomPainter\` shaders. Switch presets using the selector toolbar inside the Flutter preview canvas to explore the Cupertino Settings Card and the Trigonometric Celestial Orbit painter.
+`,
+  },
 ];
 
-const STORAGE_KEY = "selene_documents_v4";
+const STORAGE_KEY = "selene_documents_v5";
 
 export function loadDocuments(): DocumentItem[] {
   if (typeof window === "undefined") return STARTER_TEMPLATES;

@@ -15,6 +15,9 @@ import {
   Minus,
   Flame,
   LayoutTemplate,
+  Zap,
+  Shield,
+  Smartphone,
 } from "lucide-react";
 
 export interface CommandItem {
@@ -58,6 +61,57 @@ export const SLASH_COMMANDS: CommandItem[] = [
         .deleteRange(range)
         .insertContent(
           `\`\`\`vue\n<template>\n  <div class="p-4 bg-slate-900 rounded-xl border border-emerald-500/30 text-white">\n    <h3 class="text-emerald-400 font-bold">Vue 3 Live Preview</h3>\n    <p class="text-sm text-slate-300">Count: {{ count }}</p>\n    <button @click="count++" class="mt-2 px-3 py-1 bg-emerald-600 rounded text-xs font-semibold">\n      Increment\n    </button>\n  </div>\n</template>\n\n<script setup>\nimport { ref } from 'vue';\nconst count = ref(0);\n</script>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Svelte Sandbox",
+    description: "Compile-time reactive Svelte component with scoped CSS",
+    category: "Live Sandboxes",
+    badge: "Svelte",
+    icon: Zap,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`svelte\n<script>\n  let count = 0;\n  $: doubled = count * 2;\n</script>\n\n<div class="p-4 bg-slate-900 rounded-xl border border-orange-500/30 text-white">\n  <h3 class="text-orange-400 font-bold">Svelte Live Preview</h3>\n  <p class="text-sm text-slate-300">Count: {count} ({doubled}x)</p>\n  <button on:click={() => count++} class="mt-2 px-3 py-1 bg-orange-600 hover:bg-orange-500 rounded text-xs font-semibold cursor-pointer">\n    Increment\n  </button>\n</div>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Angular Sandbox",
+    description: "Angular Ivy component with two-way binding & scoped styles",
+    category: "Live Sandboxes",
+    badge: "Angular",
+    icon: Shield,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`angular\nimport { Component } from "@angular/core";\n\n@Component({\n  selector: "app-root",\n  template: \\\`\n    <div class="p-4 bg-slate-900 rounded-xl border border-rose-500/30 text-white">\n      <h3 class="text-rose-400 font-bold">Angular Ivy Live Preview</h3>\n      <p class="text-sm text-slate-300">Clicks: {{ count }}</p>\n      <button (click)="increment()" class="mt-2 px-3 py-1 bg-rose-600 hover:bg-rose-500 rounded text-xs font-semibold cursor-pointer">\n        Click Me\n      </button>\n    </div>\n  \\\`,\n})\nexport class AppComponent {\n  count = 0;\n  increment() {\n    this.count++;\n  }\n}\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Flutter Web Sandbox",
+    description: "Material 3 / Cupertino widget running via CanvasKit WASM",
+    category: "Live Sandboxes",
+    badge: "Flutter",
+    icon: Smartphone,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`flutter\nimport 'package:flutter/material.dart';\n\nvoid main() => runApp(const MyApp());\n\nclass MyApp extends StatelessWidget {\n  const MyApp({super.key});\n\n  @override\n  Widget build(BuildContext context) {\n    return MaterialApp(\n      debugShowCheckedModeBanner: false,\n      theme: ThemeData.dark(),\n      home: Scaffold(\n        body: Center(\n          child: Container(\n            padding: const EdgeInsets.all(20),\n            decoration: BoxDecoration(\n              color: const Color(0xFF0F172A),\n              borderRadius: BorderRadius.circular(16),\n              border: Border.all(color: const Color(0xFF0284C7)),\n            ),\n            child: const Text(\n              'Flutter Web Live Canvas',\n              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),\n            ),\n          ),\n        ),\n      ),\n    );\n  }\n}\n\`\`\`\n`
         )
         .run();
     },

@@ -46,7 +46,8 @@ export const SlashCommand = Extension.create({
             (item) =>
               item.title.toLowerCase().includes(lower) ||
               item.description.toLowerCase().includes(lower) ||
-              item.category.toLowerCase().includes(lower)
+              item.category.toLowerCase().includes(lower) ||
+              Boolean(item.badge?.toLowerCase().includes(lower))
           );
         },
         render: () => {
