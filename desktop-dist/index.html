@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selene — Technical Documentation & Live Code Canvas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #040711;
+      color: #E2E8F0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+    .halo {
+      position: absolute;
+      width: 550px;
+      height: 550px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(99, 102, 241, 0.12) 40%, rgba(4, 7, 17, 0) 70%);
+      filter: blur(60px);
+      z-index: 0;
+      animation: pulse 4s infinite alternate ease-in-out;
+    }
+    @keyframes pulse {
+      from { transform: scale(0.92); opacity: 0.7; }
+      to { transform: scale(1.08); opacity: 1; }
+    }
+    .card {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 36px;
+      max-width: 520px;
+    }
+    .badge {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #38BDF8;
+      font-family: monospace;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+    }
+    h1 span {
+      font-size: 11px;
+      font-family: monospace;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38BDF8;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+    .tagline {
+      font-size: 13px;
+      color: #94A3B8;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .quote {
+      font-style: italic;
+      font-size: 11px;
+      color: #CBD5E1;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(30, 41, 59, 0.8);
+      border-radius: 12px;
+      padding: 12px 18px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .quote-author {
+      font-style: normal;
+      font-family: monospace;
+      color: #38BDF8;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+    .progress-bar-container {
+      width: 280px;
+      height: 5px;
+      background: #0F172A;
+      border-radius: 9999px;
+      overflow: hidden;
+      border: 1px solid #1E293B;
+      margin-top: 10px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38BDF8, #6366F1, #A855F7);
+      border-radius: 9999px;
+      animation: load 2.5s infinite ease-in-out;
+    }
+    @keyframes load {
+      0% { width: 5%; transform: translateX(0%); }
+      50% { width: 70%; transform: translateX(30%); }
+      100% { width: 100%; transform: translateX(0%); }
+    }
+    .status {
+      font-size: 11px;
+      font-family: monospace;
+      color: #94A3B8;
+      margin-top: 14px;
+    }
+    .manual-hint {
+      display: none;
+      margin-top: 20px;
+      font-size: 11px;
+      color: #64748B;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px dashed rgba(51, 65, 85, 0.6);
+      border-radius: 8px;
+      padding: 10px 14px;
+      max-width: 440px;
+      line-height: 1.5;
+    }
+    .manual-hint code {
+      color: #38BDF8;
+      font-family: monospace;
+    }
+    .retry-btn {
+      display: none;
+      margin-top: 12px;
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #38BDF8;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .retry-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="halo"></div>
+  <div class="card">
+    <!-- SVG Moon Crown -->
+    <svg width="84" height="84" viewBox="0 0 64 64" fill="none" style="margin-bottom: 16px;">
+      <defs>
+        <linearGradient id="mGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF" />
+          <stop offset="30%" stop-color="#E0F2FE" />
+          <stop offset="70%" stop-color="#38BDF8" />
+          <stop offset="100%" stop-color="#6366F1" />
+        </linearGradient>
+      </defs>
+      <circle cx="32" cy="32" r="28" fill="#090D16" stroke="#1E293B" stroke-width="1.5" />
+      <path d="M 32 8 C 45.25 8 56 18.75 56 32 C 56 45.25 45.25 56 32 56 C 37 49 40 41 40 32 C 40 23 37 15 32 8 Z" fill="url(#mGrad)" />
+      <path d="M 23 26 L 25 31 L 30 32 L 25 34 L 23 39 L 21 34 L 16 32 L 21 31 Z" fill="#FBBF24" />
+      <circle cx="23" cy="32.5" r="1.5" fill="#FFFFFF" />
+    </svg>
+
+    <div class="badge">Σ Ε Λ Η Ν Η • TITANESS OF THE MOON</div>
+    <h1>Selene <span>v0.1.0</span></h1>
+    <p class="tagline">The Hypermodern Technical Document & Code Canvas</p>
+
+    <div class="quote">
+      &ldquo;She puts on her gleaming silver garments, and hitching up her celestial steeds, she drives forth across the night, shining with serene clarity.&rdquo;
+      <div class="quote-author">— Homeric Hymn XXXII to Selene</div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar"></div>
+    </div>
+    <div id="status" class="status">Connecting to Selene engine on http://localhost:3000...</div>
+
+    <button id="retryBtn" class="retry-btn" onclick="checkConnection()">Retry Connection</button>
+
+    <div id="manualHint" class="manual-hint">
+      <strong>Local engine not yet detected.</strong><br />
+      Start the Selene local server via terminal:<br />
+      <code>npm run dev</code> or <code>.\tools\scripts\desktop\run-desktop.ps1</code>
+    </div>
+  </div>
+
+  <script>
+    const TARGET_URL = "http://localhost:3000";
+    let attempts = 0;
+    const maxQuietAttempts = 4;
+
+    async function checkConnection() {
+      attempts++;
+      const statusEl = document.getElementById("status");
+      const hintEl = document.getElementById("manualHint");
+      const retryBtn = document.getElementById("retryBtn");
+
+      try {
+        // Ping local server
+        const res = await fetch(TARGET_URL + "/api/license/status", {
+          method: "GET",
+          cache: "no-store",
+          headers: { "Accept": "application/json" }
+        });
+        if (res.ok || res.status === 200 || res.status === 304) {
+          statusEl.textContent = "Connected! Opening Selene Canvas...";
+          window.location.replace(TARGET_URL);
+          return;
+        }
+      } catch (err) {
+        // Try fallback root ping
+        try {
+          const resRoot = await fetch(TARGET_URL, { mode: "no-cors", cache: "no-store" });
+          statusEl.textContent = "Server detected! Loading canvas...";
+          window.location.replace(TARGET_URL);
+          return;
+        } catch (e) {
+          // Server not yet accepting requests
+        }
+      }
+
+      if (attempts >= maxQuietAttempts) {
+        statusEl.textContent = "Waiting for local Selene server (attempt " + attempts + ")...";
+        hintEl.style.display = "block";
+        retryBtn.style.display = "inline-block";
+      }
+
+      setTimeout(checkConnection, 1200);
+    }
+
+    // Auto-commence probing immediately
+    checkConnection();
+  </script>
+</body>
+</html>
