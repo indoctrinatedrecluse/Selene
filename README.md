@@ -37,6 +37,17 @@ Selene dissolves this friction. Built on the unified foundations of **TipTap (Pr
 
 ---
 
+## 💎 The Core Selling Point & Strategic Edge
+
+> **Selene's defining advantage is its architectural ability to adapt to ANY web-based stack and deliver 100% faithful, zero-broken-CSS WYSIWYG renders with sub-millisecond live reload — laying the groundwork for interactive, no-code visual property controls.** 🎯✨
+
+1. **🌐 Universal Web Stack Adaptability**: Whether writing standalone React TSX components, Vue 3 templates, Svelte widgets, modern Tailwind v4 layouts, or plain HTML/CSS, Selene dynamically provisions the correct runtime in-memory without demanding local toolchains or server round-trips.
+2. **🔄 Seamless Live Reload (HMR)**: Code edits trigger instant, sub-millisecond hot reloads in isolated sandboxes while preserving runtime state and eliminating flicker.
+3. **🛡️ 100% Faithful WYSIWYG Renders**: Eliminates the "broken preview" syndrome common to other editors. Dedicated sandbox boundaries and pre-injected stylesheet runtimes guarantee that your rendered components look and behave identically to production.
+4. **🎛️ The Bridge to No-Code Visual Controls (Planned)**: The render engine's AST bridge will enable live visual property inspectors, slider controls, and color/spacing pickers directly on top of rendered components—unifying developers writing code and non-developers tweaking UI parameters in a single canvas.
+
+---
+
 ## 🎯 Purpose: Why Selene?
 
 1. **🧑‍💻 Code-First Prose Editing**: Writing documentation, technical RFCs, API designs, and architectural decision records (ADRs) shouldn't feel like typing in a 1990s text buffer. Code blocks in Selene aren't static grey rectangles; they are full-featured editor nodes with syntax tokens, line markers, language auto-detection, and live evaluation.
