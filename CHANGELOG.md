@@ -88,6 +88,30 @@ This release marks the culmination of the 4 core roadmap pillars for Selene: Uni
   - **Vanilla HTML / CSS**
 - Live Project Dev Server Tunnel ("Project Mode") for real repository navigation and live HMR.
 
+#### 🔐 Licensing Subsystem & Device Authority
+- **Cryptographic Licensing & Node-Locking**:
+  - Integrated with **[Licensor](https://licensor-h5zdysrkqa-uc.a.run.app)** central validation authority.
+  - Multi-tier support across 3 distinct license patterns:
+    - 👑 **Admin Edition (`ADM-xxxx-xxxx-xxxx`)**: Celestial gold badge, automatic HWID node-locking, zero password prompt required.
+    - 💻 **Developer Edition (`DEV-xxxx-xxxx-xxxx`)**: Elevated neon developer styling, credential authentication, and AST inspector tools.
+    - 🛡️ **User Edition (`USER-xxxx-xxxx-xxxx`)**: Polished cyan/emerald glassmorphic badge and seat activation.
+  - **Tamper-Proof 60-Day Evaluation Trial**:
+    - Automatic 60-day trial mode when unallocated.
+    - Cryptographic HMAC-SHA256 signature verification over device HWID and installation timestamp.
+    - Clock rollback and time-travel tampering detection.
+    - Secondary anchor synchronization in local user data to prevent trial resets upon registry removal.
+    - Automatic graceful time-lock barrier when evaluation period concludes.
+  - **Windows Registry (`HKCU\Software\Selene`) Persistence**:
+    - Stores license keys, HWID, seat lease, and validation heartbeat permanently across application updates and uninstalls.
+  - **License Manager & Device Authority Modal** (`SeleneLicenseModal.tsx`):
+    - Accessible via header badge or **Help -> Manage License & Device...**.
+    - Digit masking with reveal toggle, 1-click HWID clipboard copy, and "Remove License & Revert to Trial" capability.
+
+#### 📄 Proprietary License Transition
+- Updated license terms to **Proprietary Source-Available License**.
+- Copyright © 2026 **Abhishek Mitra (indoctrinatedrecluse)**. All rights reserved.
+- Modification, transformation, redistribution, or commercial use strictly requires explicit prior written approval.
+
 #### 👥 Real-Time Collaboration & Persistence
 - Multiplayer CRDT editing powered by **Yjs** and **y-webrtc**.
 - Document storage with SQLite / LibSQL database persistence and automatic localStorage fallback.

@@ -57,5 +57,5 @@ Typesetting complex formulations in sub-millisecond KaTeX:
 Empowering engineers, authors, and teams to build illuminated documentation
 
 - 🌟 GitHub: https://github.com/indoctrinatedrecluse/Selene
-- 📜 Open Source MIT License
+- 📜 Proprietary Source-Available License (© Abhishek Mitra)
 - 🌙 Named in honor of Selene, Titaness of the Moon

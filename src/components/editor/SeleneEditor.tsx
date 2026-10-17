@@ -59,6 +59,10 @@ import {
   getDesktopRuntime,
   registerDesktopMenuListener,
 } from "@/lib/desktop-bridge";
+import { SeleneLicenseBadge } from "@/components/license/SeleneLicenseBadge";
+import { SeleneLicenseModal } from "@/components/license/SeleneLicenseModal";
+import { SeleneTimeLockBarrier } from "@/components/license/SeleneTimeLockBarrier";
+import type { LicenseStatus } from "@/lib/licensing/license-service";
 
 export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
@@ -98,6 +102,24 @@ export function SeleneEditor() {
   const [showRevisions, setShowRevisions] = useState(false);
   const [revisions, setRevisions] = useState<RevisionItem[]>([]);
   const [isSavingDb, setIsSavingDb] = useState(false);
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
+  const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
+
+  // Fetch License Status from Registry Authority on mount
+  useEffect(() => {
+    async function fetchLicense() {
+      try {
+        const res = await fetch("/api/license/status");
+        if (res.ok) {
+          const data = await res.json();
+          setLicenseStatus(data);
+        }
+      } catch (err) {
+        console.warn("Using offline trial mode (License status fetch failed)", err);
+      }
+    }
+    fetchLicense();
+  }, []);
 
   // Collaboration State
   const [isCollabActive, setIsCollabActive] = useState(false);
@@ -359,6 +381,8 @@ export function SeleneEditor() {
         handleOpenLore("myth");
       } else if (command === "open-about") {
         handleOpenLore("about");
+      } else if (command === "open-license") {
+        setIsLicenseModalOpen(true);
       }
     });
 
@@ -533,6 +557,10 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                   <HelpCircle className="w-2.5 h-2.5 text-sky-400" />
                   <span>About</span>
                 </button>
+                <SeleneLicenseBadge
+                  status={licenseStatus}
+                  onClick={() => setIsLicenseModalOpen(true)}
+                />
                 {desktopRuntime !== "web" && (
                   <div
                     className="hidden lg:flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono"
@@ -823,6 +851,21 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         onBackgroundModeChange={setLunarMode}
         initialTab={loreInitialTab}
         onReplaySplash={() => setShowSplash(true)}
+        onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
+      />
+
+      {/* Selene License & Device Authority Modal */}
+      <SeleneLicenseModal
+        isOpen={isLicenseModalOpen}
+        onClose={() => setIsLicenseModalOpen(false)}
+        status={licenseStatus}
+        onLicenseUpdated={(newStatus) => setLicenseStatus(newStatus)}
+      />
+
+      {/* Tamper-Proof 60-Day Time-Lock Barrier */}
+      <SeleneTimeLockBarrier
+        status={licenseStatus}
+        onLicenseUpdated={(newStatus) => setLicenseStatus(newStatus)}
       />
 
       {/* Publish & Export Suite Modal */}

@@ -1,16 +1,29 @@
-MIT License
+PROPRIETARY SOURCE-AVAILABLE LICENSE
 
-Copyright (c) 2026 Selene Contributors
+Copyright (c) 2026 Abhishek Mitra (indoctrinatedrecluse). All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted to any person obtaining a copy of this software
+and associated documentation files (the "Software") to inspect and evaluate
+the source code solely for personal, research, or evaluation purposes.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+CONDITIONS & RESTRICTIONS:
+1. Modification, transformation, adaptation, or derivative works of the
+   Software, in whole or in part, are strictly prohibited without the express
+   prior written approval of the copyright holder.
+2. Redistribution, sublicensing, conveyance, leasing, publishing, or public
+   dissemination of the original Software or any derived works, in source or
+   binary format, is strictly prohibited without the express prior written
+   approval of the copyright holder.
+3. Commercial operation, hosted SaaS provisioning, or production deployment
+   is strictly prohibited without a valid commercial license and written
+   authorization from the copyright holder.
+
+CONTACT FOR PERMISSIONS & LICENSING:
+To request permission for modifications, redistribution, enterprise seat
+allocations, or licensing inquiries, please contact:
+  - Author: Abhishek Mitra (indoctrinatedrecluse)
+  - Email: abmitra1999@gmail.com
+  - Portfolio & Contact Form: https://portfolio-flutter-78bcf.web.app/
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

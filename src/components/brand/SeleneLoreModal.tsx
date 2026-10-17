@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Play,
   Scale,
+  Key,
 } from "lucide-react";
 import { SeleneTitanLogo } from "./SeleneTitanLogo";
 import { LunarBackgroundMode } from "./SeleneLunarBackground";
@@ -26,6 +27,7 @@ interface SeleneLoreModalProps {
   onBackgroundModeChange: (mode: LunarBackgroundMode) => void;
   initialTab?: LoreModalTab;
   onReplaySplash?: () => void;
+  onOpenLicenseModal?: () => void;
 }
 
 export function SeleneLoreModal({
@@ -35,6 +37,7 @@ export function SeleneLoreModal({
   onBackgroundModeChange,
   initialTab = "myth",
   onReplaySplash,
+  onOpenLicenseModal,
 }: SeleneLoreModalProps) {
   const [activeTab, setActiveTab] = useState<LoreModalTab>(initialTab);
 
@@ -334,7 +337,7 @@ export function SeleneLoreModal({
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed pt-1">
-                  Selene is an open-source literate technical canvas where Markdown prose seamlessly integrates with live in-memory execution, WebAssembly computational kernels, vector diagrams, and native cross-platform desktop execution.
+                  Selene is a hypermodern literate technical canvas where Markdown prose seamlessly integrates with live in-memory execution, WebAssembly computational kernels, vector diagrams, and native cross-platform desktop execution.
                 </p>
               </div>
 
@@ -366,18 +369,52 @@ export function SeleneLoreModal({
               </div>
 
               {/* License Information */}
-              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
-                  <Scale className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Open Source License: MIT</span>
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+                    <Scale className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Proprietary Source-Available License</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/60 border border-amber-500/30 text-amber-300">
+                    © 2026 Abhishek Mitra
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
-                  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction...
+                <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                  Copyright © 2026 <strong>Abhishek Mitra (indoctrinatedrecluse)</strong>. All rights reserved. Source-available for evaluation. Any modification, redistribution, republication, or commercial deployment strictly requires explicit prior written approval.
                 </p>
+                <div className="flex items-center gap-3 pt-1 text-[11px] text-sky-400 font-mono">
+                  <a href="mailto:abmitra1999@gmail.com" className="hover:underline">
+                    abmitra1999@gmail.com
+                  </a>
+                  <span>•</span>
+                  <a
+                    href="https://portfolio-flutter-78bcf.web.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline flex items-center gap-1"
+                  >
+                    <span>Portfolio Contact</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {onOpenLicenseModal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenLicenseModal();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600/40 to-sky-600/40 hover:from-indigo-600/60 hover:to-sky-600/60 border border-indigo-500/40 text-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                  >
+                    <Key className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Manage License & Devices</span>
+                  </button>
+                )}
+
                 {onReplaySplash && (
                   <button
                     type="button"

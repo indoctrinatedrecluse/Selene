@@ -9,7 +9,7 @@
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2_(Rust)-24C8D8?style=for-the-badge&logo=tauri)](https://tauri.app/)
 [![Python WASM](https://img.shields.io/badge/Python_3.12-Pyodide_WASM-3776AB?style=for-the-badge&logo=python)](https://pyodide.org/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-amber?style=for-the-badge)](LICENSE)
 
 ---
 
@@ -216,8 +216,27 @@ GitHub Actions will automatically:
 
 ---
 
-## 📄 License & Credits
+## 🔐 Licensing, Tamper-Proof 60-Day Trial & Device Authority
 
-- Licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+Selene features an industry-grade cryptographic licensing subsystem backed by **[Licensor](https://licensor-h5zdysrkqa-uc.a.run.app)** and local **Windows Registry (`HKCU\Software\Selene`)** persistence across uninstalls and updates:
+
+- **60-Day Evaluation Trial**: Automatic out-of-the-box trial with HMAC-SHA256 signature verification, anti-clock rollback detection, and secondary anchor synchronization. If the trial expires or tampering is detected, the application gracefully enters time-lock mode until a paid license is bound.
+- **Tiered Badges (Ascending Prestige)**:
+  - 🛡️ **User Edition (`USER-xxxx-xxxx-xxxx`)**: Standard seat-licensed end-user edition with username/password validation.
+  - 💻 **Developer Edition (`DEV-xxxx-xxxx-xxxx`)**: Elevated developer edition featuring neon badge styling and engine inspection tools.
+  - 👑 **Titan Administrator (`ADM-xxxx-xxxx-xxxx`)**: Celestial gold badge status with master privileges, automatic HWID node-locking, and zero password prompt requirements.
+- **Device Node-Locking (HWID)**: Machine hardware fingerprints (MachineGuid + CPU architecture + host parameters) bind licenses securely to designated seats.
+- **License Manager**: Accessible directly from the top header or **Help -> Manage License & Device...** to enter keys, toggle digit masking, view seat duration, or revert to trial.
+
+---
+
+## 📄 License & Copyright
+
+- **Proprietary Source-Available License**. Copyright © 2026 **Abhishek Mitra (indoctrinatedrecluse)**. All rights reserved.
+- Any modification, transformation, redistribution, republication, or commercial deployment strictly requires explicit prior written approval.
+- For licensing inquiries, permissions, or custom enterprise seat pools:
+  - **Author**: Abhishek Mitra
+  - **Email**: [abmitra1999@gmail.com](mailto:abmitra1999@gmail.com)
+  - **Portfolio & Contact Form**: [https://portfolio-flutter-78bcf.web.app/](https://portfolio-flutter-78bcf.web.app/)
 - Dedicated to **Selene (Σελήνη)**, Titaness of the Moon.
 - Built with ❤️ using [TipTap](https://tiptap.dev/), [ProseMirror](https://prosemirror.net/), [Pyodide](https://pyodide.org/), [Tauri](https://tauri.app/), [Sandpack](https://sandpack.codesandbox.io/), and [Next.js](https://nextjs.org/).
