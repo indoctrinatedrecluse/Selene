@@ -45,42 +45,10 @@ export interface ActivationResponse {
   license?: LicenseStatus;
 }
 
-/**
- * Computes a stable, tamper-resistant Hardware Identifier (HWID).
- */
-export async function getHardwareFingerprint(): Promise<string> {
-  const isWindows = process.platform === "win32";
-  let machineGuid = "";
+import { getHardwareFingerprint } from "@/lib/security/hwid";
+import { saveEncryptedLicenseKey, getDecryptedLicenseKey } from "@/lib/security/secure-vault";
 
-  if (isWindows) {
-    try {
-      const { stdout } = await execFileAsync("reg.exe", [
-        "query",
-        "HKLM\\SOFTWARE\\Microsoft\\Cryptography",
-        "/v",
-        "MachineGuid",
-      ]);
-      const match = stdout.match(/MachineGuid\s+REG_SZ\s+([A-Fa-f0-9-]+)/i);
-      if (match && match[1]) {
-        machineGuid = match[1].trim();
-      }
-    } catch {
-      // Fallback if reg query fails
-    }
-  }
-
-  const hostname = os.hostname();
-  const platform = os.platform();
-  const arch = os.arch();
-  const cpus = os.cpus();
-  const cpuModel = cpus && cpus.length > 0 ? cpus[0].model : "unknown-cpu";
-
-  const raw = `${machineGuid}|${hostname}|${platform}|${arch}|${cpuModel}`;
-  const hash = crypto.createHash("sha256").update(raw).digest("hex").toUpperCase();
-
-  // Format as HWID-XXXX-XXXX-XXXX-XXXX (24 characters total)
-  return `HWID-${hash.slice(0, 4)}-${hash.slice(4, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}`;
-}
+export { getHardwareFingerprint };
 
 /**
  * Secondary anchor file path for anti-tampering verification.
@@ -375,8 +343,8 @@ export async function getLicenseStatus(): Promise<LicenseStatus> {
   const hwid = await getHardwareFingerprint();
   const reg = await readRegistry();
 
-  const activeKey = reg["LicenseKey"]?.trim();
-  const licenseType = (reg["LicenseType"]?.trim().toUpperCase() as LicenseTier) || detectLicenseTier(activeKey);
+  const activeKey = await getDecryptedLicenseKey(reg);
+  const licenseType = (reg["LicenseType"]?.trim().toUpperCase() as LicenseTier) || detectLicenseTier(activeKey || "");
   const username = reg["Username"]?.trim() || "";
   const expiresAt = reg["ExpiresAt"]?.trim() || null;
   const lastValidatedAt = reg["LastValidatedAt"]?.trim();
@@ -470,8 +438,8 @@ export async function activateLicense(payload: ActivationPayload): Promise<Activ
       };
     }
 
-    // Successfully activated! Save in Windows Registry
-    await writeRegistry("LicenseKey", key);
+    // Successfully activated! Save in Windows Registry with AES-256-GCM encryption
+    await saveEncryptedLicenseKey(key);
     await writeRegistry("LicenseType", tier);
     await writeRegistry("HWID", hwid);
     await writeRegistry("Username", payload.username?.trim() || (tier === "ADMIN" ? "Titan Administrator" : ""));
@@ -583,6 +551,7 @@ export async function deactivateLicense(password?: string): Promise<{ success: b
   }
 
   // Clear license from registry
+  await deleteRegistryKey("EncryptedLicenseKey");
   await deleteRegistryKey("LicenseKey");
   await deleteRegistryKey("LicenseType");
   await deleteRegistryKey("Username");

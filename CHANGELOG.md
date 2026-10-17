@@ -102,10 +102,16 @@ This release marks the culmination of the 4 core roadmap pillars for Selene: Uni
     - Secondary anchor synchronization in local user data to prevent trial resets upon registry removal.
     - Automatic graceful time-lock barrier when evaluation period concludes.
   - **Windows Registry (`HKCU\Software\Selene`) Persistence**:
-    - Stores license keys, HWID, seat lease, and validation heartbeat permanently across application updates and uninstalls.
-  - **License Manager & Device Authority Modal** (`SeleneLicenseModal.tsx`):
+    - Stores encrypted license keys, HWID, seat lease, and validation heartbeat permanently across application updates and uninstalls.
+  - **Hardware-Bound AES-256-GCM Cryptographic Vault** (`src/lib/security/secure-vault.ts`):
+    - Hardware-tied key derivation using PBKDF2 (100,000 rounds of SHA-512) keyed to the machine HWID (`MachineGuid` + CPU details) and Windows user security identifier.
+    - License keys are encrypted with authenticated AES-256-GCM (`EncryptedLicenseKey`) in `HKCU\Software\Selene` — never stored in plaintext.
+    - **AI API Key Protection**: Dedicated secure storage vault in `HKCU\Software\Selene\Vault` for **Google Gemini**, **OpenAI**, and **Anthropic Claude** API credentials.
+    - Built-in tamper detection via GCM authentication tags and PBKDF2 salt isolation.
+  - **License Manager & AI Security Vault Modal** (`SeleneLicenseModal.tsx`):
     - Accessible via header badge or **Help -> Manage License & Device...**.
     - Digit masking with reveal toggle, 1-click HWID clipboard copy, and "Remove License & Revert to Trial" capability.
+    - Dedicated **AI Security Vault** tab with masked key displays, eye-reveal toggles, and hardware-vault key storage/deletion controls.
 
 #### 📄 Proprietary License Transition
 - Updated license terms to **Proprietary Source-Available License**.
