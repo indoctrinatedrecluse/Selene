@@ -9,7 +9,16 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { CustomCodeBlock } from "./extensions/CustomCodeBlock";
 import { Callout } from "./extensions/CalloutNode";
+import { SlashCommand } from "./extensions/slash-command/SlashCommandExtension";
 import { EditorToolbar } from "./EditorToolbar";
+import { EditorBubbleMenu } from "./EditorBubbleMenu";
+import { WorkspaceSidebar } from "./WorkspaceSidebar";
+import {
+  loadDocuments,
+  saveDocuments,
+  DocumentItem,
+  STARTER_TEMPLATES,
+} from "@/lib/workspace-store";
 import {
   FileText,
   Split,
@@ -19,104 +28,31 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const INITIAL_CONTENT = `# 🌙 Selene Technical Specification & Live Canvas
-
-Welcome to **Selene** — the hypermodern technical document & code canvas where markdown prose seamlessly integrates with live code execution and vector graphics! ✨
-
-> [!NOTE]
-> All live code renders run inside **isolated sandbox contexts with zero CSS bleed**, ensuring that your document typography and your project components never clash.
-
----
-
-## ⚡ 1. Live React & Tailwind Sandbox
-
-Below is an interactive live React component. You can edit the code in real-time or switch between **Split**, **Code**, and **Render** views. Notice that all Tailwind CSS utility classes render with 100% fidelity!
-
-\`\`\`tsx
-export function LiveInteractiveCard() {
-  const [likes, setLikes] = React.useState(42);
-  const [color, setColor] = React.useState('sky');
-
-  return (
-    <div className="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-slate-700/60 shadow-xl space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center font-bold text-white shadow-md">
-          S
-        </div>
-        <div>
-          <h3 className="text-base font-semibold text-white">Selene Live Preview</h3>
-          <p className="text-xs text-slate-400">Isolated HMR Sandbox</p>
-        </div>
-      </div>
-      <p className="text-sm text-slate-300">
-        Edit this code directly in the editor! Notice how the state updates with zero broken CSS.
-      </p>
-      <div className="pt-2 flex items-center justify-between border-t border-slate-800">
-        <button
-          onClick={() => setLikes(l => l + 1)}
-          className="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium transition-all shadow-md active:scale-95"
-        >
-          ❤️ Like ({likes})
-        </button>
-        <span className="text-xs font-mono text-slate-400">Tailwind v4 Active</span>
-      </div>
-    </div>
-  );
-}
-\`\`\`
-
----
-
-## 📊 2. Live Mermaid.js System Diagram
-
-Text-based diagrams compile into responsive SVG graphics dynamically:
-
-\`\`\`mermaid
-sequenceDiagram
-    autonumber
-    actor User as 👤 Developer
-    participant Canvas as 🌙 Selene Canvas
-    participant Engine as ⚡ Polymorphic Engine
-    participant Sandbox as 🛡️ Sandpack / Iframe
-
-    User->>Canvas: Type Markdown or Code
-    Canvas->>Engine: Route AST Node Update
-    alt Web Component
-        Engine->>Sandbox: In-Memory Hot Reload & Inject Tailwind
-        Sandbox-->>Canvas: Seamless Live Render
-    else Architecture Diagram
-        Engine->>Canvas: Render Responsive SVG (Mermaid)
-    else LaTeX Formula
-        Engine->>Canvas: Typeset KaTeX Equation
-    end
-\`\`\`
-
----
-
-## 📐 3. Mathematical Typesetting
-
-Equations typeset in sub-millisecond speeds:
-
-\`\`\`math
-\\mathcal{L}_{\\text{total}} = \\lambda_1 \\mathcal{L}_{\\text{fidelity}} + \\lambda_2 \\sum_{i=1}^N \\| \\hat{y}_i - y_i \\|^2 + \\mathbb{E}_{x \\sim p_{\\text{data}}}[\\log D(x)]
-\`\`\`
-
----
-
-## ✅ 4. Technical Checklist
-- [x] Zero-bleed isolated iframe sandboxes
-- [x] Live HMR re-rendering
-- [x] Bi-directional Markdown synchronizer
-- [ ] Visual no-code property inspectors (Upcoming Phase)
-`;
-
 export type EditorViewMode = "wysiwyg" | "split" | "markdown";
 
 export function SeleneEditor() {
-  const [docTitle, setDocTitle] = useState("Untitled Technical Canvas");
+  const [documents, setDocuments] = useState<DocumentItem[]>(() => {
+    if (typeof window !== "undefined") {
+      return loadDocuments();
+    }
+    return STARTER_TEMPLATES;
+  });
+  const [activeDocId, setActiveDocId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const loaded = loadDocuments();
+      return loaded[0]?.id || STARTER_TEMPLATES[0].id;
+    }
+    return STARTER_TEMPLATES[0].id;
+  });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<EditorViewMode>("wysiwyg");
-  const [markdownContent, setMarkdownContent] = useState(INITIAL_CONTENT);
   const [isCopied, setIsCopied] = useState(false);
+
+  const activeDoc =
+    documents.find((d) => d.id === activeDocId) || documents[0] || STARTER_TEMPLATES[0];
+
+  const [docTitle, setDocTitle] = useState(activeDoc.title);
+  const [markdownContent, setMarkdownContent] = useState(activeDoc.content);
 
   const editor = useEditor({
     extensions: [
@@ -125,6 +61,7 @@ export function SeleneEditor() {
       }),
       CustomCodeBlock,
       Callout,
+      SlashCommand,
       TaskList,
       TaskItem.configure({
         nested: true,
@@ -137,21 +74,93 @@ export function SeleneEditor() {
         placeholder: "Type '/' for commands or start writing technical documentation...",
       }),
     ],
-    content: INITIAL_CONTENT,
+    content: activeDoc.content,
     editorProps: {
       attributes: {
         class: "focus:outline-none min-h-[500px] px-8 py-6 prose prose-invert max-w-none text-slate-200",
       },
     },
     onUpdate: ({ editor }) => {
-      // Synchronize markdown content for split/export views
       const md = (editor.storage as { markdown?: { getMarkdown: () => string } }).markdown?.getMarkdown();
       if (md) {
         setMarkdownContent(md);
+        // Auto-save to documents state and localStorage
+        setDocuments((prev) => {
+          const updated = prev.map((d) =>
+            d.id === activeDocId
+              ? { ...d, content: md, updatedAt: Date.now() }
+              : d
+          );
+          saveDocuments(updated);
+          return updated;
+        });
       }
     },
     immediatelyRender: false,
   });
+
+  // Handle document selection
+  const handleSelectDoc = (id: string) => {
+    const target = documents.find((d) => d.id === id);
+    if (!target) return;
+    setActiveDocId(id);
+    setDocTitle(target.title);
+    setMarkdownContent(target.content);
+    if (editor) {
+      editor.commands.setContent(target.content);
+    }
+  };
+
+  // Handle document creation
+  const handleCreateDoc = () => {
+    const newDoc: DocumentItem = {
+      id: `doc-${Date.now()}`,
+      title: "Untitled Document",
+      icon: "📄",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      content: `# Untitled Technical Canvas\n\nType \`/\` to insert live sandboxes, diagrams, or math formulas.\n`,
+    };
+
+    const nextDocs = [newDoc, ...documents];
+    setDocuments(nextDocs);
+    saveDocuments(nextDocs);
+    setActiveDocId(newDoc.id);
+    setDocTitle(newDoc.title);
+    setMarkdownContent(newDoc.content);
+    if (editor) {
+      editor.commands.setContent(newDoc.content);
+    }
+  };
+
+  // Handle document deletion
+  const handleDeleteDoc = (id: string) => {
+    if (documents.length <= 1) return;
+    const nextDocs = documents.filter((d) => d.id !== id);
+    setDocuments(nextDocs);
+    saveDocuments(nextDocs);
+    if (activeDocId === id) {
+      const nextActive = nextDocs[0];
+      setActiveDocId(nextActive.id);
+      setDocTitle(nextActive.title);
+      setMarkdownContent(nextActive.content);
+      if (editor) {
+        editor.commands.setContent(nextActive.content);
+      }
+    }
+  };
+
+  // Handle title rename
+  const handleTitleChange = (newTitle: string) => {
+    setDocTitle(newTitle);
+    setDocuments((prev) => {
+      const updated = prev.map((d) =>
+        d.id === activeDocId ? { ...d, title: newTitle } : d
+      );
+      saveDocuments(updated);
+      return updated;
+    });
+  };
 
   const handleInsertLiveSandbox = useCallback(() => {
     if (!editor) return;
@@ -208,7 +217,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden">
       {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-800 shrink-0">
+      <header className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold text-sm shadow-md">
             🌙
@@ -222,7 +231,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               <input
                 type="text"
                 value={docTitle}
-                onChange={(e) => setDocTitle(e.target.value)}
+                onChange={(e) => handleTitleChange(e.target.value)}
                 className="bg-transparent font-medium text-slate-200 text-sm focus:outline-none hover:bg-slate-800/60 focus:bg-slate-800 px-2 py-0.5 rounded transition-colors"
                 placeholder="Document Title"
               />
@@ -275,8 +284,19 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         </div>
       </header>
 
-      {/* Main Workspace Area */}
+      {/* Main Workspace Area with Collapsible Sidebar */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Workspace Documents Sidebar */}
+        <WorkspaceSidebar
+          documents={documents}
+          activeDocId={activeDocId}
+          onSelectDoc={handleSelectDoc}
+          onCreateDoc={handleCreateDoc}
+          onDeleteDoc={handleDeleteDoc}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+
         {/* Editor Column */}
         <div
           className={`flex-1 flex flex-col overflow-y-auto ${
@@ -296,6 +316,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
 
           {/* TipTap Document Canvas */}
           <div className="flex-1 max-w-4xl w-full mx-auto pb-24 pt-4">
+            <EditorBubbleMenu editor={editor} />
             <EditorContent editor={editor} />
           </div>
         </div>
@@ -317,9 +338,10 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
             <textarea
               value={markdownContent}
               onChange={(e) => {
-                setMarkdownContent(e.target.value);
+                const val = e.target.value;
+                setMarkdownContent(val);
                 if (editor) {
-                  editor.commands.setContent(e.target.value);
+                  editor.commands.setContent(val);
                 }
               }}
               className="flex-1 p-6 bg-transparent font-mono text-xs text-slate-300 resize-none focus:outline-none leading-relaxed overflow-y-auto selection:bg-sky-500/30"

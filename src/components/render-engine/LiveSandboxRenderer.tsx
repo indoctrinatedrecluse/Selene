@@ -12,11 +12,16 @@ import {
   getTemplateForLanguage,
 } from "./stack-templates";
 import {
+  LivePropertyInspector,
+  ComponentVisualProps,
+} from "./LivePropertyInspector";
+import {
   Eye,
   Code2,
   Columns,
   RefreshCw,
   Sparkles,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export type RenderViewMode = "split" | "preview" | "code";
@@ -24,7 +29,6 @@ export type RenderViewMode = "split" | "preview" | "code";
 interface LiveSandboxRendererProps {
   initialCode: string;
   language?: string;
-  onCodeChange?: (code: string) => void;
   className?: string;
 }
 
@@ -35,13 +39,57 @@ export function LiveSandboxRenderer({
 }: LiveSandboxRendererProps) {
   const [viewMode, setViewMode] = useState<RenderViewMode>("split");
   const [activeLang, setActiveLang] = useState(language);
+  const [currentCode, setCurrentCode] = useState(initialCode);
+  const [showInspector, setShowInspector] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const template = getTemplateForLanguage(activeLang);
-  const files = generateSandpackFiles(initialCode, activeLang);
+  const files = generateSandpackFiles(currentCode, activeLang);
 
   const handleRestart = () => {
     setRefreshKey((k) => k + 1);
+  };
+
+  const handleApplyVisualProps = (vProps: ComponentVisualProps) => {
+    let updated = currentCode;
+
+    // Dynamically replace title if present
+    const titleMatch = updated.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
+    if (titleMatch) {
+      updated = updated.replace(
+        /<h([1-6])([^>]*)>(.*?)<\/h\1>/,
+        `<h$1$2>${vProps.title}</h$1>`
+      );
+    }
+
+    // Replace padding classes
+    updated = updated.replace(/\bp-(?:3|4|6|8)\b/g, vProps.padding);
+
+    // Replace border radius classes
+    updated = updated.replace(
+      /\brounded-(?:none|md|lg|xl|2xl|full)\b/g,
+      vProps.borderRadius
+    );
+
+    // Replace accent colors in bg and text
+    const colorMap: Record<string, string> = {
+      sky: "sky",
+      indigo: "indigo",
+      emerald: "emerald",
+      rose: "rose",
+      amber: "amber",
+      violet: "violet",
+    };
+    const targetColor = colorMap[vProps.accentColor] || "sky";
+    updated = updated.replace(
+      /\b(?:bg|text|from|to|border)-(?:sky|indigo|emerald|rose|amber|violet)-([0-9]{2,3})\b/g,
+      (match, shade) => {
+        const prefix = match.split("-")[0];
+        return `${prefix}-${targetColor}-${shade}`;
+      }
+    );
+
+    setCurrentCode(updated);
   };
 
   return (
@@ -76,6 +124,21 @@ export function LiveSandboxRenderer({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          {/* No-Code Inspector Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowInspector(!showInspector)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              showInspector
+                ? "bg-sky-500/20 text-sky-400 border border-sky-500/40 shadow-sm"
+                : "bg-slate-800/80 text-slate-300 hover:text-white border border-slate-700/60"
+            }`}
+            title="Toggle Visual Property Controls"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
+            <span>Tweak Props</span>
+          </button>
+
           {/* View Mode Toggle */}
           <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800">
             <button
@@ -131,9 +194,16 @@ export function LiveSandboxRenderer({
         </div>
       </div>
 
+      {/* No-Code Visual Property Inspector Bar */}
+      <LivePropertyInspector
+        isOpen={showInspector}
+        onClose={() => setShowInspector(false)}
+        onApplyToProps={handleApplyVisualProps}
+      />
+
       {/* Sandpack Isolated Sandbox Execution Engine */}
       <SandpackProvider
-        key={`${activeLang}-${refreshKey}`}
+        key={`${activeLang}-${refreshKey}-${currentCode.length}`}
         template={template}
         theme="dark"
         files={files}
@@ -145,7 +215,7 @@ export function LiveSandboxRenderer({
         options={{
           autoReload: true,
           recompileMode: "delayed",
-          recompileDelay: 350,
+          recompileDelay: 300,
         }}
       >
         <SandpackLayout
