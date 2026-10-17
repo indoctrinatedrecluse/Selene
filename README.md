@@ -205,77 +205,122 @@ Rather than forcing a single rigid renderer, Selene employs a **Polymorphic Rend
 
 ---
 
-## 🗺️ Planned Implementations & Roadmap
+## 🗺️ Implementations & Roadmap Status
 
 ### 🏁 Phase 1: Foundation & App Shell
-- [ ] Initialize Next.js 15, React 19, TypeScript, and Tailwind CSS v4 workspace.
-- [ ] Establish application shell (collapsible document navigation, top header, status indicators).
-- [ ] Configure light/dark theme switching with persistent user preferences.
+- [x] Initialize Next.js 16, React 19, TypeScript, and Tailwind CSS v4 workspace.
+- [x] Establish application shell with collapsible workspace sidebar and top header.
+- [x] Configure dark theme design system with responsive layouts.
 
 ### ✍️ Phase 2: Core TipTap & Markdown Canvas
-- [ ] Configure TipTap v2 with `tiptap-markdown` for two-way GFM parsing and export.
-- [ ] Build floating bubble formatting menu (bold, italic, strikethrough, inline code, link).
-- [ ] Build Notion-style Slash (`/`) command menu with keyboard navigation and block insertion.
-- [ ] Implement Task Lists, Admonitions/Callouts (`[!NOTE]`, `[!TIP]`, `[!WARNING]`, `[!CAUTION]`).
+- [x] Configure TipTap v3 with `tiptap-markdown` for two-way GFM parsing and export.
+- [x] Build floating bubble formatting menu (bold, italic, strikethrough, inline code, headings, math).
+- [x] Build Notion-style Slash (`/`) command palette with real-time fuzzy search and keyboard traversal.
+- [x] Implement Task Lists, Admonitions/Callouts (`[!NOTE]`, `[!TIP]`, `[!WARNING]`).
 
 ### ⚡ Phase 3: Live Render Engine & Code Intelligence
-- [ ] Build Custom Code Block NodeView powered by **Shiki** + **CodeMirror 6**:
-  - Language autocompletion & selector.
-  - Line numbers, copy code action, and active line highlight.
-- [ ] Integrate **Sandpack** for live in-document code sandboxing (React/TS/HTML live execution).
-- [ ] Implement **KaTeX** inline and display mathematics extension with live preview.
-- [ ] Implement **Mermaid.js** diagramming NodeView with interactive SVG preview and error boundary.
+- [x] Build Custom Code Block NodeView routing to specialized polymorphic renderers.
+- [x] Integrate **Sandpack** for client-side multi-stack live execution (React, Vue 3, Svelte, HTML/CSS).
+- [x] Pre-injected isolated Tailwind runtime guaranteeing 100% visual fidelity with zero broken CSS.
+- [x] Implement **No-Code Visual Property Inspector** (live tweaking of colors, radius, padding, shadows).
+- [x] Implement **KaTeX** inline and display mathematical typesetting.
+- [x] Implement **Mermaid.js** diagramming NodeView with interactive SVG preview and error boundary.
 
 ### 💾 Phase 4: Persistence, Workspace & Storage
-- [ ] Setup Drizzle ORM schema (Users, Workspaces, Documents, Revisions).
-- [ ] Configure local SQLite mode for quickstart and PostgreSQL connection for production.
-- [ ] Implement auto-saving, local-first drafts, and Markdown file import/export.
+- [x] Setup Drizzle ORM schema with LibSQL / SQLite local database (`/data/selene.db`).
+- [x] Implement Next.js REST API route handlers (`/api/documents` and `/api/documents/[id]`).
+- [x] Multi-document workspace management with local storage and database auto-sync.
+- [x] Implement automatic Revision History snapshots with 1-click version restore.
+- [x] Markdown file import (`.md`, `.txt`) and export.
 
 ### 👥 Phase 5: Real-time Collaboration & Multiplayer
-- [ ] Integrate Yjs document state with `@tiptap/extension-collaboration`.
-- [ ] Connect Hocuspocus WebSocket sync server.
-- [ ] Multi-user presence awareness (live colored cursor tracks, name tags, and active avatars).
+- [x] Integrate **Yjs** CRDT document state with **WebRTC** peer-to-peer live synchronization.
+- [x] Multi-user presence awareness (peer count indicator, colored user avatars).
+- [x] Zen / Presentation mode for distraction-free technical writing and reading.
 
 ---
 
 ## 🚀 Build & Run Instructions
 
-*(Note: Initial scaffolding commands — detailed development scripts are configured during setup)*
+Selene includes automated, multi-platform scripts for running the development server and compiling production distribution bundles with dependency verification and quality suites.
 
 ### 📋 Prerequisites
-- **Node.js**: `v20.x` or higher (tested with `v24.x`)
-- **Package Manager**: `npm` (v10+) or `pnpm`
-- **Database (Optional for dev)**: SQLite is used out-of-the-box; PostgreSQL supported for production.
+- **Node.js**: `v18.0.0` or higher (tested with `v24.x`)
+- **Package Manager**: `npm` (v10+)
+- **Operating Systems**: Windows (PowerShell), Linux, macOS, or Cygwin
 
-### 🔧 Setup & Installation
+---
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/your-org/selene.git
-cd selene
+### 🏃 Running the Development Server
 
-# 2. Install dependencies
-npm install
+The run script checks Node.js, npm, dependency presence (auto-installing if missing), verifies port availability, and launches the Next.js Turbopack development server with verbose logging:
 
-# 3. Configure environment variables (TBD)
-cp .env.example .env.local
+#### On Windows (PowerShell):
+```powershell
+# Default port 3000
+.\tools\scripts\run\run.ps1
 
-# 4. Run local development server
-npm run dev
+# Custom port or host
+.\tools\scripts\run\run.ps1 -Port 8080 -HostName "0.0.0.0"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to experience Selene.
-
-### 🧪 Quality & Tests
+#### On Linux, macOS, or Cygwin:
 ```bash
-# Run linting
-npm run lint
+# Ensure execution permissions (first run)
+chmod +x tools/scripts/run/run.sh
 
-# Run type check
+# Run development server
+./tools/scripts/run/run.sh
+
+# Run on custom port/host
+./tools/scripts/run/run.sh 8080 0.0.0.0
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+### 🔨 Compiling for Production & Running Tests
+
+The build script performs environment validation, executes the full quality sanity test suite (TypeScript type check and ESLint), and compiles the production distribution bundle:
+
+#### On Windows (PowerShell):
+```powershell
+# Run full sanity suite and compile production build
+.\tools\scripts\build\build.ps1
+
+# Clean previous build artifacts (.next) before building
+.\tools\scripts\build\build.ps1 -Clean
+
+# Skip test suite (fast build)
+.\tools\scripts\build\build.ps1 -SkipTests
+```
+
+#### On Linux, macOS, or Cygwin:
+```bash
+# Ensure execution permissions (first run)
+chmod +x tools/scripts/build/build.sh
+
+# Run full sanity suite and compile production build
+./tools/scripts/build/build.sh
+
+# Clean previous build artifacts
+./tools/scripts/build/build.sh "" --clean
+
+# Skip test suite
+./tools/scripts/build/build.sh --skip-tests
+```
+
+### 🧪 Standalone NPM Quality Commands
+```bash
+# Run TypeScript compilation check
 npm run type-check
 
-# Run tests (TBD)
-npm run test
+# Run ESLint static analysis
+npm run lint
+
+# Run combined test suite
+npm test
 ```
 
 ---
