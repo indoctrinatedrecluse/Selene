@@ -39,12 +39,15 @@ Selene dissolves this friction. Built on the unified foundations of **TipTap (Pr
 
 ## 💎 The Core Selling Point & Strategic Edge
 
-> **Selene's defining advantage is its architectural ability to adapt to ANY web-based stack and deliver 100% faithful, zero-broken-CSS WYSIWYG renders with sub-millisecond live reload — laying the groundwork for interactive, no-code visual property controls.** 🎯✨
+> **Selene's defining advantage is its novel Dual-Engine Architecture: seamless switching between in-memory component sandboxes (Playbox) and live project dev servers running in the background with automatic route navigation and live reload (HMR) across npm + React + Tailwind CSS, Bootstrap 5, or Vanilla CSS.** 🎯✨
 
-1. **🌐 Universal Web Stack Adaptability**: Whether writing standalone React TSX components, Vue 3 templates, Svelte widgets, modern Tailwind v4 layouts, or plain HTML/CSS, Selene dynamically provisions the correct runtime in-memory without demanding local toolchains or server round-trips.
-2. **🔄 Seamless Live Reload (HMR)**: Code edits trigger instant, sub-millisecond hot reloads in isolated sandboxes while preserving runtime state and eliminating flicker.
-3. **🛡️ 100% Faithful WYSIWYG Renders**: Eliminates the "broken preview" syndrome common to other editors. Dedicated sandbox boundaries and pre-injected stylesheet runtimes guarantee that your rendered components look and behave identically to production.
-4. **🎛️ The Bridge to No-Code Visual Controls (Planned)**: The render engine's AST bridge will enable live visual property inspectors, slider controls, and color/spacing pickers directly on top of rendered components—unifying developers writing code and non-developers tweaking UI parameters in a single canvas.
+1. **⚡ Dual-Engine Switching Architecture (Industry-Grade Novelty)**:
+   - **Mode 1: Component Sandbox / Playbox Engine**: In-memory micro-sandbox for isolated UI components, interactive snippet experiments, and zero-CSS-bleed previews with no-code **Tweak Props** controls.
+   - **Mode 2: Live Project Dev Server Engine ("Project Tunnel")**: Detects and communicates directly with your project's background dev server (Next.js, Vite React, CRA). Automatically maps project files (e.g., `src/app/dashboard/page.tsx` ➔ `/dashboard`) to live dev server routes with full hot reload (HMR) and real backend APIs!
+2. **🌐 Universal Web Stack Adaptability**: Deeply optimized for modern `npm + React` with automatic styling stack detection across **Tailwind CSS v4**, **Bootstrap 5**, and **Vanilla CSS**.
+3. **🔄 Sub-Millisecond Live Reload (HMR)**: Edits trigger instant hot module reloads in both isolated sandboxes and background project runtimes with zero screen flicker.
+4. **🛡️ 100% Faithful WYSIWYG Renders**: Eliminates broken CSS syndromes. Dedicated sandboxing and pre-injected stylesheet runtimes guarantee that components render identically to production.
+5. **🎛️ Interactive No-Code Visual Property Controls**: Adjust theme colors, corner radiuses, paddings, and heading text live with real-time DOM synchronization without writing boilerplate.
 
 ---
 
@@ -127,11 +130,12 @@ flowchart TD
 
 ### 🔬 The Polymorphic Live Render Engine (Context & Stack Aware)
 
-Rather than forcing a single rigid renderer, Selene employs a **Polymorphic Render Pipeline** that automatically routes snippets to the ideal execution runtime based on project type and language target:
+Rather than forcing a single rigid renderer, Selene employs a novel **Polymorphic Dual-Engine Architecture** that automatically routes snippets to the ideal execution runtime based on whether you are prototyping an isolated component or developing a full multi-page project:
 
-| Target Context | Dedicated Render Engine | Isolation & Capabilities |
+| Execution Mode | Dedicated Render Engine | Key Isolation & Capabilities |
 | :--- | :--- | :--- |
-| **🌐 Web Frameworks & UI Stacks**<br>*(React, Vue, Svelte, Next.js components, Tailwind)* | **Sandpack In-Memory Bundler** & **Isolated Shadow/Iframe Runner** | Full npm package resolution, complete CSS/Tailwind isolation, Hot Module Reloading (HMR) in-browser. |
+| **⚡ Mode 1: Component Playbox**<br>*(React TSX, Vue 3, Svelte, Tailwind v4)* | **Sandpack In-Memory Bundler** & **Shadow Iframe** | 0-server overhead, instantaneous execution in-memory, zero CSS bleed, real-time **No-Code Tweak Props** inspector. |
+| **🌐 Mode 2: Live Project Dev Server**<br>*(Next.js, Vite React, CRA, full repo)* | **Project Dev Server Tunnel (`/api/project/status`)** | Communicates with the background dev server (port 3000/5173). Features **Automatic Route Navigation Mapping** (e.g., `src/app/pricing/page.tsx` ➔ `/pricing`), live HMR, responsive viewports (Mobile, Tablet, Desktop), and real backend API calls. |
 | **📄 Documents, Math & Prose**<br>*(Markdown, LaTeX equations, GFM tables)* | **TipTap Core + KaTeX** | Sub-millisecond mathematical typesetting without layout shift, native DOM tables, markdown parity. |
 | **📊 Architecture & Visuals**<br>*(Flowcharts, Sequence, ER Diagrams)* | **Mermaid.js Core Engine** | Live SVG compilation with automatic theme synchronization and pan/zoom interaction. |
 | **🖥️ Systems, Desktop & Scripts**<br>*(Python, Rust/WASM, Go, Shell)* | **WebAssembly / Pyodide / WASI Runtime** | In-browser isolated execution sandbox for scripting and algorithm evaluation without server dependencies. |
@@ -143,10 +147,14 @@ Rather than forcing a single rigid renderer, Selene employs a **Polymorphic Rend
 > **Our primary POC objective is our software's ability to seamlessly display complete, interactive live renders across diverse stacks without errors, style bleeding, or broken CSS.** 🛡️⚡
 
 ### How Selene Guarantees Zero Broken CSS & Error Resilience:
-1. **🛡️ Total CSS & DOM Encapsulation**: Live component renders run inside dedicated sandboxed iframes and Shadow DOM boundaries. The host editor's UI styling and the user's project styling (such as Tailwind classes, custom CSS variables, or global resets) never collide or bleed into each other.
-2. **🎨 First-Class Tailwind CSS Support in Previews**: The live runner pre-injects Tailwind compiler runtime into the sandbox context, guaranteeing that Tailwind utility classes, custom themes, and design tokens render with 100% visual fidelity.
-3. **🧱 Resilient Error Boundaries & Render Freezing**: As you type code, syntax will inevitably be momentarily incomplete. Rather than crashing or showing a blank screen, Selene's engine freezes the last valid render and displays a subtle non-intrusive diagnostic badge until valid syntax is restored.
-4. **🔄 Instant Hot-Swapping**: Switch between viewing the raw CodeMirror 6 code editor, the live interactive preview, or a side-by-side split canvas with a single keybinding or click.
+1. **🛡️ Total CSS & DOM Encapsulation**: Component previews run inside dedicated sandboxed iframes. The host editor's UI styling and the user's project styling (such as Tailwind v4 utilities, Bootstrap 5 grids, custom CSS variables, or global resets) never collide or bleed into each other.
+2. **🎨 Multi-Stack CSS Framework Support**:
+   - **Tailwind CSS**: Pre-injected JIT play CDN compiler with active dark-mode synchronization.
+   - **Bootstrap 5**: Full grid, utilities, and components support.
+   - **Vanilla CSS**: Isolated stylesheets with CSS variables and custom properties.
+3. **🔄 Novel Render Engine Switcher**: Seamlessly switch between **Playbox Sandbox** and **Live Project Server** right from any code block or top workspace toolbar with 1 click.
+4. **🧱 Resilient Error Boundaries & Auto-Export Normalizer**: Incomplete syntax or missing default exports are automatically detected and wrapped without crashing the preview.
+5. **📱 Responsive Viewport Switcher**: Test live components on Mobile (375px), Tablet (768px), Laptop (1024px), and Desktop (100%) with orientation rotation.
 
 ---
 
@@ -218,10 +226,14 @@ Rather than forcing a single rigid renderer, Selene employs a **Polymorphic Rend
 - [x] Build Notion-style Slash (`/`) command palette with real-time fuzzy search and keyboard traversal.
 - [x] Implement Task Lists, Admonitions/Callouts (`[!NOTE]`, `[!TIP]`, `[!WARNING]`).
 
-### ⚡ Phase 3: Live Render Engine & Code Intelligence
+### ⚡ Phase 3: Dual-Engine Live Rendering & Code Intelligence
 - [x] Build Custom Code Block NodeView routing to specialized polymorphic renderers.
-- [x] Integrate **Sandpack** for client-side multi-stack live execution (React, Vue 3, Svelte, HTML/CSS).
+- [x] **Mode 1 (Playbox Sandbox)**: Integrate **Sandpack** for client-side multi-stack live execution (React, Vue 3, Svelte, HTML/CSS).
 - [x] Pre-injected isolated Tailwind runtime guaranteeing 100% visual fidelity with zero broken CSS.
+- [x] **Mode 2 (Live Project Server Engine)**: Background dev server detection (`/api/project/status`), automatic route navigation mapping (`src/app/.../page.tsx` ➔ `/...`), live reload (HMR), and dev server process manager (`/api/project/server`).
+- [x] **Novel Polymorphic Engine Switcher**: 1-click toggling between Playbox Sandbox, Project Server, Dual Split, and Document Canvas.
+- [x] Multi-CSS stack detection & badge support (**Tailwind CSS v4**, **Bootstrap 5**, **Vanilla CSS**).
+- [x] Responsive Viewport Device Switcher (Desktop 100%, Laptop 1024px, Tablet 768px, Mobile 375px) with orientation rotation.
 - [x] Implement **No-Code Visual Property Inspector** (live tweaking of colors, radius, padding, shadows).
 - [x] Implement **KaTeX** inline and display mathematical typesetting.
 - [x] Implement **Mermaid.js** diagramming NodeView with interactive SVG preview and error boundary.

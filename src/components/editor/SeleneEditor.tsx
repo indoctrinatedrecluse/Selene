@@ -24,6 +24,7 @@ import {
   STARTER_TEMPLATES,
 } from "@/lib/workspace-store";
 import { createCollabSession, CollabSession, CollabUser } from "@/lib/collaboration";
+import { ProjectServerRenderer } from "@/components/render-engine/ProjectServerRenderer";
 import {
   FileText,
   Split,
@@ -35,9 +36,10 @@ import {
   Maximize2,
   Minimize2,
   History,
+  Globe,
 } from "lucide-react";
 
-export type EditorViewMode = "wysiwyg" | "split" | "markdown";
+export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
 export function SeleneEditor() {
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
@@ -468,6 +470,19 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                 <span>Canvas</span>
               </button>
               <button
+                onClick={() => setViewMode("project")}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition-all ${
+                  viewMode === "project"
+                    ? "bg-sky-500/20 text-sky-400 border border-sky-500/40 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                title="Live Project Dev Server Preview with HMR"
+              >
+                <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Live Project</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              </button>
+              <button
                 onClick={() => setViewMode("split")}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
                   viewMode === "split"
@@ -476,7 +491,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                 }`}
               >
                 <Split className="w-3.5 h-3.5" />
-                <span>Split</span>
+                <span>Split MD</span>
               </button>
               <button
                 onClick={() => setViewMode("markdown")}
@@ -556,6 +571,17 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
             <EditorContent editor={editor} />
           </div>
         </div>
+
+        {/* Right Pane: Live Project Render */}
+        {viewMode === "project" && (
+          <div className="border-l border-slate-800 bg-slate-900/60 flex flex-col w-1/2 overflow-hidden">
+            <ProjectServerRenderer
+              currentFilePath={activeDoc.title}
+              defaultRoute="/"
+              className="border-none !rounded-none h-full"
+            />
+          </div>
+        )}
 
         {/* Split Raw Markdown Pane */}
         {(viewMode === "split" || viewMode === "markdown") && (

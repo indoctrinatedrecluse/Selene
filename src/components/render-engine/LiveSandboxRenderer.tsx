@@ -23,7 +23,9 @@ import {
   RefreshCw,
   Sparkles,
   SlidersHorizontal,
+  Globe,
 } from "lucide-react";
+import { ProjectServerRenderer } from "./ProjectServerRenderer";
 
 export type RenderViewMode = "split" | "preview" | "code";
 
@@ -31,13 +33,16 @@ interface LiveSandboxRendererProps {
   initialCode: string;
   language?: string;
   className?: string;
+  filePath?: string;
 }
 
 export function LiveSandboxRenderer({
   initialCode,
   language = "tsx",
   className = "",
+  filePath = "src/app/page.tsx",
 }: LiveSandboxRendererProps) {
+  const [engineMode, setEngineMode] = useState<"sandbox" | "project">("sandbox");
   const [viewMode, setViewMode] = useState<RenderViewMode>("split");
   const [prevInitialCode, setPrevInitialCode] = useState(initialCode);
   const [currentCode, setCurrentCode] = useState(initialCode);
@@ -114,107 +119,153 @@ export function LiveSandboxRenderer({
       {/* Header Bar */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          {/* Status Badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-sky-500/10 border border-sky-500/20 text-xs font-medium text-sky-400">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
-            </span>
-            <span>Live HMR Active</span>
+          {/* Engine Mode Switcher */}
+          <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setEngineMode("sandbox")}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-all ${
+                engineMode === "sandbox"
+                  ? "bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              title="Component Playbox Sandbox (Isolated in-memory render with zero CSS bleed)"
+            >
+              <Sparkles className="w-3 h-3 text-sky-400" />
+              <span>Playbox</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEngineMode("project")}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-all ${
+                engineMode === "project"
+                  ? "bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              title="Live Project Dev Server (Background server with route navigation and live reload)"
+            >
+              <Globe className="w-3 h-3 text-emerald-400" />
+              <span>Project Server</span>
+            </button>
           </div>
 
-          {/* Stack / Language Badge */}
-          <select
-            value={activeLang}
-            onChange={(e) => setActiveLang(e.target.value)}
-            className="text-xs font-mono font-medium bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-md px-2.5 py-1 text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors"
-          >
-            <option value="tsx">React (TypeScript + Tailwind)</option>
-            <option value="jsx">React (JSX)</option>
-            <option value="vue">Vue 3</option>
-            <option value="svelte">Svelte</option>
-            <option value="html">Vanilla HTML / CSS</option>
-          </select>
+          {engineMode === "sandbox" && (
+            <>
+              {/* Status Badge */}
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-xs font-medium text-sky-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                </span>
+                <span>HMR Active</span>
+              </div>
+
+              {/* Stack / Language Badge */}
+              <select
+                value={activeLang}
+                onChange={(e) => setActiveLang(e.target.value)}
+                className="text-xs font-mono font-medium bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-md px-2 py-0.5 text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors"
+              >
+                <option value="tsx">React (TypeScript + Tailwind)</option>
+                <option value="jsx">React (JSX)</option>
+                <option value="vue">Vue 3</option>
+                <option value="svelte">Svelte</option>
+                <option value="html">Vanilla HTML / CSS</option>
+              </select>
+            </>
+          )}
         </div>
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
-          {/* No-Code Inspector Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowInspector(!showInspector)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-              showInspector
-                ? "bg-sky-500/20 text-sky-400 border border-sky-500/40 shadow-sm"
-                : "bg-slate-800/80 text-slate-300 hover:text-white border border-slate-700/60"
-            }`}
-            title="Toggle Visual Property Controls"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
-            <span>Tweak Props</span>
-          </button>
+          {engineMode === "sandbox" && (
+            <>
+              {/* No-Code Inspector Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowInspector(!showInspector)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                  showInspector
+                    ? "bg-sky-500/20 text-sky-400 border border-sky-500/40 shadow-sm"
+                    : "bg-slate-800/80 text-slate-300 hover:text-white border border-slate-700/60"
+                }`}
+                title="Toggle Visual Property Controls"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
+                <span>Tweak Props</span>
+              </button>
 
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800">
-            <button
-              type="button"
-              onClick={() => setViewMode("code")}
-              title="Code View"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                viewMode === "code"
-                  ? "bg-slate-800 text-sky-400 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Code2 className="w-3.5 h-3.5" />
-              <span>Code</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("split")}
-              title="Split View (Code & Live Render)"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                viewMode === "split"
-                  ? "bg-slate-800 text-sky-400 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Columns className="w-3.5 h-3.5" />
-              <span>Split</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("preview")}
-              title="Live Render WYSIWYG"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                viewMode === "preview"
-                  ? "bg-slate-800 text-sky-400 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Render</span>
-            </button>
-          </div>
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("code")}
+                  title="Code View"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                    viewMode === "code"
+                      ? "bg-slate-800 text-sky-400 shadow-sm"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Code2 className="w-3.5 h-3.5" />
+                  <span>Code</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("split")}
+                  title="Split View (Code & Live Render)"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                    viewMode === "split"
+                      ? "bg-slate-800 text-sky-400 shadow-sm"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Columns className="w-3.5 h-3.5" />
+                  <span>Split</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("preview")}
+                  title="Live Render WYSIWYG"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                    viewMode === "preview"
+                      ? "bg-slate-800 text-sky-400 shadow-sm"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Render</span>
+                </button>
+              </div>
 
-          {/* Reset / Reload Button */}
-          <button
-            type="button"
-            onClick={handleRestart}
-            title="Reload Sandbox"
-            className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
+              {/* Reset / Reload Button */}
+              <button
+                type="button"
+                onClick={handleRestart}
+                title="Reload Sandbox"
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* No-Code Visual Property Inspector Bar */}
-      <LivePropertyInspector
-        isOpen={showInspector}
-        onClose={() => setShowInspector(false)}
-        onApplyToProps={handleApplyVisualProps}
-      />
+      {/* Conditionally Render: Project Server Mode OR Playbox Sandbox */}
+      {engineMode === "project" ? (
+        <ProjectServerRenderer
+          currentFilePath={filePath}
+          className="border-none !rounded-none min-h-[440px]"
+        />
+      ) : (
+        <>
+          {/* No-Code Visual Property Inspector Bar */}
+          <LivePropertyInspector
+            isOpen={showInspector}
+            onClose={() => setShowInspector(false)}
+            onApplyToProps={handleApplyVisualProps}
+          />
 
       {/* Sandpack Isolated Sandbox Execution Engine */}
       <SandpackProvider
@@ -264,6 +315,8 @@ export function LiveSandboxRenderer({
           )}
         </SandpackLayout>
       </SandpackProvider>
+      </>
+      )}
     </div>
   );
 }
