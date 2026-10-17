@@ -38,10 +38,18 @@ import {
   History,
   Globe,
 } from "lucide-react";
+import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
+import {
+  SeleneLunarBackground,
+  LunarBackgroundMode,
+} from "@/components/brand/SeleneLunarBackground";
+import { SeleneLoreModal } from "@/components/brand/SeleneLoreModal";
 
 export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
 export function SeleneEditor() {
+  const [lunarMode, setLunarMode] = useState<LunarBackgroundMode>("titan-aura");
+  const [isLoreModalOpen, setIsLoreModalOpen] = useState(false);
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
     if (typeof window !== "undefined") {
       return loadDocuments();
@@ -391,19 +399,34 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
   }, [markdownContent]);
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="relative flex flex-col h-screen bg-[#070A14] text-slate-100 overflow-hidden">
+      {/* Selene Ambient Lunar Background */}
+      <SeleneLunarBackground mode={lunarMode} />
+
       {/* Top Navigation Bar */}
       {!isZenMode && (
-        <header className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 shrink-0">
+        <header className="relative z-10 flex items-center justify-between px-4 py-2 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold text-sm shadow-md">
-              🌙
-            </div>
+            <button
+              onClick={() => setIsLoreModalOpen(true)}
+              className="flex items-center justify-center p-0.5 rounded-lg hover:bg-slate-800/80 transition-all cursor-pointer group"
+              title="Selene the Moon Titan — Mythology, Heritage & Canvas Ambiance"
+            >
+              <SeleneTitanLogo size="md" glow={true} />
+            </button>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-sky-400">
+                <span className="text-xs font-bold uppercase tracking-widest text-sky-400">
                   Selene
                 </span>
+                <button
+                  onClick={() => setIsLoreModalOpen(true)}
+                  className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-300 text-[10px] font-mono transition-all cursor-pointer"
+                  title="View Moon Titan Lore & Canvas Themes"
+                >
+                  <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                  <span>Titan Lore</span>
+                </button>
                 <span className="text-slate-600">/</span>
                 <input
                   type="text"
@@ -445,6 +468,15 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               title="Version History"
             >
               <History className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Lunar Ambiance & Lore Toggle */}
+            <button
+              onClick={() => setIsLoreModalOpen(true)}
+              className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-sky-400 hover:text-sky-300 border border-indigo-500/20 transition-colors cursor-pointer"
+              title="Lunar Titan Ambiance & Lore"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
             </button>
 
             {/* Zen Mode Toggle */}
@@ -621,14 +653,28 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         onRestore={handleRestoreRevision}
       />
 
+      {/* Selene Mythological Lore & Ambiance Modal */}
+      <SeleneLoreModal
+        isOpen={isLoreModalOpen}
+        onClose={() => setIsLoreModalOpen(false)}
+        backgroundMode={lunarMode}
+        onBackgroundModeChange={setLunarMode}
+      />
+
       {/* Bottom Status Footer */}
       {!isZenMode && (
-        <footer className="flex items-center justify-between px-6 py-2 bg-slate-900/90 border-t border-slate-800 text-xs text-slate-400 shrink-0">
+        <footer className="relative z-10 flex items-center justify-between px-6 py-2 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 text-xs text-slate-400 shrink-0">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-              <span>Polymorphic Engine Active</span>
-            </div>
+            <button
+              onClick={() => setIsLoreModalOpen(true)}
+              className="flex items-center gap-1.5 text-sky-400 hover:text-sky-300 font-medium transition-colors cursor-pointer"
+              title="Learn about Selene, Titaness of the Moon"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Selene Titan of the Moon</span>
+            </button>
+            <span>•</span>
+            <span>Polymorphic Engine Active</span>
             <span>•</span>
             <span>Zero CSS Bleed Isolation</span>
             <span>•</span>

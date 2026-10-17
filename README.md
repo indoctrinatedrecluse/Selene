@@ -37,6 +37,20 @@ Selene dissolves this friction. Built on the unified foundations of **TipTap (Pr
 
 ---
 
+## 🏛️ Mythological Origins: Selene, Titaness of the Moon
+
+> *“And from her immortal head a radiance is shown from heaven, and deep night is wrapped about her splendor...”*  
+> — **Homeric Hymn XXXII to Selene**
+
+Selene is named in reverence to **Selene (Σελήνη)**, the primordial Greek Titaness of the Moon. Daughter of the Titans Hyperion and Theia, sister to Helios (the Sun) and Eos (the Dawn), Selene mounts her radiant silver chariot drawn by celestial winged steeds each twilight, sweeping across the night sky to illuminate the earth with gentle, calming clarity.
+
+### The Engineering Allegory:
+- 🌌 **The Nocturnal Firmament & The Lunar Torch**: Navigating dense codebases, convoluted ASTs, and fragmented technical prose is like traveling through midnight darkness. Just as Selene's lunar light brings infallible clarity without the scorching glare of the sun, our platform illuminates your code, markdown prose, math, and diagrams with effortless, accurate live rendering.
+- 🛡️ **Pristine Celestial Isolation (Zero CSS Bleed)**: The lunar sphere exists in peaceful vacuum isolation. Selene enforces pristine isolation boundaries around code execution so user stylesheets and framework resets never corrupt the host document canvas.
+- 🌙 **The Patron of Late-Night Craftsmanship**: Selene is the guardian of the quiet midnight hours when programmers, architects, and technical authors do their most profound, uninterrupted deep work.
+
+---
+
 ## 💎 The Core Selling Point & Strategic Edge
 
 > **Selene's defining advantage is its novel Dual-Engine Architecture: seamless switching between in-memory component sandboxes (Playbox) and live project dev servers running in the background with automatic route navigation and live reload (HMR) across npm + React + Tailwind CSS, Bootstrap 5, or Vanilla CSS.** 🎯✨

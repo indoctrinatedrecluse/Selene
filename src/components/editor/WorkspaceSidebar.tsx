@@ -6,13 +6,13 @@ import {
   Plus,
   Trash2,
   Search,
-  FileCode,
   PanelLeftClose,
   PanelLeft,
   Sparkles,
   Upload,
   History,
 } from "lucide-react";
+import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 
 interface WorkspaceSidebarProps {
   documents: DocumentItem[];
@@ -63,6 +63,7 @@ export function WorkspaceSidebar({
   if (isCollapsed) {
     return (
       <div className="w-12 border-r border-slate-800 bg-slate-900/60 flex flex-col items-center py-3 gap-3 shrink-0">
+        <SeleneTitanLogo size="xs" glow={true} className="mb-0.5" />
         <button
           onClick={onToggleCollapse}
           className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
@@ -116,9 +117,7 @@ export function WorkspaceSidebar({
       {/* Sidebar Header */}
       <div className="flex items-center justify-between px-3.5 py-3 border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <div className="p-1 rounded bg-sky-500/20 text-sky-400">
-            <FileCode className="w-4 h-4" />
-          </div>
+          <SeleneTitanLogo size="xs" glow={false} />
           <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
             Workspace
           </span>

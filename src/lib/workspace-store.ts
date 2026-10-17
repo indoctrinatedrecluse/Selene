@@ -19,7 +19,8 @@ export const STARTER_TEMPLATES: DocumentItem[] = [
 Welcome to **Selene** — the hypermodern technical document & code canvas where markdown prose seamlessly integrates with live code execution and vector graphics! ✨
 
 > [!NOTE]
-> All live code renders run inside **isolated sandbox contexts with zero CSS bleed**, ensuring that your document typography and your project components never clash.
+> 🏛️ **Named for Selene, Titaness of the Moon (Σελήνη)**:
+> In Greek mythology, Selene drives her radiant silver chariot across the nocturnal cosmos, illuminating the earth with gentle, serene clarity. Selene is engineered with that same philosophy: illuminating complex codebases, AST nodes, and technical documentation with effortless live rendering, isolated sandboxes, and zero CSS leakage. Click **Titan Lore** in the top navigation bar to explore the heritage.
 
 ---
 

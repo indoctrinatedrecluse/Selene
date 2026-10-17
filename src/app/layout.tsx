@@ -13,8 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Selene — Hypermodern Technical Document & Code Canvas",
-  description: "WYSIWYG technical canvas with live code execution, vector graphics, and isolated sandboxes.",
+  title: "Selene — Titan of the Moon | Technical Document & Live Code Canvas",
+  description: "Hypermodern WYSIWYG editor engineered with the clarity of the Moon Titan. Live multi-stack render engines, isolated sandboxes, LaTeX, and Mermaid graphics.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
