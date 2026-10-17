@@ -47,7 +47,16 @@ import {
   Globe,
   Presentation,
   FileDown,
+  FolderOpen,
+  Save,
+  Monitor,
 } from "lucide-react";
+import {
+  openLocalDocument,
+  saveLocalDocument,
+  getDesktopRuntime,
+  registerDesktopMenuListener,
+} from "@/lib/desktop-bridge";
 
 export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
@@ -224,7 +233,7 @@ export function SeleneEditor() {
   };
 
   // Handle document creation
-  const handleCreateDoc = async () => {
+  const handleCreateDoc = useCallback(async () => {
     const newDoc: DocumentItem = {
       id: `doc-${Date.now()}`,
       title: "Untitled Document",
@@ -234,9 +243,11 @@ export function SeleneEditor() {
       content: `# Untitled Technical Canvas\n\nType \`/\` to insert live sandboxes, diagrams, or math formulas.\n`,
     };
 
-    const nextDocs = [newDoc, ...documents];
-    setDocuments(nextDocs);
-    saveDocuments(nextDocs);
+    setDocuments((prev) => {
+      const nextDocs = [newDoc, ...prev];
+      saveDocuments(nextDocs);
+      return nextDocs;
+    });
     setActiveDocId(newDoc.id);
     setDocTitle(newDoc.title);
     setMarkdownContent(newDoc.content);
@@ -253,39 +264,101 @@ export function SeleneEditor() {
     } catch {
       // Local storage fallback
     }
-  };
+  }, [editor]);
 
   // Handle file import
-  const handleImportDoc = async (title: string, content: string) => {
-    const newDoc: DocumentItem = {
-      id: `doc-${Date.now()}`,
-      title,
-      icon: "📥",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      content,
+  const handleImportDoc = useCallback(
+    async (title: string, content: string) => {
+      const newDoc: DocumentItem = {
+        id: `doc-${Date.now()}`,
+        title,
+        icon: "📥",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        content,
+      };
+
+      setDocuments((prev) => {
+        const nextDocs = [newDoc, ...prev];
+        saveDocuments(nextDocs);
+        return nextDocs;
+      });
+      setActiveDocId(newDoc.id);
+      setDocTitle(title);
+      setMarkdownContent(content);
+      if (editor) {
+        editor.commands.setContent(content);
+      }
+
+      try {
+        await fetch("/api/documents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newDoc),
+        });
+      } catch {
+        // Local fallback
+      }
+    },
+    [editor]
+  );
+
+  // Desktop File I/O Handlers
+  const handleDesktopOpen = useCallback(async () => {
+    const result = await openLocalDocument();
+    if (result) {
+      const title = result.fileName.replace(/\.(md|markdown|selene|txt)$/i, "");
+      await handleImportDoc(title, result.content);
+    }
+  }, [handleImportDoc]);
+
+  const handleDesktopSave = useCallback(async () => {
+    const cleanTitle = docTitle.replace(/[^\w\s-]/g, "").trim() || "document";
+    await saveLocalDocument(markdownContent, `${cleanTitle}.md`);
+  }, [docTitle, markdownContent]);
+
+  // Desktop runtime detection & native menu/shortcut integration
+  const [desktopRuntime] = useState<"tauri" | "electron" | "web">(() => {
+    return typeof window !== "undefined" ? getDesktopRuntime() : "web";
+  });
+
+  useEffect(() => {
+    const unlisten = registerDesktopMenuListener((command, payload) => {
+      if (command === "new-document") {
+        handleCreateDoc();
+      } else if (command === "file-opened" && payload && typeof payload === "object") {
+        const item = payload as { name: string; content: string };
+        handleImportDoc(
+          item.name.replace(/\.(md|markdown|selene|txt)$/i, ""),
+          item.content
+        );
+      } else if (command === "save-document") {
+        handleDesktopSave();
+      } else if (command === "toggle-slides") {
+        setIsSlideDeckOpen((prev) => !prev);
+      } else if (command === "open-publish-modal") {
+        setIsPublishModalOpen(true);
+      } else if (command === "open-lore") {
+        setIsLoreModalOpen(true);
+      }
+    });
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+        e.preventDefault();
+        handleDesktopOpen();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleDesktopSave();
+      }
     };
 
-    const nextDocs = [newDoc, ...documents];
-    setDocuments(nextDocs);
-    saveDocuments(nextDocs);
-    setActiveDocId(newDoc.id);
-    setDocTitle(title);
-    setMarkdownContent(content);
-    if (editor) {
-      editor.commands.setContent(content);
-    }
-
-    try {
-      await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newDoc),
-      });
-    } catch {
-      // Local fallback
-    }
-  };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      unlisten();
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleCreateDoc, handleImportDoc, handleDesktopOpen, handleDesktopSave]);
 
   // Handle document deletion
   const handleDeleteDoc = async (id: string) => {
@@ -433,6 +506,15 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                   <Sparkles className="w-2.5 h-2.5 text-amber-400" />
                   <span>Titan Lore</span>
                 </button>
+                {desktopRuntime !== "web" && (
+                  <div
+                    className="hidden lg:flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono"
+                    title={`Running in Native ${desktopRuntime === "tauri" ? "Tauri v2" : "Electron"} Desktop Shell`}
+                  >
+                    <Monitor className="w-2.5 h-2.5" />
+                    <span>Desktop ({desktopRuntime === "tauri" ? "Tauri" : "Electron"})</span>
+                  </div>
+                )}
                 <span className="text-slate-600">/</span>
                 <input
                   type="text"
@@ -552,6 +634,26 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
             >
               <Presentation className="w-3.5 h-3.5 text-sky-400" />
               <span className="hidden sm:inline">Deck Mode</span>
+            </button>
+
+            {/* Desktop Open File */}
+            <button
+              onClick={handleDesktopOpen}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border border-slate-700/60 text-xs font-medium transition-colors cursor-pointer"
+              title="Open Local File from Disk (Ctrl+O)"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden xl:inline">Open</span>
+            </button>
+
+            {/* Desktop Save File */}
+            <button
+              onClick={handleDesktopSave}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-emerald-300 border border-slate-700/60 text-xs font-medium transition-colors cursor-pointer"
+              title="Save Document to Local Disk (Ctrl+S)"
+            >
+              <Save className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xl:inline">Save Disk</span>
             </button>
 
             {/* Publish & Export */}
