@@ -38,15 +38,28 @@ export async function POST(req: Request) {
       }
 
       const meta = detectProjectMetadata();
-      const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
-      serverLogs = [`[Selene] Spawning '${meta.packageManager} run dev' in background...`];
-
-      activeServerProcess = spawn(npmCmd, ["run", "dev"], {
-        cwd: process.cwd(),
-        shell: true,
-        env: { ...process.env, PORT: String(meta.suggestedPort) },
-      });
+      if (meta.jsFramework === "flutter") {
+        const flutterCmd = process.platform === "win32" ? "flutter.bat" : "flutter";
+        serverLogs = [`[Selene] Spawning 'flutter run -d web-server --web-port=${meta.suggestedPort}' in background...`];
+        activeServerProcess = spawn(
+          flutterCmd,
+          ["run", "-d", "web-server", `--web-port=${meta.suggestedPort}`],
+          {
+            cwd: process.cwd(),
+            shell: true,
+            env: { ...process.env },
+          }
+        );
+      } else {
+        const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+        serverLogs = [`[Selene] Spawning '${meta.packageManager} run dev' in background...`];
+        activeServerProcess = spawn(npmCmd, ["run", "dev"], {
+          cwd: process.cwd(),
+          shell: true,
+          env: { ...process.env, PORT: String(meta.suggestedPort) },
+        });
+      }
 
       activeServerProcess.stdout?.on("data", (chunk) => {
         const line = chunk.toString().trim();

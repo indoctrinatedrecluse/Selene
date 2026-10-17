@@ -170,6 +170,7 @@ export function LiveSandboxRenderer({
                 <option value="jsx">React (JSX)</option>
                 <option value="vue">Vue 3 (SFC + Scoped CSS)</option>
                 <option value="svelte">Svelte (Reactive + Scoped CSS)</option>
+                <option value="angular">Angular (Ivy + Scoped CSS)</option>
                 <option value="html">Vanilla HTML / CSS</option>
               </select>
             </>

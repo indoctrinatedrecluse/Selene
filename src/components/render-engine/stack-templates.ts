@@ -299,11 +299,254 @@ const count = ref(10);
   <h2 class="text-xl font-bold">Vanilla HTML & Tailwind</h2>
   <p class="text-sm opacity-90 mt-1">Rendered with Tailwind runtime inside an isolated iframe context.</p>
 </div>`,
+  angular: `import { Component } from "@angular/core";
+
+@Component({
+  selector: "app-root",
+  template: \`
+    <div class="angular-card">
+      <div class="header">
+        <div class="badge">NG</div>
+        <div>
+          <h3>Angular Ivy Live Engine</h3>
+          <p class="sub">Component-Scoped Encapsulation</p>
+        </div>
+      </div>
+      <p class="desc">
+        Real-time two-way data binding, dependency injection, and scoped styles running inside Selene.
+      </p>
+      <div class="footer">
+        <button (click)="increment()" class="btn">
+          🚀 Clicks: {{ count }} ({{ count * 5 }} pts)
+        </button>
+        <span class="encapsulation">Emulated Scoped CSS</span>
+      </div>
+    </div>
+  \`,
+  styles: [\`
+    .angular-card {
+      background: #0f172a;
+      border: 1px solid rgba(225, 29, 72, 0.4);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      color: #fff;
+      max-width: 380px;
+      margin: 0 auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s ease;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .angular-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 25px 30px -5px rgba(225, 29, 72, 0.25);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, #e11d48, #be123c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.3);
+    }
+    h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .sub {
+      margin: 0;
+      font-size: 0.65rem;
+      color: #fb7185;
+      font-family: monospace;
+    }
+    .desc {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin: 0 0 1rem 0;
+    }
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #1e293b;
+      padding-top: 0.75rem;
+    }
+    .btn {
+      background: #e11d48;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.85rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.3);
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      background: #f43f5e;
+    }
+    .encapsulation {
+      font-size: 0.65rem;
+      font-family: monospace;
+      color: #fb7185;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  \`]
+})
+export class AppComponent {
+  count = 7;
+  increment() {
+    this.count++;
+  }
+}
+`,
+  dart: `import 'package:flutter/material.dart';
+
+void main() => runApp(const SeleneFlutterApp());
+
+class SeleneFlutterApp extends StatelessWidget {
+  const SeleneFlutterApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF0B0F19),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0284C7),
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: const CounterScreen(),
+    );
+  }
+}
+
+class CounterScreen extends StatefulWidget {
+  const CounterScreen({super.key});
+
+  @override
+  State<CounterScreen> createState() => _CounterScreenState();
+}
+
+class _CounterScreenState extends State<CounterScreen> {
+  int _counter = 42;
+
+  void _increment() {
+    setState(() {
+      _counter++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Container(
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0x330284C7), width: 1.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x220284C7),
+                blurRadius: 30,
+                offset: Offset(0, 10),
+              )
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0284C7), Color(0xFF38BDF8)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.flutter_dash, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Flutter Web Engine',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Hardware Skia / CanvasKit',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: Color(0xFF38BDF8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Compiled WebAssembly execution with hardware acceleration and 60 FPS fluid rendering.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8), height: 1.4),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _increment,
+                icon: const Icon(Icons.bolt, size: 18),
+                label: Text('Taps: $_counter (\${_counter * 10} pts)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0284C7),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+`,
 };
 
 export function getTemplateForLanguage(lang: string = "tsx"): SandpackPredefinedTemplate {
   const normalized = lang.toLowerCase();
   switch (normalized) {
+    case "angular":
+      return "angular";
     case "vue":
       return "vue";
     case "svelte":
@@ -407,6 +650,49 @@ export function generateSandpackFiles(code: string, lang: string = "tsx"): Recor
   ${code}
 </body>
 </html>`,
+    };
+  }
+
+  if (normalized === "angular") {
+    const isComponentTs = code.includes("@Component");
+    const compTs = isComponentTs ? code : DEFAULT_SNIPPETS_BY_LANG.angular;
+
+    const angularIndexHtml = `<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <title>Selene Angular Live</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background-color: #0b0f19;
+      color: #f8fafc;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    app-root {
+      display: block;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>`;
+
+    return {
+      "/src/app/app.component.ts": compTs,
+      "/src/index.html": angularIndexHtml,
     };
   }
 

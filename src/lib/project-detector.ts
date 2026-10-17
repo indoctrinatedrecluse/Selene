@@ -41,8 +41,18 @@ export function detectProjectMetadata(projectRoot: string = process.cwd()): Proj
   // Check for Flutter project first (pubspec.yaml)
   const pubspecPath = path.join(projectRoot, "pubspec.yaml");
   if (fs.existsSync(pubspecPath)) {
+    let appName = "Flutter App";
+    try {
+      const pubspecContent = fs.readFileSync(pubspecPath, "utf8");
+      const nameMatch = pubspecContent.match(/^name:\s*([a-zA-Z0-9_]+)/m);
+      if (nameMatch && nameMatch[1]) {
+        appName = nameMatch[1];
+      }
+    } catch {
+      // fallback
+    }
     return {
-      name: "Flutter App",
+      name: appName,
       version: "1.0.0",
       jsFramework: "flutter",
       cssFramework: "vanilla",
@@ -73,6 +83,7 @@ export function detectProjectMetadata(projectRoot: string = process.cwd()): Proj
   };
 
   const depNames = Object.keys(allDeps);
+  const hasAngularJson = fs.existsSync(path.join(projectRoot, "angular.json"));
 
   // 1. Detect Framework & Default Port
   let jsFramework: JsFramework = "unknown";
@@ -81,7 +92,7 @@ export function detectProjectMetadata(projectRoot: string = process.cwd()): Proj
   if (depNames.includes("next")) {
     jsFramework = "nextjs";
     suggestedPort = 3000;
-  } else if (depNames.includes("@angular/core")) {
+  } else if (hasAngularJson || depNames.includes("@angular/core") || depNames.includes("@angular/cli")) {
     jsFramework = "angular";
     suggestedPort = 4200;
   } else if (depNames.includes("@sveltejs/kit") || depNames.includes("svelte")) {
@@ -112,7 +123,13 @@ export function detectProjectMetadata(projectRoot: string = process.cwd()): Proj
     cssFramework = "tailwind";
   } else if (depNames.includes("bootstrap") || depNames.includes("react-bootstrap")) {
     cssFramework = "bootstrap";
-  } else if (jsFramework === "vue" || jsFramework === "vite-vue" || jsFramework === "svelte" || jsFramework === "vite-svelte") {
+  } else if (
+    jsFramework === "vue" ||
+    jsFramework === "vite-vue" ||
+    jsFramework === "svelte" ||
+    jsFramework === "vite-svelte" ||
+    jsFramework === "angular"
+  ) {
     cssFramework = "scoped-css";
   }
 
@@ -171,8 +188,8 @@ export function resolveFileToRoute(filePath: string): RouteResolution {
 
   const normalized = filePath.replace(/\\/g, "/");
 
-  // 1. SvelteKit Routes: src/routes/.../+page.svelte
-  const svelteKitMatch = normalized.match(/(?:^|\/)(?:src\/)?routes(\/.*?)\/\+page\.svelte$/);
+  // 1. SvelteKit Routes: ...routes/.../+page.svelte
+  const svelteKitMatch = normalized.match(/(?:^|\/)routes(\/.*?)\/(?:\+|\s)?page\.svelte$/);
   if (svelteKitMatch) {
     return {
       filePath,
@@ -181,7 +198,7 @@ export function resolveFileToRoute(filePath: string): RouteResolution {
       confidence: "exact",
     };
   }
-  if (/(?:^|\/)(?:src\/)?routes\/\+page\.svelte$/.test(normalized)) {
+  if (/(?:^|\/)routes\/(?:\+|\s)?page\.svelte$/.test(normalized)) {
     return {
       filePath,
       resolvedRoute: "/",
@@ -190,8 +207,8 @@ export function resolveFileToRoute(filePath: string): RouteResolution {
     };
   }
 
-  // 2. Next.js App Router: (src/)?app/.../page.(tsx|jsx|js|ts)
-  const appPageMatch = normalized.match(/(?:^|\/)(?:src\/)?app(\/.*?)\/page\.(?:tsx|jsx|js|ts)$/);
+  // 2. Next.js App Router: ...app/.../page.(tsx|jsx|js|ts)
+  const appPageMatch = normalized.match(/(?:^|\/)app(\/.*?)\/page\.(?:tsx|jsx|js|ts)$/);
   if (appPageMatch) {
     const route = appPageMatch[1] || "/";
     return {
@@ -202,7 +219,7 @@ export function resolveFileToRoute(filePath: string): RouteResolution {
     };
   }
 
-  if (/(?:^|\/)(?:src\/)?app\/page\.(?:tsx|jsx|js|ts)$/.test(normalized)) {
+  if (/(?:^|\/)app\/page\.(?:tsx|jsx|js|ts)$/.test(normalized)) {
     return {
       filePath,
       resolvedRoute: "/",
@@ -245,8 +262,16 @@ export function resolveFileToRoute(filePath: string): RouteResolution {
     };
   }
 
-  // 5. Angular Component Routes: (src/)?app/.../(feature).component.ts
-  const angularMatch = normalized.match(/(?:^|\/)(?:src\/)?app(\/.*?)\/.*\.component\.ts$/);
+  // 5. Angular Component Routes: (src/)?app/.../(feature).component.(ts|html)
+  if (/(?:^|\/)app\/app\.component\.(?:ts|html)$/.test(normalized)) {
+    return {
+      filePath,
+      resolvedRoute: "/",
+      isComponent: false,
+      confidence: "exact",
+    };
+  }
+  const angularMatch = normalized.match(/(?:^|\/)app(\/.*?)\/[^/]+\.component\.(?:ts|html)$/);
   if (angularMatch) {
     const route = angularMatch[1];
     return {
@@ -257,7 +282,27 @@ export function resolveFileToRoute(filePath: string): RouteResolution {
     };
   }
 
-  // 6. Next.js Pages Router: (src/)?pages/.../index.(tsx|jsx) or (src/)?pages/.../(file).(tsx|jsx)
+  // 6. Flutter / Dart Route Resolution: lib/main.dart or lib/(screens|pages|routes)/...
+  if (/(?:^|\/)lib\/main\.dart$/.test(normalized)) {
+    return {
+      filePath,
+      resolvedRoute: "/",
+      isComponent: false,
+      confidence: "exact",
+    };
+  }
+  const flutterRouteMatch = normalized.match(/(?:^|\/)lib\/(?:screens|pages|routes)(\/.*?)\.dart$/);
+  if (flutterRouteMatch) {
+    const route = flutterRouteMatch[1];
+    return {
+      filePath,
+      resolvedRoute: route === "/home" ? "/" : route.toLowerCase(),
+      isComponent: false,
+      confidence: "exact",
+    };
+  }
+
+  // 7. Next.js Pages Router: (src/)?pages/.../index.(tsx|jsx) or (src/)?pages/.../(file).(tsx|jsx)
   const pagesIndexMatch = normalized.match(/(?:^|\/)(?:src\/)?pages(\/.*?)\/index\.(?:tsx|jsx|js|ts)$/);
   if (pagesIndexMatch) {
     return {

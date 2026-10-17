@@ -5,9 +5,10 @@ import { NodeViewWrapper, NodeViewProps } from "@tiptap/react";
 import { LiveSandboxRenderer } from "@/components/render-engine/LiveSandboxRenderer";
 import { MermaidRenderer } from "@/components/render-engine/MermaidRenderer";
 import { MathRenderer } from "@/components/render-engine/MathRenderer";
+import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
-const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "html", "static"];
+const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
 
 export function LiveCodeBlockView(props: NodeViewProps) {
   const { node, updateAttributes } = props;
@@ -18,6 +19,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const [showLiveRender, setShowLiveRender] = useState(true);
 
   const isLiveWeb = LIVE_WEB_LANGUAGES.includes(language);
+  const isFlutter = language === "dart" || language === "flutter";
   const isMermaid = language === "mermaid";
   const isMath = language === "math" || language === "latex";
 
@@ -36,6 +38,15 @@ export function LiveCodeBlockView(props: NodeViewProps) {
           language={language}
           className="shadow-2xl"
         />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a Flutter / Dart widget block and live render is enabled, render the Flutter Web Canvas!
+  if (isFlutter && showLiveRender) {
+    return (
+      <NodeViewWrapper className="flutter-block my-4">
+        <FlutterWebRenderer initialCode={rawCode} className="shadow-2xl" />
       </NodeViewWrapper>
     );
   }
@@ -74,9 +85,12 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="javascript">javascript</option>
             <option value="tsx">tsx (live)</option>
             <option value="jsx">jsx (live)</option>
-            <option value="html">html (live)</option>
             <option value="vue">vue (live)</option>
             <option value="svelte">svelte (live)</option>
+            <option value="angular">angular (live)</option>
+            <option value="flutter">flutter (live)</option>
+            <option value="dart">dart (live)</option>
+            <option value="html">html (live)</option>
             <option value="mermaid">mermaid (diagram)</option>
             <option value="latex">latex (math)</option>
             <option value="python">python</option>
@@ -87,7 +101,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {LIVE_WEB_LANGUAGES.includes(language) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"

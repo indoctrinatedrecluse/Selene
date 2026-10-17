@@ -53,7 +53,7 @@ export async function GET(req: Request) {
     // Check potential dev server ports
     const candidatePorts = requestedPort
       ? [parseInt(requestedPort, 10)]
-      : [metadata.suggestedPort, 3000, 5173, 8080, 3001];
+      : [metadata.suggestedPort, 3000, 5173, 4200, 8080, 3001];
 
     // Remove duplicates
     const uniquePorts = Array.from(new Set(candidatePorts));

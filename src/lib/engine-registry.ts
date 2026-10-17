@@ -119,23 +119,36 @@ export function dispatchEngine(context: EngineDispatchContext): EngineDispatchRe
     };
   }
 
-  // 3. Flutter & Dart Web (Upcoming Engine Preparation)
+  // 3. Flutter & Dart Web Engine
   if (lang === "dart" || lang === "flutter" || ext === "dart") {
     return {
       engineType: "flutter-web",
       stack: "flutter-dart",
       cssStandard: "vanilla",
-      title: "Flutter Web Engine",
+      title: "Flutter Web Multiplatform Engine",
       template: "flutter",
       suggestedPort: 8080,
       supportsTweakProps: false,
       resolvedRoute,
-      description: "Hardware-accelerated Skia / CanvasKit Flutter Web execution container.",
+      description: "Hardware-accelerated Skia / CanvasKit Flutter Web execution container with responsive device simulator.",
     };
   }
 
-  // 4. Angular (Upcoming Framework Support)
+  // 4. Angular (Playbox Micro-Sandbox & Project Server)
   if (lang === "angular" || filePath.includes(".component.ts") || filePath.includes(".component.html")) {
+    if (preferredMode === "sandbox" || !filePath) {
+      return {
+        engineType: "playbox-sandbox",
+        stack: "angular-component",
+        cssStandard: "scoped-css",
+        title: "Angular Ivy Playbox",
+        template: "angular",
+        suggestedPort: 4200,
+        supportsTweakProps: true,
+        resolvedRoute,
+        description: "In-browser Angular Ivy micro-sandbox with component-scoped CSS encapsulation and Tailwind utilities.",
+      };
+    }
     return {
       engineType: isServerRunning ? "project-dev-server" : "angular-live",
       stack: "angular-component",
@@ -145,7 +158,7 @@ export function dispatchEngine(context: EngineDispatchContext): EngineDispatchRe
       suggestedPort: 4200,
       supportsTweakProps: false,
       resolvedRoute,
-      description: "Angular Ivy compilation with component-scoped encapsulation and CLI hot reload.",
+      description: "Angular Ivy compilation with component-scoped encapsulation and CLI hot reload on port 4200.",
     };
   }
 
