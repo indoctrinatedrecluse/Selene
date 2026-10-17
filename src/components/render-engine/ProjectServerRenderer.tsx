@@ -180,7 +180,7 @@ export function ProjectServerRenderer({
             <span>{isServerRunning ? `Port ${serverPort} Active` : "Server Probing"}</span>
           </div>
 
-          {/* JS Framework Pill */}
+          {/* JS / Application Framework Pill */}
           <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[11px] border border-slate-700/50">
             <Layers className="w-3 h-3 text-sky-400" />
             <span>
@@ -188,6 +188,18 @@ export function ProjectServerRenderer({
                 ? "Next.js"
                 : projectMeta?.jsFramework === "vite-react"
                 ? "Vite + React"
+                : projectMeta?.jsFramework === "vite-vue"
+                ? "Vite + Vue 3"
+                : projectMeta?.jsFramework === "vite-svelte"
+                ? "Vite + Svelte"
+                : projectMeta?.jsFramework === "vue"
+                ? "Vue 3"
+                : projectMeta?.jsFramework === "svelte"
+                ? "Svelte"
+                : projectMeta?.jsFramework === "angular"
+                ? "Angular"
+                : projectMeta?.jsFramework === "flutter"
+                ? "Flutter Web"
                 : "React SPA"}
             </span>
           </div>
@@ -201,6 +213,10 @@ export function ProjectServerRenderer({
             ) : projectMeta?.cssFramework === "bootstrap" ? (
               <span className="px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 font-mono">
                 Bootstrap 5
+              </span>
+            ) : projectMeta?.cssFramework === "scoped-css" ? (
+              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono">
+                Scoped CSS
               </span>
             ) : (
               <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 font-mono">

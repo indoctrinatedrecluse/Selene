@@ -137,10 +137,104 @@ export default function MetricCard() {
 }
 \`\`\`
 
-## 2. Gradient Banner (Vanilla HTML)
+## 2. Reactive SFC Card (Vue 3 + Scoped CSS)
+
+\`\`\`vue
+<template>
+  <div class="vue-card p-6 bg-slate-900 rounded-2xl border border-emerald-500/40 text-white shadow-2xl text-center max-w-sm mx-auto backdrop-blur-md">
+    <div class="flex items-center justify-center gap-2.5 mb-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-white shadow-md text-sm">
+        V3
+      </div>
+      <div class="text-left">
+        <h3 class="text-sm font-semibold text-white">Vue 3 SFC Live</h3>
+        <p class="text-[10px] text-emerald-400 font-mono">Composition API + Scoped CSS</p>
+      </div>
+    </div>
+    <p class="text-xs text-slate-300 leading-relaxed">
+      Single File Component with full reactivity, scoped styles, and Tailwind utilities compiled live in-memory.
+    </p>
+    <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+      <button
+        @click="count++"
+        class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md transition-all active:scale-95 cursor-pointer"
+      >
+        ✨ Count: {{ count }}
+      </button>
+      <span class="vue-badge text-[10px] font-mono text-emerald-400 uppercase tracking-wider">Scoped CSS</span>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+const count = ref(10);
+</script>
+
+<style scoped>
+.vue-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.vue-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.2);
+}
+.vue-badge {
+  letter-spacing: 0.05em;
+}
+</style>
+\`\`\`
+
+## 3. Reactive Declarations (Svelte + Scoped CSS)
+
+\`\`\`svelte
+<script>
+  let count = 15;
+  $: doubled = count * 2;
+</script>
+
+<div class="svelte-card p-6 bg-slate-900 rounded-2xl border border-orange-500/40 text-white shadow-2xl text-center max-w-sm mx-auto backdrop-blur-md">
+  <div class="flex items-center justify-center gap-2.5 mb-3">
+    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center font-bold text-white shadow-md text-sm">
+      Sv
+    </div>
+    <div class="text-left">
+      <h3 class="text-sm font-semibold text-white">Svelte Reactive Live</h3>
+      <p class="text-[10px] text-orange-400 font-mono">Zero Virtual DOM Overhead</p>
+    </div>
+  </div>
+  <p class="text-xs text-slate-300 leading-relaxed">
+    Compile-time reactive declarations with encapsulated scoped styles and instant HMR live reload.
+  </p>
+  <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+    <button
+      on:click={() => count += 1}
+      class="px-3.5 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold shadow-md transition-all active:scale-95 cursor-pointer"
+    >
+      ⚡ Count: {count} ({doubled}x)
+    </button>
+    <span class="svelte-badge text-[10px] font-mono text-orange-400 uppercase tracking-wider">Scoped CSS</span>
+  </div>
+</div>
+
+<style>
+  .svelte-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .svelte-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px -5px rgba(249, 115, 22, 0.2);
+  }
+  .svelte-badge {
+    letter-spacing: 0.05em;
+  }
+</style>
+\`\`\`
+
+## 4. Gradient Banner (Vanilla HTML & Tailwind)
 
 \`\`\`html
-<div class="p-6 bg-gradient-to-r from-violet-600 via-indigo-600 to-sky-600 rounded-2xl text-white shadow-2xl">
+<div class="p-6 bg-gradient-to-r from-violet-600 via-indigo-600 to-sky-600 rounded-2xl text-white shadow-2xl text-center max-w-sm mx-auto">
   <h2 class="text-xl font-black">Zero-Leak Web Canvas</h2>
   <p class="text-sm opacity-90 mt-1">Tailwind utility classes render directly in isolated iframe contexts.</p>
 </div>
@@ -185,7 +279,7 @@ export interface IngestionEvent {
   },
 ];
 
-const STORAGE_KEY = "selene_documents_v2";
+const STORAGE_KEY = "selene_documents_v3";
 
 export function loadDocuments(): DocumentItem[] {
   if (typeof window === "undefined") return STARTER_TEMPLATES;
