@@ -19,6 +19,7 @@ import {
   Shield,
   Smartphone,
   Presentation,
+  Terminal,
 } from "lucide-react";
 
 export interface CommandItem {
@@ -130,6 +131,23 @@ export const SLASH_COMMANDS: CommandItem[] = [
         .deleteRange(range)
         .insertContent(
           `\`\`\`html\n<div class="p-6 bg-gradient-to-r from-sky-600 to-indigo-600 rounded-2xl text-white shadow-xl">\n  <h2 class="text-xl font-bold">Modern Web Canvas</h2>\n  <p class="text-sm text-sky-100 mt-1">Rendered with Tailwind runtime inside an isolated sandbox.</p>\n</div>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Python WASM Cell",
+    description: "Interactive Python notebook with NumPy & Matplotlib in WebAssembly",
+    category: "Live Sandboxes",
+    badge: "Python",
+    icon: Terminal,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`python\nimport numpy as np\nimport matplotlib.pyplot as plt\n\n# Lunar Orbital Mechanics Simulation\ntheta = np.linspace(0, 2 * np.pi, 500)\nr_moon = 8.0\nt = np.linspace(0, 10, 500)\nx = 4 * np.cos(t) + 3.5 * np.cos(3 * t)\ny = 2.5 * np.sin(t) - 2.0 * np.sin(2 * t)\n\nfig, ax = plt.subplots(figsize=(6, 4))\nax.scatter([0], [0], color='#38bdf8', s=300, label='Earth')\nax.scatter([r_moon * np.cos(1.2)], [r_moon * np.sin(1.2)], color='#fbbf24', s=150, label='Moon (Selene)')\nax.plot(x, y, color='#a855f7', linewidth=2, label='Transfer Orbit')\nax.plot(r_moon * np.cos(theta), r_moon * np.sin(theta), '--', color='#475569', alpha=0.5)\nax.set_title("Selene Trans-Lunar Injection", fontsize=11, fontweight='bold')\nax.legend(loc='upper right', fontsize=8)\nax.grid(True, linestyle=':', alpha=0.3)\nplt.tight_layout()\nplt.show()\n\nprint("✓ Orbital delta-V computation complete.")\n\`\`\`\n`
         )
         .run();
     },

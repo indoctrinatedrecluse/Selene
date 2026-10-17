@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { LiveSandboxRenderer } from "@/components/render-engine/LiveSandboxRenderer";
 import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRenderer";
+import { PythonNotebookRenderer } from "@/components/render-engine/PythonNotebookRenderer";
 import { MermaidRenderer } from "@/components/render-engine/MermaidRenderer";
 import { MathRenderer } from "@/components/render-engine/MathRenderer";
 
@@ -200,6 +201,9 @@ export function SlideDeckViewer({
   const isFlutter =
     currentSlide.codeBlock &&
     ["flutter", "dart"].includes(currentSlide.codeBlock.lang);
+  const isPython =
+    currentSlide.codeBlock &&
+    ["python", "py", "notebook"].includes(currentSlide.codeBlock.lang);
 
   return (
     <div className="fixed inset-0 z-50 bg-[#070A14] text-slate-100 flex flex-col overflow-hidden animate-in fade-in duration-200">
@@ -338,6 +342,16 @@ export function SlideDeckViewer({
             {isFlutter && currentSlide.codeBlock && (
               <div className="w-full my-4 shadow-2xl rounded-xl overflow-hidden border border-slate-800">
                 <FlutterWebRenderer
+                  initialCode={currentSlide.codeBlock.code}
+                  className="!my-0"
+                />
+              </div>
+            )}
+
+            {/* Live Python WASM Notebook if on this slide */}
+            {isPython && currentSlide.codeBlock && (
+              <div className="w-full my-4 shadow-2xl rounded-xl overflow-hidden border border-slate-800">
+                <PythonNotebookRenderer
                   initialCode={currentSlide.codeBlock.code}
                   className="!my-0"
                 />

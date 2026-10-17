@@ -6,6 +6,7 @@ import { LiveSandboxRenderer } from "@/components/render-engine/LiveSandboxRende
 import { MermaidRenderer } from "@/components/render-engine/MermaidRenderer";
 import { MathRenderer } from "@/components/render-engine/MathRenderer";
 import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRenderer";
+import { PythonNotebookRenderer } from "@/components/render-engine/PythonNotebookRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -20,6 +21,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
 
   const isLiveWeb = LIVE_WEB_LANGUAGES.includes(language);
   const isFlutter = language === "dart" || language === "flutter";
+  const isPython = language === "python" || language === "py" || language === "notebook";
   const isMermaid = language === "mermaid";
   const isMath = language === "math" || language === "latex";
 
@@ -74,6 +76,19 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's a Python computational cell and live render is enabled, render the Pyodide WASM Kernel!
+  if (isPython && showLiveRender) {
+    return (
+      <NodeViewWrapper className="python-block my-4">
+        <PythonNotebookRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // If it's a Mermaid diagram
   if (isMermaid) {
     return (
@@ -115,8 +130,8 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="dart">dart (live)</option>
             <option value="html">html (live)</option>
             <option value="mermaid">mermaid (diagram)</option>
-            <option value="latex">latex (math)</option>
-            <option value="python">python</option>
+            <option value="python">python (live WASM)</option>
+            <option value="py">py (live WASM)</option>
             <option value="rust">rust</option>
             <option value="json">json</option>
             <option value="css">css</option>
@@ -124,7 +139,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"
