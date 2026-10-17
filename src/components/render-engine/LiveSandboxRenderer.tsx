@@ -10,6 +10,7 @@ import {
 import {
   generateSandpackFiles,
   getTemplateForLanguage,
+  detectDynamicDependencies,
 } from "./stack-templates";
 import {
   LivePropertyInspector,
@@ -38,8 +39,22 @@ export function LiveSandboxRenderer({
   className = "",
 }: LiveSandboxRendererProps) {
   const [viewMode, setViewMode] = useState<RenderViewMode>("split");
-  const [activeLang, setActiveLang] = useState(language);
+  const [prevInitialCode, setPrevInitialCode] = useState(initialCode);
   const [currentCode, setCurrentCode] = useState(initialCode);
+
+  if (initialCode !== prevInitialCode) {
+    setPrevInitialCode(initialCode);
+    setCurrentCode(initialCode);
+  }
+
+  const [prevLang, setPrevLang] = useState(language);
+  const [activeLang, setActiveLang] = useState(language);
+
+  if (language !== prevLang) {
+    setPrevLang(language);
+    setActiveLang(language);
+  }
+
   const [showInspector, setShowInspector] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -203,16 +218,15 @@ export function LiveSandboxRenderer({
 
       {/* Sandpack Isolated Sandbox Execution Engine */}
       <SandpackProvider
-        key={`${activeLang}-${refreshKey}-${currentCode.length}`}
+        key={`${activeLang}-${refreshKey}`}
         template={template}
         theme="dark"
         files={files}
         customSetup={{
-          dependencies: {
-            "lucide-react": "latest",
-          },
+          dependencies: detectDynamicDependencies(currentCode),
         }}
         options={{
+          externalResources: ["https://cdn.tailwindcss.com"],
           autoReload: true,
           recompileMode: "delayed",
           recompileDelay: 300,
@@ -242,7 +256,7 @@ export function LiveSandboxRenderer({
                 <span>Isolated CSS Sandbox</span>
               </div>
               <SandpackPreview
-                showRefreshButton={false}
+                showRefreshButton={true}
                 showOpenInCodeSandbox={false}
                 style={{ height: 380 }}
               />
