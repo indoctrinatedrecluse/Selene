@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "test": "npm run type-check && npm run lint",
     "desktop:dev": "electron electron/main.js",
+    "tauri": "tauri",
     "desktop:tauri": "tauri dev",
     "desktop:tauri:build": "tauri build"
   },
