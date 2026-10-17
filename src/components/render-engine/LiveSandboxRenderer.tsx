@@ -1,21 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SandpackProvider,
   SandpackLayout,
   SandpackCodeEditor,
   SandpackPreview,
+  useSandpack,
 } from "@codesandbox/sandpack-react";
 import {
   generateSandpackFiles,
   getTemplateForLanguage,
   detectDynamicDependencies,
 } from "./stack-templates";
+import { UniversalPropertyInspector } from "./UniversalPropertyInspector";
 import {
-  LivePropertyInspector,
-  ComponentVisualProps,
-} from "./LivePropertyInspector";
+  UniversalVisualProps,
+  applyVisualProps,
+} from "@/lib/ast-transformer";
 import {
   Eye,
   Code2,
@@ -34,6 +36,34 @@ interface LiveSandboxRendererProps {
   language?: string;
   className?: string;
   filePath?: string;
+  onCodeChange?: (newCode: string) => void;
+}
+
+/**
+ * SandpackCodeSync listens to user edits inside SandpackCodeEditor
+ * and debounces synchronization back to the ProseMirror Document AST.
+ */
+function SandpackCodeSync({
+  currentCode,
+  onCodeChange,
+}: {
+  currentCode: string;
+  onCodeChange?: (code: string) => void;
+}) {
+  const { sandpack } = useSandpack();
+  const activeFile = sandpack.activeFile;
+  const fileCode = sandpack.files[activeFile]?.code;
+
+  useEffect(() => {
+    if (fileCode && fileCode !== currentCode && onCodeChange) {
+      const timer = setTimeout(() => {
+        onCodeChange(fileCode);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [fileCode, currentCode, onCodeChange]);
+
+  return null;
 }
 
 export function LiveSandboxRenderer({
@@ -41,13 +71,14 @@ export function LiveSandboxRenderer({
   language = "tsx",
   className = "",
   filePath = "src/app/page.tsx",
+  onCodeChange,
 }: LiveSandboxRendererProps) {
   const [engineMode, setEngineMode] = useState<"sandbox" | "project">("sandbox");
   const [viewMode, setViewMode] = useState<RenderViewMode>("split");
   const [prevInitialCode, setPrevInitialCode] = useState(initialCode);
   const [currentCode, setCurrentCode] = useState(initialCode);
 
-  if (initialCode !== prevInitialCode) {
+  if (initialCode !== prevInitialCode && initialCode !== currentCode) {
     setPrevInitialCode(initialCode);
     setCurrentCode(initialCode);
   }
@@ -70,46 +101,10 @@ export function LiveSandboxRenderer({
     setRefreshKey((k) => k + 1);
   };
 
-  const handleApplyVisualProps = (vProps: ComponentVisualProps) => {
-    let updated = currentCode;
-
-    // Dynamically replace title if present
-    const titleMatch = updated.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
-    if (titleMatch) {
-      updated = updated.replace(
-        /<h([1-6])([^>]*)>(.*?)<\/h\1>/,
-        `<h$1$2>${vProps.title}</h$1>`
-      );
-    }
-
-    // Replace padding classes
-    updated = updated.replace(/\bp-(?:3|4|6|8)\b/g, vProps.padding);
-
-    // Replace border radius classes
-    updated = updated.replace(
-      /\brounded-(?:none|md|lg|xl|2xl|full)\b/g,
-      vProps.borderRadius
-    );
-
-    // Replace accent colors in bg and text
-    const colorMap: Record<string, string> = {
-      sky: "sky",
-      indigo: "indigo",
-      emerald: "emerald",
-      rose: "rose",
-      amber: "amber",
-      violet: "violet",
-    };
-    const targetColor = colorMap[vProps.accentColor] || "sky";
-    updated = updated.replace(
-      /\b(?:bg|text|from|to|border)-(?:sky|indigo|emerald|rose|amber|violet)-([0-9]{2,3})\b/g,
-      (match, shade) => {
-        const prefix = match.split("-")[0];
-        return `${prefix}-${targetColor}-${shade}`;
-      }
-    );
-
+  const handleApplyVisualProps = (vProps: UniversalVisualProps) => {
+    const updated = applyVisualProps(currentCode, activeLang, vProps);
     setCurrentCode(updated);
+    onCodeChange?.(updated);
   };
 
   return (
@@ -261,10 +256,12 @@ export function LiveSandboxRenderer({
         />
       ) : (
         <>
-          {/* No-Code Visual Property Inspector Bar */}
-          <LivePropertyInspector
+          {/* Universal No-Code Visual Property Inspector */}
+          <UniversalPropertyInspector
             isOpen={showInspector}
             onClose={() => setShowInspector(false)}
+            code={currentCode}
+            language={activeLang}
             onApplyToProps={handleApplyVisualProps}
           />
 
@@ -284,6 +281,13 @@ export function LiveSandboxRenderer({
           recompileDelay: 300,
         }}
       >
+        <SandpackCodeSync
+          currentCode={currentCode}
+          onCodeChange={(code) => {
+            setCurrentCode(code);
+            onCodeChange?.(code);
+          }}
+        />
         <SandpackLayout
           className={`border-none !rounded-none !bg-transparent min-h-[360px] ${
             viewMode === "code"

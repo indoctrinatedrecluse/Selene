@@ -11,7 +11,7 @@ import { Check, Copy, Terminal, Eye } from "lucide-react";
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
 
 export function LiveCodeBlockView(props: NodeViewProps) {
-  const { node, updateAttributes } = props;
+  const { node, updateAttributes, editor, getPos } = props;
   const language = (node.attrs.language || "typescript").toLowerCase();
   const rawCode = node.textContent;
 
@@ -29,6 +29,24 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCodeChange = (newCode: string) => {
+    if (typeof getPos !== "function" || !editor) return;
+    const pos = getPos();
+    if (pos === undefined) return;
+    if (newCode === node.textContent) return;
+
+    const from = pos + 1;
+    const to = pos + node.nodeSize - 1;
+    const { tr } = editor.state;
+    tr.setMeta("addToHistory", true);
+    if (newCode) {
+      tr.replaceWith(from, to, editor.schema.text(newCode));
+    } else {
+      tr.delete(from, to);
+    }
+    editor.view.dispatch(tr);
+  };
+
   // If it's a web stack snippet and live render is enabled, render the Sandpack Live Engine!
   if (isLiveWeb && showLiveRender) {
     return (
@@ -37,6 +55,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
           initialCode={rawCode}
           language={language}
           className="shadow-2xl"
+          onCodeChange={handleCodeChange}
         />
       </NodeViewWrapper>
     );
@@ -46,7 +65,11 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   if (isFlutter && showLiveRender) {
     return (
       <NodeViewWrapper className="flutter-block my-4">
-        <FlutterWebRenderer initialCode={rawCode} className="shadow-2xl" />
+        <FlutterWebRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
       </NodeViewWrapper>
     );
   }

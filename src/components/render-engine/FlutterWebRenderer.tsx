@@ -28,6 +28,7 @@ interface FlutterWebRendererProps {
   className?: string;
   defaultEngineMode?: FlutterEngineMode;
   localServerPort?: number;
+  onCodeChange?: (newCode: string) => void;
 }
 
 const FLUTTER_PRESETS: Record<string, { label: string; code: string }> = {
@@ -228,6 +229,7 @@ export function FlutterWebRenderer({
   className = "",
   defaultEngineMode = "cloud-wasm",
   localServerPort = 8080,
+  onCodeChange,
 }: FlutterWebRendererProps) {
   const codeToUse = initialCode || DEFAULT_SNIPPETS_BY_LANG.dart || "";
   const [currentCode, setCurrentCode] = useState(codeToUse);
@@ -240,6 +242,23 @@ export function FlutterWebRenderer({
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Sync to parent AST when code changes
+  useEffect(() => {
+    if (currentCode && currentCode !== initialCode) {
+      const timer = setTimeout(() => {
+        onCodeChange?.(currentCode);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentCode, initialCode, onCodeChange]);
+
+  const [prevInitialCode, setPrevInitialCode] = useState(initialCode);
+  // Sync from parent if initialCode changes
+  if (initialCode && initialCode !== prevInitialCode && initialCode !== currentCode) {
+    setPrevInitialCode(initialCode);
+    setCurrentCode(initialCode);
+  }
 
   // Sync code to DartPad iframe via postMessage
   const syncCodeToDartPad = useCallback(() => {
