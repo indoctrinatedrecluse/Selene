@@ -21,9 +21,10 @@ import {
   Minus,
   Undo,
   Redo,
-  Download,
   Copy,
   Check,
+  FileDown,
+  Presentation,
 } from "lucide-react";
 
 interface EditorToolbarProps {
@@ -34,6 +35,8 @@ interface EditorToolbarProps {
   onInsertMath: () => void;
   onExportMarkdown: () => void;
   onCopyMarkdown: () => void;
+  onOpenPublishModal?: () => void;
+  onLaunchSlides?: () => void;
 }
 
 export function EditorToolbar({
@@ -44,6 +47,8 @@ export function EditorToolbar({
   onInsertMath,
   onExportMarkdown,
   onCopyMarkdown,
+  onOpenPublishModal,
+  onLaunchSlides,
 }: EditorToolbarProps) {
   if (!editor) return null;
 
@@ -276,6 +281,18 @@ export function EditorToolbar({
 
       {/* Export & Actions */}
       <div className="flex items-center gap-1.5">
+        {onLaunchSlides && (
+          <button
+            type="button"
+            onClick={onLaunchSlides}
+            className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-sky-300 text-xs font-medium transition-colors border border-slate-700/60"
+            title="Launch Interactive Slide Deck"
+          >
+            <Presentation className="w-3.5 h-3.5 text-sky-400" />
+            <span>Deck Mode</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={onCopyMarkdown}
@@ -292,12 +309,12 @@ export function EditorToolbar({
 
         <button
           type="button"
-          onClick={onExportMarkdown}
+          onClick={onOpenPublishModal || onExportMarkdown}
           className="flex items-center gap-1 px-2.5 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium transition-colors shadow-sm"
-          title="Export Markdown Document"
+          title="Publish & Export Document (PDF, HTML, Deck)"
         >
-          <Download className="w-3.5 h-3.5" />
-          <span>Export</span>
+          <FileDown className="w-3.5 h-3.5" />
+          <span>Publish / Export</span>
         </button>
       </div>
     </div>

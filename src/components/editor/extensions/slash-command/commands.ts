@@ -18,6 +18,7 @@ import {
   Zap,
   Shield,
   Smartphone,
+  Presentation,
 } from "lucide-react";
 
 export interface CommandItem {
@@ -303,6 +304,16 @@ export const SLASH_COMMANDS: CommandItem[] = [
     description: "Visual horizontal line separator",
     category: "Typography",
     icon: Minus,
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+    },
+  },
+  {
+    title: "Slide Break (Deck Mode)",
+    description: "Inserts a slide break partition for interactive presentation mode",
+    category: "Typography",
+    badge: "Slides",
+    icon: Presentation,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
     },

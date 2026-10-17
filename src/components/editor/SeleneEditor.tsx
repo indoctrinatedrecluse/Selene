@@ -25,6 +25,14 @@ import {
 } from "@/lib/workspace-store";
 import { createCollabSession, CollabSession, CollabUser } from "@/lib/collaboration";
 import { ProjectServerRenderer } from "@/components/render-engine/ProjectServerRenderer";
+import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
+import {
+  SeleneLunarBackground,
+  LunarBackgroundMode,
+} from "@/components/brand/SeleneLunarBackground";
+import { SeleneLoreModal } from "@/components/brand/SeleneLoreModal";
+import { PublishExportModal } from "./PublishExportModal";
+import { SlideDeckViewer } from "@/components/presentation/SlideDeckViewer";
 import {
   FileText,
   Split,
@@ -37,19 +45,17 @@ import {
   Minimize2,
   History,
   Globe,
+  Presentation,
+  FileDown,
 } from "lucide-react";
-import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
-import {
-  SeleneLunarBackground,
-  LunarBackgroundMode,
-} from "@/components/brand/SeleneLunarBackground";
-import { SeleneLoreModal } from "@/components/brand/SeleneLoreModal";
 
 export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
 export function SeleneEditor() {
   const [lunarMode, setLunarMode] = useState<LunarBackgroundMode>("titan-aura");
   const [isLoreModalOpen, setIsLoreModalOpen] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isSlideDeckOpen, setIsSlideDeckOpen] = useState(false);
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
     if (typeof window !== "undefined") {
       return loadDocuments();
@@ -538,6 +544,26 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               </button>
             </div>
 
+            {/* Slide Deck Mode */}
+            <button
+              onClick={() => setIsSlideDeckOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-sky-300 border border-slate-700/60 text-xs font-medium transition-colors cursor-pointer"
+              title="Launch Presentation Deck"
+            >
+              <Presentation className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Deck Mode</span>
+            </button>
+
+            {/* Publish & Export */}
+            <button
+              onClick={() => setIsPublishModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium transition-all shadow-sm cursor-pointer"
+              title="Publish & Export (PDF, HTML, Slides)"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span>Publish</span>
+            </button>
+
             {/* Saved Status Indicator */}
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
               <CheckCircle2 className="w-3 h-3" />
@@ -594,6 +620,8 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               onInsertMath={handleInsertMath}
               onExportMarkdown={handleExportMarkdown}
               onCopyMarkdown={handleCopyMarkdown}
+              onOpenPublishModal={() => setIsPublishModalOpen(true)}
+              onLaunchSlides={() => setIsSlideDeckOpen(true)}
             />
           )}
 
@@ -659,6 +687,23 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         onClose={() => setIsLoreModalOpen(false)}
         backgroundMode={lunarMode}
         onBackgroundModeChange={setLunarMode}
+      />
+
+      {/* Publish & Export Suite Modal */}
+      <PublishExportModal
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        documentTitle={docTitle}
+        markdownContent={markdownContent}
+        onLaunchSlideDeck={() => setIsSlideDeckOpen(true)}
+      />
+
+      {/* Interactive Presentation Slide Deck Viewer */}
+      <SlideDeckViewer
+        isOpen={isSlideDeckOpen}
+        onClose={() => setIsSlideDeckOpen(false)}
+        documentTitle={docTitle}
+        markdownContent={markdownContent}
       />
 
       {/* Bottom Status Footer */}
