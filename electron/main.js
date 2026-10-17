@@ -54,15 +54,15 @@ function createMainWindow() {
 
   buildMenu();
 
-  mainWindow.loadURL(DEV_URL).catch(() => {
-    // If not immediately available, wait for server
-    checkServerReady(DEV_URL).then((ready) => {
-      if (ready && mainWindow) {
-        mainWindow.loadURL(DEV_URL);
-      } else if (mainWindow) {
-        mainWindow.loadURL(`data:text/html,<html><body style="background:#070A14;color:#E2E8F0;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;"><h2>🌙 Starting Selene Desktop Engine...</h2><p style="color:#94A3B8;">Connecting to local Next.js server on port ${PORT}...</p></body></html>`);
-      }
-    });
+  const splashPath = path.join(__dirname, "splash.html");
+  if (fs.existsSync(splashPath)) {
+    mainWindow.loadFile(splashPath);
+  }
+
+  checkServerReady(DEV_URL).then((ready) => {
+    if (ready && mainWindow) {
+      mainWindow.loadURL(DEV_URL);
+    }
   });
 
   mainWindow.on("closed", () => {

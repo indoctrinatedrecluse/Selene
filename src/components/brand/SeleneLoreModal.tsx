@@ -9,15 +9,23 @@ import {
   Compass,
   Palette,
   BookOpen,
+  Info,
+  ExternalLink,
+  Play,
+  Scale,
 } from "lucide-react";
 import { SeleneTitanLogo } from "./SeleneTitanLogo";
 import { LunarBackgroundMode } from "./SeleneLunarBackground";
+
+export type LoreModalTab = "myth" | "philosophy" | "theme" | "about";
 
 interface SeleneLoreModalProps {
   isOpen: boolean;
   onClose: () => void;
   backgroundMode: LunarBackgroundMode;
   onBackgroundModeChange: (mode: LunarBackgroundMode) => void;
+  initialTab?: LoreModalTab;
+  onReplaySplash?: () => void;
 }
 
 export function SeleneLoreModal({
@@ -25,8 +33,10 @@ export function SeleneLoreModal({
   onClose,
   backgroundMode,
   onBackgroundModeChange,
+  initialTab = "myth",
+  onReplaySplash,
 }: SeleneLoreModalProps) {
-  const [activeTab, setActiveTab] = useState<"myth" | "philosophy" | "theme">("myth");
+  const [activeTab, setActiveTab] = useState<LoreModalTab>(initialTab);
 
   if (!isOpen) return null;
 
@@ -96,6 +106,18 @@ export function SeleneLoreModal({
           >
             <Palette className="w-3.5 h-3.5" />
             <span>Lunar Ambiance</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("about")}
+            className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-all ${
+              activeTab === "about"
+                ? "border-sky-400 text-sky-400 font-semibold"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>Help & About</span>
           </button>
         </div>
 
@@ -287,6 +309,103 @@ export function SeleneLoreModal({
 
               <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
                 💡 <span className="font-semibold text-slate-300">GPU Efficient:</span> The ambient canvas renders via lightweight CSS/WebGL transforms, automatically sleeping when backgrounded to preserve CPU and battery.
+              </div>
+            </div>
+          )}
+
+          {activeTab === "about" && (
+            <div className="space-y-4">
+              {/* Product Brief Banner */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-sky-950/40 via-indigo-950/30 to-purple-950/40 border border-sky-500/30 space-y-2 shadow-inner">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🌙</span>
+                    <div>
+                      <h3 className="text-sm font-bold text-white tracking-tight">
+                        Selene — Technical Document & Code Canvas
+                      </h3>
+                      <p className="text-[11px] text-sky-400 font-mono">
+                        Titan Edition • Version 0.1.0
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono">
+                    Stable Release
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed pt-1">
+                  Selene is an open-source literate technical canvas where Markdown prose seamlessly integrates with live in-memory execution, WebAssembly computational kernels, vector diagrams, and native cross-platform desktop execution.
+                </p>
+              </div>
+
+              {/* Version & Technical Architecture Grid */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-slate-500 font-semibold">Core Framework</span>
+                  <div className="text-slate-200 font-medium">Next.js 16 + React 19</div>
+                  <div className="text-[10px] text-slate-400">Turbopack & Partial Prerender</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-slate-500 font-semibold">AST Orchestration</span>
+                  <div className="text-slate-200 font-medium">TipTap + ProseMirror</div>
+                  <div className="text-[10px] text-slate-400">Structured block document state</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-slate-500 font-semibold">Python WASM Kernel</span>
+                  <div className="text-slate-200 font-medium">Pyodide 0.26 (WASM)</div>
+                  <div className="text-[10px] text-slate-400">NumPy, Pandas & Matplotlib</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-slate-500 font-semibold">Desktop Shell</span>
+                  <div className="text-slate-200 font-medium">Tauri v2 + Electron</div>
+                  <div className="text-[10px] text-slate-400">Rust WebView2 & Offline File I/O</div>
+                </div>
+              </div>
+
+              {/* License Information */}
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+                  <Scale className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Open Source License: MIT</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
+                  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction...
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {onReplaySplash && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onReplaySplash();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 text-indigo-300 text-xs font-medium transition-colors cursor-pointer"
+                  >
+                    <Play className="w-3 h-3 text-sky-400" />
+                    <span>Replay Titan Splash</span>
+                  </button>
+                )}
+
+                <a
+                  href="https://github.com/indoctrinatedrecluse/Selene"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3 text-slate-400" />
+                  <span>GitHub Repository</span>
+                </a>
+
+                <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400 ml-auto">
+                  <span>Samples available in</span>
+                  <code className="text-sky-400">samples/</code>
+                </div>
               </div>
             </div>
           )}

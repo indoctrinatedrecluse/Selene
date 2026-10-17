@@ -30,7 +30,8 @@ import {
   SeleneLunarBackground,
   LunarBackgroundMode,
 } from "@/components/brand/SeleneLunarBackground";
-import { SeleneLoreModal } from "@/components/brand/SeleneLoreModal";
+import { SeleneLoreModal, LoreModalTab } from "@/components/brand/SeleneLoreModal";
+import { SeleneSplashScreen } from "@/components/brand/SeleneSplashScreen";
 import { PublishExportModal } from "./PublishExportModal";
 import { SlideDeckViewer } from "@/components/presentation/SlideDeckViewer";
 import {
@@ -50,6 +51,7 @@ import {
   FolderOpen,
   Save,
   Monitor,
+  HelpCircle,
 } from "lucide-react";
 import {
   openLocalDocument,
@@ -63,6 +65,16 @@ export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 export function SeleneEditor() {
   const [lunarMode, setLunarMode] = useState<LunarBackgroundMode>("titan-aura");
   const [isLoreModalOpen, setIsLoreModalOpen] = useState(false);
+  const [loreInitialTab, setLoreInitialTab] = useState<LoreModalTab>("myth");
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const seen = sessionStorage.getItem("selene_splash_seen");
+    if (!seen) {
+      sessionStorage.setItem("selene_splash_seen", "true");
+      return true;
+    }
+    return false;
+  });
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isSlideDeckOpen, setIsSlideDeckOpen] = useState(false);
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
@@ -322,6 +334,11 @@ export function SeleneEditor() {
     return typeof window !== "undefined" ? getDesktopRuntime() : "web";
   });
 
+  const handleOpenLore = useCallback((tab: LoreModalTab = "myth") => {
+    setLoreInitialTab(tab);
+    setIsLoreModalOpen(true);
+  }, []);
+
   useEffect(() => {
     const unlisten = registerDesktopMenuListener((command, payload) => {
       if (command === "new-document") {
@@ -339,7 +356,9 @@ export function SeleneEditor() {
       } else if (command === "open-publish-modal") {
         setIsPublishModalOpen(true);
       } else if (command === "open-lore") {
-        setIsLoreModalOpen(true);
+        handleOpenLore("myth");
+      } else if (command === "open-about") {
+        handleOpenLore("about");
       }
     });
 
@@ -358,7 +377,7 @@ export function SeleneEditor() {
       unlisten();
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleCreateDoc, handleImportDoc, handleDesktopOpen, handleDesktopSave]);
+  }, [handleCreateDoc, handleImportDoc, handleDesktopOpen, handleDesktopSave, handleOpenLore]);
 
   // Handle document deletion
   const handleDeleteDoc = async (id: string) => {
@@ -487,7 +506,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         <header className="relative z-10 flex items-center justify-between px-4 py-2 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsLoreModalOpen(true)}
+              onClick={() => handleOpenLore("myth")}
               className="flex items-center justify-center p-0.5 rounded-lg hover:bg-slate-800/80 transition-all cursor-pointer group"
               title="Selene the Moon Titan — Mythology, Heritage & Canvas Ambiance"
             >
@@ -499,12 +518,20 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                   Selene
                 </span>
                 <button
-                  onClick={() => setIsLoreModalOpen(true)}
+                  onClick={() => handleOpenLore("myth")}
                   className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-300 text-[10px] font-mono transition-all cursor-pointer"
                   title="View Moon Titan Lore & Canvas Themes"
                 >
                   <Sparkles className="w-2.5 h-2.5 text-amber-400" />
                   <span>Titan Lore</span>
+                </button>
+                <button
+                  onClick={() => handleOpenLore("about")}
+                  className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 text-[10px] font-mono transition-all cursor-pointer"
+                  title="Help, License & Product Brief"
+                >
+                  <HelpCircle className="w-2.5 h-2.5 text-sky-400" />
+                  <span>About</span>
                 </button>
                 {desktopRuntime !== "web" && (
                   <div
@@ -783,12 +810,19 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         onRestore={handleRestoreRevision}
       />
 
+      {/* Selene Mythological Splash Screen (Initial Boot or Replay) */}
+      {showSplash && (
+        <SeleneSplashScreen onComplete={() => setShowSplash(false)} />
+      )}
+
       {/* Selene Mythological Lore & Ambiance Modal */}
       <SeleneLoreModal
         isOpen={isLoreModalOpen}
         onClose={() => setIsLoreModalOpen(false)}
         backgroundMode={lunarMode}
         onBackgroundModeChange={setLunarMode}
+        initialTab={loreInitialTab}
+        onReplaySplash={() => setShowSplash(true)}
       />
 
       {/* Publish & Export Suite Modal */}
@@ -813,7 +847,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         <footer className="relative z-10 flex items-center justify-between px-6 py-2 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 text-xs text-slate-400 shrink-0">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setIsLoreModalOpen(true)}
+              onClick={() => handleOpenLore("myth")}
               className="flex items-center gap-1.5 text-sky-400 hover:text-sky-300 font-medium transition-colors cursor-pointer"
               title="Learn about Selene, Titaness of the Moon"
             >
