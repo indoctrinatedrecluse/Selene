@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
@@ -14,11 +14,16 @@ import { EditorToolbar } from "./EditorToolbar";
 import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import {
+  RevisionHistoryDrawer,
+  RevisionItem,
+} from "./RevisionHistoryDrawer";
+import {
   loadDocuments,
   saveDocuments,
   DocumentItem,
   STARTER_TEMPLATES,
 } from "@/lib/workspace-store";
+import { createCollabSession, CollabSession, CollabUser } from "@/lib/collaboration";
 import {
   FileText,
   Split,
@@ -26,6 +31,10 @@ import {
   Code2,
   CheckCircle2,
   Sparkles,
+  Users,
+  Maximize2,
+  Minimize2,
+  History,
 } from "lucide-react";
 
 export type EditorViewMode = "wysiwyg" | "split" | "markdown";
@@ -44,9 +53,20 @@ export function SeleneEditor() {
     }
     return STARTER_TEMPLATES[0].id;
   });
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<EditorViewMode>("wysiwyg");
   const [isCopied, setIsCopied] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
+  const [showRevisions, setShowRevisions] = useState(false);
+  const [revisions, setRevisions] = useState<RevisionItem[]>([]);
+  const [isSavingDb, setIsSavingDb] = useState(false);
+
+  // Collaboration State
+  const [isCollabActive, setIsCollabActive] = useState(false);
+  const [collabUser, setCollabUser] = useState<CollabUser | null>(null);
+  const [peerCount, setPeerCount] = useState(1);
+  const collabSessionRef = useRef<CollabSession | null>(null);
 
   const activeDoc =
     documents.find((d) => d.id === activeDocId) || documents[0] || STARTER_TEMPLATES[0];
@@ -54,10 +74,62 @@ export function SeleneEditor() {
   const [docTitle, setDocTitle] = useState(activeDoc.title);
   const [markdownContent, setMarkdownContent] = useState(activeDoc.content);
 
+  // Sync from DB on mount
+  useEffect(() => {
+    async function syncFromDb() {
+      try {
+        const res = await fetch("/api/documents");
+        if (res.ok) {
+          const dbDocs = await res.json();
+          if (Array.isArray(dbDocs) && dbDocs.length > 0) {
+            const mapped: DocumentItem[] = dbDocs.map(
+              (d: {
+                id: string;
+                title: string;
+                contentMarkdown: string;
+                icon?: string | null;
+                createdAt: number;
+                updatedAt: number;
+              }) => ({
+                id: d.id,
+                title: d.title,
+                content: d.contentMarkdown,
+                icon: d.icon || "📄",
+                createdAt: d.createdAt,
+                updatedAt: d.updatedAt,
+              })
+            );
+            setDocuments(mapped);
+            saveDocuments(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn("Using local storage documents (DB sync offline)", err);
+      }
+    }
+    syncFromDb();
+  }, []);
+
+  // Fetch revisions when active document changes
+  const loadRevisions = useCallback(async (docId: string) => {
+    try {
+      const res = await fetch(`/api/documents/${docId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.revisions) {
+          setRevisions(data.revisions);
+        }
+      }
+    } catch {
+      // Revisions fallback
+    }
+  }, []);
+
+  // TipTap Editor instance
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        codeBlock: false, // Replaced by CustomCodeBlock
+        codeBlock: false,
       }),
       CustomCodeBlock,
       Callout,
@@ -84,7 +156,7 @@ export function SeleneEditor() {
       const md = (editor.storage as { markdown?: { getMarkdown: () => string } }).markdown?.getMarkdown();
       if (md) {
         setMarkdownContent(md);
-        // Auto-save to documents state and localStorage
+        // Auto-save to local state
         setDocuments((prev) => {
           const updated = prev.map((d) =>
             d.id === activeDocId
@@ -94,10 +166,33 @@ export function SeleneEditor() {
           saveDocuments(updated);
           return updated;
         });
+
+        // Trigger debounced cloud save
+        debounceDbSave(activeDocId, docTitle, md);
       }
     },
     immediatelyRender: false,
   });
+
+  // Debounced DB persistence
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceDbSave = useCallback((id: string, title: string, content: string) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    setIsSavingDb(true);
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await fetch(`/api/documents/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, contentMarkdown: content }),
+        });
+      } catch {
+        // Fallback to local storage
+      } finally {
+        setIsSavingDb(false);
+      }
+    }, 800);
+  }, []);
 
   // Handle document selection
   const handleSelectDoc = (id: string) => {
@@ -109,10 +204,11 @@ export function SeleneEditor() {
     if (editor) {
       editor.commands.setContent(target.content);
     }
+    loadRevisions(id);
   };
 
   // Handle document creation
-  const handleCreateDoc = () => {
+  const handleCreateDoc = async () => {
     const newDoc: DocumentItem = {
       id: `doc-${Date.now()}`,
       title: "Untitled Document",
@@ -131,10 +227,52 @@ export function SeleneEditor() {
     if (editor) {
       editor.commands.setContent(newDoc.content);
     }
+
+    try {
+      await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newDoc),
+      });
+    } catch {
+      // Local storage fallback
+    }
+  };
+
+  // Handle file import
+  const handleImportDoc = async (title: string, content: string) => {
+    const newDoc: DocumentItem = {
+      id: `doc-${Date.now()}`,
+      title,
+      icon: "📥",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      content,
+    };
+
+    const nextDocs = [newDoc, ...documents];
+    setDocuments(nextDocs);
+    saveDocuments(nextDocs);
+    setActiveDocId(newDoc.id);
+    setDocTitle(title);
+    setMarkdownContent(content);
+    if (editor) {
+      editor.commands.setContent(content);
+    }
+
+    try {
+      await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newDoc),
+      });
+    } catch {
+      // Local fallback
+    }
   };
 
   // Handle document deletion
-  const handleDeleteDoc = (id: string) => {
+  const handleDeleteDoc = async (id: string) => {
     if (documents.length <= 1) return;
     const nextDocs = documents.filter((d) => d.id !== id);
     setDocuments(nextDocs);
@@ -148,6 +286,12 @@ export function SeleneEditor() {
         editor.commands.setContent(nextActive.content);
       }
     }
+
+    try {
+      await fetch(`/api/documents/${id}`, { method: "DELETE" });
+    } catch {
+      // Local fallback
+    }
   };
 
   // Handle title rename
@@ -160,6 +304,36 @@ export function SeleneEditor() {
       saveDocuments(updated);
       return updated;
     });
+    debounceDbSave(activeDocId, newTitle, markdownContent);
+  };
+
+  // Handle version restore
+  const handleRestoreRevision = (rev: RevisionItem) => {
+    setMarkdownContent(rev.contentMarkdown);
+    if (editor) {
+      editor.commands.setContent(rev.contentMarkdown);
+    }
+    setShowRevisions(false);
+  };
+
+  // Toggle Live Collaboration (Webrtc CRDT)
+  const toggleCollaboration = () => {
+    if (isCollabActive) {
+      collabSessionRef.current?.provider.destroy();
+      collabSessionRef.current = null;
+      setIsCollabActive(false);
+      setCollabUser(null);
+    } else {
+      const session = createCollabSession(activeDocId);
+      collabSessionRef.current = session;
+      setCollabUser(session.currentUser);
+      setIsCollabActive(true);
+
+      session.provider.awareness.on("change", () => {
+        const states = Array.from(session.provider.awareness.getStates().values());
+        setPeerCount(states.length);
+      });
+    }
   };
 
   const handleInsertLiveSandbox = useCallback(() => {
@@ -217,85 +391,145 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-100 overflow-hidden">
       {/* Top Navigation Bar */}
-      <header className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold text-sm shadow-md">
-            🌙
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-sky-400">
-                Selene
-              </span>
-              <span className="text-slate-600">/</span>
-              <input
-                type="text"
-                value={docTitle}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                className="bg-transparent font-medium text-slate-200 text-sm focus:outline-none hover:bg-slate-800/60 focus:bg-slate-800 px-2 py-0.5 rounded transition-colors"
-                placeholder="Document Title"
-              />
+      {!isZenMode && (
+        <header className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold text-sm shadow-md">
+              🌙
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-sky-400">
+                  Selene
+                </span>
+                <span className="text-slate-600">/</span>
+                <input
+                  type="text"
+                  value={docTitle}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  className="bg-transparent font-medium text-slate-200 text-sm focus:outline-none hover:bg-slate-800/60 focus:bg-slate-800 px-2 py-0.5 rounded transition-colors"
+                  placeholder="Document Title"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* View Mode Switcher */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
+          {/* Right Header Actions */}
+          <div className="flex items-center gap-2.5">
+            {/* Live Multiplayer Collab Toggle */}
             <button
-              onClick={() => setViewMode("wysiwyg")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-medium transition-all ${
-                viewMode === "wysiwyg"
-                  ? "bg-slate-800 text-sky-400 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+              onClick={toggleCollaboration}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                isCollabActive
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                  : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60"
               }`}
+              title="Toggle WebRTC Real-Time Collaboration"
             >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Canvas</span>
+              <Users className="w-3.5 h-3.5" />
+              <span>{isCollabActive ? `Live Collab (${peerCount})` : "Share Collab"}</span>
+              {isCollabActive && collabUser && (
+                <span className="text-xs">{collabUser.avatar}</span>
+              )}
             </button>
+
+            {/* Version History Toggle */}
             <button
-              onClick={() => setViewMode("split")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-medium transition-all ${
-                viewMode === "split"
-                  ? "bg-slate-800 text-sky-400 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
+              onClick={() => {
+                loadRevisions(activeDocId);
+                setShowRevisions(true);
+              }}
+              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60 transition-colors"
+              title="Version History"
             >
-              <Split className="w-3.5 h-3.5" />
-              <span>Split</span>
+              <History className="w-3.5 h-3.5" />
             </button>
+
+            {/* Zen Mode Toggle */}
             <button
-              onClick={() => setViewMode("markdown")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md font-medium transition-all ${
-                viewMode === "markdown"
-                  ? "bg-slate-800 text-sky-400 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
+              onClick={() => setIsZenMode(true)}
+              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60 transition-colors"
+              title="Zen Focus Mode"
             >
-              <Code2 className="w-3.5 h-3.5" />
-              <span>Raw MD</span>
+              <Maximize2 className="w-3.5 h-3.5" />
             </button>
+
+            {/* View Mode Switcher */}
+            <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
+              <button
+                onClick={() => setViewMode("wysiwyg")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
+                  viewMode === "wysiwyg"
+                    ? "bg-slate-800 text-sky-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Canvas</span>
+              </button>
+              <button
+                onClick={() => setViewMode("split")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
+                  viewMode === "split"
+                    ? "bg-slate-800 text-sky-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Split className="w-3.5 h-3.5" />
+                <span>Split</span>
+              </button>
+              <button
+                onClick={() => setViewMode("markdown")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
+                  viewMode === "markdown"
+                    ? "bg-slate-800 text-sky-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Code2 className="w-3.5 h-3.5" />
+                <span>Raw MD</span>
+              </button>
+            </div>
+
+            {/* Saved Status Indicator */}
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>{isSavingDb ? "Syncing..." : "Synced"}</span>
+            </div>
           </div>
+        </header>
+      )}
 
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Saved Locally</span>
-          </div>
-        </div>
-      </header>
+      {/* Zen Mode Exit Button */}
+      {isZenMode && (
+        <button
+          onClick={() => setIsZenMode(false)}
+          className="fixed top-4 right-4 z-50 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-700 text-slate-300 hover:text-white shadow-2xl backdrop-blur-md text-xs font-medium"
+        >
+          <Minimize2 className="w-3.5 h-3.5" />
+          <span>Exit Zen</span>
+        </button>
+      )}
 
-      {/* Main Workspace Area with Collapsible Sidebar */}
+      {/* Main Workspace Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Workspace Documents Sidebar */}
-        <WorkspaceSidebar
-          documents={documents}
-          activeDocId={activeDocId}
-          onSelectDoc={handleSelectDoc}
-          onCreateDoc={handleCreateDoc}
-          onDeleteDoc={handleDeleteDoc}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        />
+        {!isZenMode && (
+          <WorkspaceSidebar
+            documents={documents}
+            activeDocId={activeDocId}
+            onSelectDoc={handleSelectDoc}
+            onCreateDoc={handleCreateDoc}
+            onImportDoc={handleImportDoc}
+            onDeleteDoc={handleDeleteDoc}
+            onOpenRevisions={() => {
+              loadRevisions(activeDocId);
+              setShowRevisions(true);
+            }}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          />
+        )}
 
         {/* Editor Column */}
         <div
@@ -304,15 +538,17 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
           }`}
         >
           {/* TipTap Toolbar */}
-          <EditorToolbar
-            editor={editor}
-            isCopied={isCopied}
-            onInsertLiveSandbox={handleInsertLiveSandbox}
-            onInsertMermaid={handleInsertMermaid}
-            onInsertMath={handleInsertMath}
-            onExportMarkdown={handleExportMarkdown}
-            onCopyMarkdown={handleCopyMarkdown}
-          />
+          {!isZenMode && (
+            <EditorToolbar
+              editor={editor}
+              isCopied={isCopied}
+              onInsertLiveSandbox={handleInsertLiveSandbox}
+              onInsertMermaid={handleInsertMermaid}
+              onInsertMath={handleInsertMath}
+              onExportMarkdown={handleExportMarkdown}
+              onCopyMarkdown={handleCopyMarkdown}
+            />
+          )}
 
           {/* TipTap Document Canvas */}
           <div className="flex-1 max-w-4xl w-full mx-auto pb-24 pt-4">
@@ -351,22 +587,34 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         )}
       </div>
 
+      {/* Revision History Drawer */}
+      <RevisionHistoryDrawer
+        isOpen={showRevisions}
+        onClose={() => setShowRevisions(false)}
+        revisions={revisions}
+        onRestore={handleRestoreRevision}
+      />
+
       {/* Bottom Status Footer */}
-      <footer className="flex items-center justify-between px-6 py-2 bg-slate-900/90 border-t border-slate-800 text-xs text-slate-400 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-            <span>Polymorphic Engine: Sandpack + Mermaid + KaTeX</span>
+      {!isZenMode && (
+        <footer className="flex items-center justify-between px-6 py-2 bg-slate-900/90 border-t border-slate-800 text-xs text-slate-400 shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+              <span>Polymorphic Engine Active</span>
+            </div>
+            <span>•</span>
+            <span>Zero CSS Bleed Isolation</span>
+            <span>•</span>
+            <span className="text-emerald-400 font-mono">Drizzle ORM + LibSQL</span>
           </div>
-          <span>•</span>
-          <span>Zero CSS Bleed Isolation</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span>{markdownContent.split(/\s+/).filter(Boolean).length} words</span>
-          <span>•</span>
-          <span>{markdownContent.length} characters</span>
-        </div>
-      </footer>
+          <div className="flex items-center gap-4">
+            <span>{markdownContent.split(/\s+/).filter(Boolean).length} words</span>
+            <span>•</span>
+            <span>{markdownContent.length} characters</span>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

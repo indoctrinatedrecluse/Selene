@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",
+    "@libsql/client": "^0.18.0",
+    "@tiptap/extension-collaboration": "^3.32.0",
     "@tiptap/extension-placeholder": "^3.32.0",
     "@tiptap/extension-table": "^3.32.0",
     "@tiptap/extension-table-cell": "^3.32.0",
@@ -22,6 +24,7 @@
     "@tiptap/starter-kit": "^3.32.0",
     "@tiptap/suggestion": "^3.32.0",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.4",
     "katex": "^0.19.0",
     "lucide-react": "^1.59.0",
     "mermaid": "^12.2.0",
@@ -31,7 +34,9 @@
     "shiki": "^4.5.0",
     "tailwind-merge": "^3.7.0",
     "tippy.js": "^6.3.7",
-    "tiptap-markdown": "^0.9.0"
+    "tiptap-markdown": "^0.9.0",
+    "y-webrtc": "^10.3.0",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -40,6 +45,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/tippy.js": "^6.3.0",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",

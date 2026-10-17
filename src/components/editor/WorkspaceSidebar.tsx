@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { DocumentItem } from "@/lib/workspace-store";
 import {
   Plus,
@@ -10,6 +10,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   Sparkles,
+  Upload,
+  History,
 } from "lucide-react";
 
 interface WorkspaceSidebarProps {
@@ -17,7 +19,9 @@ interface WorkspaceSidebarProps {
   activeDocId: string;
   onSelectDoc: (id: string) => void;
   onCreateDoc: () => void;
+  onImportDoc: (title: string, content: string) => void;
   onDeleteDoc: (id: string) => void;
+  onOpenRevisions: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -27,15 +31,34 @@ export function WorkspaceSidebar({
   activeDocId,
   onSelectDoc,
   onCreateDoc,
+  onImportDoc,
   onDeleteDoc,
+  onOpenRevisions,
   isCollapsed,
   onToggleCollapse,
 }: WorkspaceSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredDocs = documents.filter((doc) =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      const title = file.name.replace(/\.[^/.]+$/, "");
+      onImportDoc(title, content);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
 
   if (isCollapsed) {
     return (
@@ -54,12 +77,42 @@ export function WorkspaceSidebar({
         >
           <Plus className="w-4 h-4" />
         </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          title="Import Markdown File"
+        >
+          <Upload className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onOpenRevisions}
+          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          title="Version History"
+        >
+          <History className="w-4 h-4" />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".md,.markdown,.txt"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
       </div>
     );
   }
 
   return (
     <aside className="w-64 border-r border-slate-800 bg-slate-900/80 flex flex-col shrink-0 transition-all">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".md,.markdown,.txt"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
       {/* Sidebar Header */}
       <div className="flex items-center justify-between px-3.5 py-3 border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -71,6 +124,13 @@ export function WorkspaceSidebar({
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            title="Import Markdown (.md)"
+          >
+            <Upload className="w-3.5 h-3.5" />
+          </button>
           <button
             onClick={onCreateDoc}
             className="flex items-center gap-1 px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-medium shadow-sm transition-all"
@@ -146,9 +206,16 @@ export function WorkspaceSidebar({
       </div>
 
       {/* Footer Info */}
-      <div className="px-3 py-2 border-t border-slate-800 text-[10px] text-slate-500 flex items-center justify-between">
-        <span>Local Storage Synced</span>
-        <span className="font-mono">v0.2.0</span>
+      <div className="px-3 py-2.5 border-t border-slate-800 text-[10px] text-slate-500 flex items-center justify-between bg-slate-950/40">
+        <button
+          onClick={onOpenRevisions}
+          className="flex items-center gap-1 text-slate-400 hover:text-sky-400 transition-colors"
+          title="Open Revisions Drawer"
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>Version History</span>
+        </button>
+        <span className="font-mono text-emerald-400">● SQLite/DB</span>
       </div>
     </aside>
   );
