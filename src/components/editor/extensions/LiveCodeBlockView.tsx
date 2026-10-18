@@ -11,6 +11,9 @@ import { PhpLaravelRenderer } from "@/components/render-engine/PhpLaravelRendere
 import { RubyRailsRenderer } from "@/components/render-engine/RubyRailsRenderer";
 import { GoTemplateRenderer } from "@/components/render-engine/GoTemplateRenderer";
 import { DjangoJinjaRenderer } from "@/components/render-engine/DjangoJinjaRenderer";
+import { RustWasmRenderer } from "@/components/render-engine/RustWasmRenderer";
+import { SqlDataStudioRenderer } from "@/components/render-engine/SqlDataStudioRenderer";
+import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -30,6 +33,9 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isRubyRails = language === "ruby" || language === "rails" || language === "erb";
   const isGoTemplate = language === "go" || language === "golang" || language === "gotemplate" || language === "hugo";
   const isDjangoJinja = language === "django" || language === "jinja" || language === "jinja2";
+  const isRustWasm = language === "rust" || language === "rs" || language === "yew" || language === "leptos" || language === "wasm";
+  const isSql = language === "sql" || language === "sqlite" || language === "libsql";
+  const isShader = language === "glsl" || language === "wgsl" || language === "shader" || language === "cpp";
   const isMermaid = language === "mermaid";
   const isMath = language === "math" || language === "latex";
 
@@ -141,6 +147,45 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     return (
       <NodeViewWrapper className="django-jinja-block my-4">
         <DjangoJinjaRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a Rust WebAssembly (Yew / Leptos) component
+  if (isRustWasm && showLiveRender) {
+    return (
+      <NodeViewWrapper className="rust-wasm-block my-4">
+        <RustWasmRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a SQL / SQLite / LibSQL query block
+  if (isSql && showLiveRender) {
+    return (
+      <NodeViewWrapper className="sql-studio-block my-4">
+        <SqlDataStudioRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a WebGL / GLSL Canvas Shader
+  if (isShader && showLiveRender) {
+    return (
+      <NodeViewWrapper className="shader-canvas-block my-4">
+        <ShaderCanvasRenderer
           initialCode={rawCode}
           className="shadow-2xl"
           onCodeChange={handleCodeChange}

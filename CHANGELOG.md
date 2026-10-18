@@ -7,43 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] - Sprint 2: Go (Hugo) & Django (Jinja2) Live Engines + Universal Visual Inspector
+## [0.2.0] - 2026-10-18
 
-### 🐹 Go 1.23 `html/template` & Hugo Live Render Engine (`GoTemplateRenderer.tsx`)
-- **Native In-Browser Go Template Compiler**: Instant client-side evaluation of `html/template` syntax including `{{ .Property }}`, `{{ range .Collection }} ... {{ end }}`, `{{ if eq .Field "val" }} ... {{ else }} ... {{ end }}`, and pipeline functions (`upper`, `lower`, `len`).
-- **Embedded Mock Context Extraction**: Automatic parsing of `{{/* Context: { ... } */}}` JSON comment blocks for zero-latency in-memory data binding.
-- **Dual Execution Runtime**:
-  - *Go Template Engine*: 100% offline in-browser execution with Tailwind CSS 3.4 integration.
-  - *Go HTTP Server Bridge*: Direct connection to local Go servers (`http://localhost:8080`) or Hugo dev server (`http://localhost:1313`).
-- **Responsive Device Previews & Layouts**: Desktop, Tablet, and Mobile frames with split, canvas, and code modes.
-- **Universal Visual Inspector Support**: Connected to `UniversalPropertyInspector` with bi-directional AST patching for Go template contexts, padding, border radius, colors, and elevations.
+### 🌟 Major Feature Release: Polyglot Live Renders, AI Canvas Copilot & Visual Diff Suite
 
-### 🐍 Django 5.0 & Jinja2 Live Render Engine (`DjangoJinjaRenderer.tsx`)
-- **Native In-Browser DTL / Jinja2 Compiler**: Real-time client-side evaluation of Django Template Language and Jinja2 syntax including `{{ variable }}`, `{{ variable|filter }}`, `{% for item in collection %} ... {% endfor %}`, and `{% if condition %} ... {% endif %}`.
-- **Embedded Mock Context Extraction**: Automatic parsing of `{# Context: { ... } #}` JSON comment blocks for instant mock data binding.
-- **Dual Execution Runtime**:
-  - *Jinja Engine*: 100% offline in-browser sandbox with Tailwind CSS 3.4 integration.
-  - *Django / FastAPI Server Bridge*: Direct iframe proxy to local Django servers (`http://localhost:8000`) or FastAPI/Flask instances.
-- **Responsive Device Previews & Layouts**: Desktop, Tablet, and Mobile phone frames with split, canvas, and code modes.
-- **Universal Visual Inspector Support**: Connected to `UniversalPropertyInspector` with bi-directional AST patching for context variables, sizing, themes, and colors.
+This release delivers the complete Sprint 2 & Sprint 3 capabilities across the Selene canvas platform:
 
-### 🎛️ Point 2: Universal Visual Inspector Extension (Blade & ERB)
-- Enhanced `UniversalPropertyInspector` and `ast-transformer.ts` with bidirectional visual tweaking support for:
-  - **PHP / Laravel Blade**: `$cluster`, `$count`, Alpine.js `x-text`, padding, rounded corners, surface themes, and accent colors.
-  - **Ruby on Rails ERB**: `@cluster`, `@count`, Hotwire `data-telemetry-target="counter"`, padding, border radiuses, surface themes, and accent colors.
-- Added Crimson Titan (`red`) accent color theme to `ACCENT_THEMES` for Laravel's signature aesthetic.
+#### ✨ Selene AI Canvas Copilot (Hardware-Bound Vault Integration)
+- **Direct Vault Credential Access**: Automatically decrypts Google Gemini API keys stored in `HKCU\Software\Selene\Vault` using hardware-bound AES-256-GCM authenticated encryption.
+- **Multi-Modal Generation On Demand**: Generates Mermaid diagrams (Flowcharts, Sequences, Architecture, ERD), KaTeX LaTeX formulas, and multi-stack UI snippets from natural language prompts.
+- **Zero-Config Offline Fallback**: Features built-in heuristic template generation for instant offline usability when no external API key is configured.
+- **Global Shortcut & Header Bar Access**: Accessible via `Ctrl+Shift+A` or the glowing `AI Copilot` pill in the navigation header, with 1-click canvas insertion.
 
-### 📁 Showcase Documents & Language Integration
-- Added dedicated showcase sample documents in `samples/` and `src/lib/workspace-store.ts`:
-  - `06_php_laravel_blade_showcase.md` (`🐘` PHP & Laravel Blade)
-  - `07_ruby_on_rails_erb_showcase.md` (`💎` Ruby on Rails ERB)
-  - `08_go_template_hugo_showcase.md` (`🐹` Go `html/template` & Hugo)
-  - `09_django_jinja2_python_showcase.md` (`🐍` Django DTL & Jinja2)
-- Updated `LiveCodeBlockView.tsx` with automatic routing for `go`, `golang`, `gotemplate`, `hugo`, `django`, `jinja`, and `jinja2`.
-- Updated `stack-templates.ts` with default snippets for all new template languages.
-- Upgraded persistent storage migration key to `selene_documents_v9`, seamlessly hydrating new starter showcases without overwriting existing user documents.
+#### 🔍 Visual Diff Inspector in Revision History Drawer
+- **Line-by-Line LCS Diff Algorithm** (`src/lib/diff-engine.ts`): Computes precise insertions, deletions, and unchanged segments with line number tracking and statistics.
+- **Dual Diff Views**:
+  - *Unified Diff View*: Inline view with green additions (`+`), red deletions (`-`), and line numbers.
+  - *Side-by-Side Split View*: Dual-pane synchronized comparison between selected revisions and current editor content or previous snapshots.
+- **1-Click Rollback**: Restore any past version directly from the diff inspector interface.
 
-## [0.1.0] - 2026-10-18
+#### 🦀 Rust WebAssembly (Yew & Leptos) Live Render Engine (`RustWasmRenderer.tsx`)
+- **RSX Macro Compilation**: Parses and renders Rust `html! { ... }` (Yew) and `view! { ... }` (Leptos) macros into reactive sandboxed elements with Tailwind CSS.
+- **Linear Memory & Telemetry Tracking**: Real-time display of memory allocation and thread safety status.
+- **Dual Execution Runtime**: Instant in-browser WASM sandbox + local Trunk/Cargo dev server bridge on port 8080.
+- **Visual Property Inspector Integration**: Bi-directional AST synchronization for titles, counter states, padding, corners, and themes.
+
+#### 🗄️ SQL & LibSQL In-Browser Data Studio (`SqlDataStudioRenderer.tsx`)
+- **Interactive Relational Query Studio**: In-browser execution of `SELECT`, `JOIN`, `GROUP BY`, and aggregate SQL queries over pre-seeded space mission datasets.
+- **Interactive Results Grid**: Real-time column sorting, live substring filtering, execution latency badges, and 1-click CSV data export.
+- **Schema Explorer**: Collapsible panel listing active table structures (`celestial_missions`, `telemetry_nodes`, `crew_manifest`).
+
+#### 🌌 WebGL & GLSL Canvas Shader Engine (`ShaderCanvasRenderer.tsx`)
+- **Hardware-Accelerated Fragment Shaders**: Full WebGL2/WebGL1 GPU rendering loop over HTML5 `<canvas>`.
+- **Standard Shader Uniforms**: Supplies `u_time`, `u_resolution`, and normalized `u_mouse` cursor coordinates.
+- **Playback Controls**: Play, pause, time reset, and real-time FPS performance monitoring.
+- **Built-in Curated Presets**: Cosmic Lunar Nebula (FBM Plasma), Raymarched Titan Orb (3D Sphere SDF), and Cyber Grid Waves.
+
+#### 🐹 Go (Hugo) & 🐍 Django (Jinja2) Live Engines
+- **Go `html/template` Engine** (`GoTemplateRenderer.tsx`): Evaluates Go variables, loops (`range`), conditionals (`if eq`), filters (`upper`, `len`), and embedded JSON context blocks.
+- **Django & Jinja2 Engine** (`DjangoJinjaRenderer.tsx`): Evaluates Django Template Language and Jinja2 variables, tags (`{% for %}`), and filters (`|upper`, `|length`).
+- **Local Server Bridges**: Connect directly to Go servers (port 8080) and Django/FastAPI servers (port 8000).
+
+#### 🐘 PHP (Laravel) & 💎 Ruby (Rails) Live Engines
+- **Laravel Blade Engine** (`PhpLaravelRenderer.tsx`): In-browser Blade directives with Alpine.js 3.x reactivity.
+- **Rails ERB Engine** (`RubyRailsRenderer.tsx`): In-browser ERB scriptlets with Hotwire Turbo Frames and Stimulus simulation.
+
+#### 📁 Comprehensive 12-Document Showcase Gallery & v10 Storage Migration
+- Curated sample documents in `samples/` and `STARTER_TEMPLATES` covering all 12 live stacks.
+- Upgraded persistent storage migration key to `selene_documents_v10`, ensuring existing user notes remain completely preserved while hydrating new showcases.
+
+---
 
 ### 🌟 Initial Major Milestone Release — "Titan Edition"
 

@@ -55,6 +55,24 @@ This directory contains curated, production-grade sample documents demonstrating
    - Fast client-side sandbox execution with Tailwind CSS styling.
    - Dual-runtime support (in-browser sandbox & local Django / FastAPI server bridge on port 8000).
 
+10. [`10_rust_yew_leptos_showcase.md`](./10_rust_yew_leptos_showcase.md)
+    - Rust WebAssembly (`wasm32-unknown-unknown`) component live execution.
+    - Evaluates Yew `html! { ... }` and Leptos `view! { ... }` macros with fine-grained reactivity.
+    - Zero GC overhead, thread-safety verification, and linear memory telemetry.
+    - Dual-runtime support (in-browser sandbox & local `trunk serve` bridge on port 8080).
+
+11. [`11_sql_sqlite_libsql_showcase.md`](./11_sql_sqlite_libsql_showcase.md)
+    - In-browser SQL & LibSQL Data Studio with relational query execution.
+    - Real-time evaluation of `SELECT`, `JOIN`, `GROUP BY`, and aggregate functions with sub-millisecond latency.
+    - Interactive results grid with column sorting, live row filtering, and CSV export.
+    - Pre-seeded with `celestial_missions`, `telemetry_nodes`, and `crew_manifest`.
+
+12. [`12_glsl_webgl_shaders_showcase.md`](./12_glsl_webgl_shaders_showcase.md)
+    - Hardware-accelerated WebGL fragment shader canvas.
+    - Interactive uniforms: `u_time`, `u_resolution`, `u_mouse`.
+    - Live animation controls, pause/play, time reset, and live FPS counter.
+    - Preloaded with cosmic nebula, raymarched sphere, and cyber grid presets.
+
 ---
 
 ## 🚀 How to Open in Selene

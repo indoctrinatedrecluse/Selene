@@ -17,6 +17,7 @@ import {
   RevisionHistoryDrawer,
   RevisionItem,
 } from "./RevisionHistoryDrawer";
+import { SeleneAiCopilotModal } from "@/components/ai/SeleneAiCopilotModal";
 import {
   loadDocuments,
   saveDocuments,
@@ -176,6 +177,19 @@ export function SeleneEditor() {
   const [isSavingDb, setIsSavingDb] = useState(false);
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
+  const [isAiCopilotOpen, setIsAiCopilotOpen] = useState(false);
+
+  // Global Keyboard Shortcuts (Ctrl+Shift+A for AI Copilot)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+        e.preventDefault();
+        setIsAiCopilotOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Fetch License Status from Registry Authority on mount
   useEffect(() => {
@@ -729,6 +743,16 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               )}
             </button>
 
+            {/* Selene AI Canvas Copilot Button */}
+            <button
+              onClick={() => setIsAiCopilotOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-500/20 to-indigo-500/20 hover:from-sky-500/30 hover:to-indigo-500/30 text-sky-300 border border-sky-500/40 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              title="Selene AI Canvas Copilot (Ctrl+Shift+A)"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
+              <span>AI Copilot</span>
+            </button>
+
             {/* Version History Toggle */}
             <button
               onClick={() => {
@@ -960,12 +984,27 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         )}
       </div>
 
-      {/* Revision History Drawer */}
+      {/* Revision History Drawer with Visual Diff Inspector */}
       <RevisionHistoryDrawer
         isOpen={showRevisions}
         onClose={() => setShowRevisions(false)}
         revisions={revisions}
+        currentContent={markdownContent}
         onRestore={handleRestoreRevision}
+      />
+
+      {/* Selene AI Canvas Copilot Modal */}
+      <SeleneAiCopilotModal
+        isOpen={isAiCopilotOpen}
+        onClose={() => setIsAiCopilotOpen(false)}
+        onInsertCode={(code) => {
+          if (editor) {
+            editor.commands.insertContent(`\n\n${code}\n\n`);
+          } else {
+            setMarkdownContent((prev) => `${prev}\n\n${code}\n\n`);
+          }
+        }}
+        onOpenLicenseVault={() => setIsLicenseModalOpen(true)}
       />
 
       {/* Selene Mythological Splash Screen (Initial Boot or Replay) */}

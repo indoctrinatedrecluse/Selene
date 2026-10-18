@@ -798,6 +798,202 @@ class _CounterScreenState extends State<CounterScreen> {
   <p class="text-xs text-slate-400">Uptime: {{ uptime }}</p>
 </div>
 `,
+  rust: `use yew::prelude::*;
+
+#[function_component(App)]
+pub fn app() -> Html {
+    let count = use_state(|| 42);
+
+    html! {
+        <div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-amber-500/30 shadow-2xl text-slate-100 font-sans">
+            <h3 class="text-base font-bold text-white mb-2">{ "Rust Yew WebAssembly" }</h3>
+            <p class="text-xs text-slate-400 mb-4">{ "Compiled to wasm32 with zero garbage collection overhead." }</p>
+            <button id="rust-counter-btn" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-all">
+                { "WASM Cycles: " } <span id="rust-counter-val" class="font-mono">{ *count }</span>
+            </button>
+        </div>
+    }
+}
+`,
+  rs: `use yew::prelude::*;
+
+#[function_component(App)]
+pub fn app() -> Html {
+    let count = use_state(|| 42);
+
+    html! {
+        <div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-amber-500/30 shadow-2xl text-slate-100 font-sans">
+            <h3 class="text-base font-bold text-white mb-2">{ "Rust Yew WebAssembly" }</h3>
+            <p class="text-xs text-slate-400 mb-4">{ "Compiled to wasm32 with zero garbage collection overhead." }</p>
+            <button id="rust-counter-btn" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-all">
+                { "WASM Cycles: " } <span id="rust-counter-val" class="font-mono">{ *count }</span>
+            </button>
+        </div>
+    }
+}
+`,
+  yew: `use yew::prelude::*;
+
+#[function_component(App)]
+pub fn app() -> Html {
+    let count = use_state(|| 42);
+
+    html! {
+        <div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-amber-500/30 shadow-2xl text-slate-100 font-sans">
+            <h3 class="text-base font-bold text-white mb-2">{ "Rust Yew WebAssembly" }</h3>
+            <p class="text-xs text-slate-400 mb-4">{ "Compiled to wasm32 with zero garbage collection overhead." }</p>
+            <button id="rust-counter-btn" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-all">
+                { "WASM Cycles: " } <span id="rust-counter-val" class="font-mono">{ *count }</span>
+            </button>
+        </div>
+    }
+}
+`,
+  leptos: `use leptos::*;
+
+#[component]
+pub fn App() -> impl IntoView {
+    let (count, set_count) = create_signal(100);
+
+    view! {
+        <div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-amber-500/30 shadow-2xl text-slate-100 font-sans">
+            <h3 class="text-base font-bold text-white mb-2">{ "Fine-Grained Reactive Rust" }</h3>
+            <p class="text-xs text-slate-400 mb-4">{ "Compiles directly to WebAssembly with zero virtual-DOM overhead." }</p>
+            <button id="rust-counter-btn" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-all">
+                { "Increment: " } <span id="rust-counter-val" class="font-mono">{ count }</span>
+            </button>
+        </div>
+    }
+}
+`,
+  sql: `SELECT 
+  m.name AS mission_name,
+  m.target_celestial_body,
+  m.status,
+  COUNT(t.node_id) AS active_nodes,
+  ROUND(AVG(t.latency_ms), 1) AS avg_latency_ms,
+  ROUND(SUM(t.bandwidth_mbps), 1) AS total_bandwidth_mbps
+FROM celestial_missions m
+LEFT JOIN telemetry_nodes t ON m.id = t.mission_id
+WHERE m.status IN ('active', 'nominal')
+GROUP BY m.id, m.name, m.target_celestial_body, m.status
+ORDER BY avg_latency_ms ASC;`,
+  sqlite: `SELECT 
+  m.name AS mission_name,
+  m.target_celestial_body,
+  m.status,
+  COUNT(t.node_id) AS active_nodes,
+  ROUND(AVG(t.latency_ms), 1) AS avg_latency_ms
+FROM celestial_missions m
+LEFT JOIN telemetry_nodes t ON m.id = t.mission_id
+GROUP BY m.id, m.name
+ORDER BY m.name ASC;`,
+  libsql: `SELECT 
+  m.name AS mission_name,
+  m.target_celestial_body,
+  m.status,
+  COUNT(t.node_id) AS active_nodes,
+  ROUND(AVG(t.latency_ms), 1) AS avg_latency_ms
+FROM celestial_missions m
+LEFT JOIN telemetry_nodes t ON m.id = t.mission_id
+GROUP BY m.id, m.name
+ORDER BY m.name ASC;`,
+  glsl: `// Selene WebGL Fragment Shader • Cosmic Nebula
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    float t = u_time * 0.4;
+
+    float d = length(uv);
+    for (float i = 1.0; i < 4.0; i++) {
+        uv.x += 0.3 / i * sin(i * 3.0 * uv.y + t) + 0.1;
+        uv.y += 0.3 / i * cos(i * 3.0 * uv.x + t) + 0.1;
+    }
+
+    vec3 col = vec3(0.0);
+    col.r = 0.5 + 0.5 * sin(uv.x + t * 0.8 + 0.0);
+    col.g = 0.5 + 0.5 * sin(uv.y + t * 0.6 + 2.0);
+    col.b = 0.5 + 0.5 * sin(uv.x + uv.y + t * 1.0 + 4.0);
+
+    col *= 1.2 - d * 0.6;
+    col += vec3(0.05, 0.15, 0.25) / (d + 0.2);
+
+    gl_FragColor = vec4(col, 1.0);
+}`,
+  wgsl: `// Selene WebGL Fragment Shader • Cosmic Nebula
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    float t = u_time * 0.4;
+
+    float d = length(uv);
+    for (float i = 1.0; i < 4.0; i++) {
+        uv.x += 0.3 / i * sin(i * 3.0 * uv.y + t) + 0.1;
+        uv.y += 0.3 / i * cos(i * 3.0 * uv.x + t) + 0.1;
+    }
+
+    vec3 col = vec3(0.0);
+    col.r = 0.5 + 0.5 * sin(uv.x + t * 0.8 + 0.0);
+    col.g = 0.5 + 0.5 * sin(uv.y + t * 0.6 + 2.0);
+    col.b = 0.5 + 0.5 * sin(uv.x + uv.y + t * 1.0 + 4.0);
+
+    gl_FragColor = vec4(col, 1.0);
+}`,
+  shader: `// Selene WebGL Fragment Shader • Cosmic Nebula
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    float t = u_time * 0.4;
+
+    float d = length(uv);
+    for (float i = 1.0; i < 4.0; i++) {
+        uv.x += 0.3 / i * sin(i * 3.0 * uv.y + t) + 0.1;
+        uv.y += 0.3 / i * cos(i * 3.0 * uv.x + t) + 0.1;
+    }
+
+    vec3 col = vec3(0.0);
+    col.r = 0.5 + 0.5 * sin(uv.x + t * 0.8 + 0.0);
+    col.g = 0.5 + 0.5 * sin(uv.y + t * 0.6 + 2.0);
+    col.b = 0.5 + 0.5 * sin(uv.x + uv.y + t * 1.0 + 4.0);
+
+    gl_FragColor = vec4(col, 1.0);
+}`,
+  cpp: `// Selene WebGL Fragment Shader • Cosmic Nebula
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    float t = u_time * 0.4;
+    vec3 col = vec3(0.5 + 0.5 * sin(uv.x + t), 0.5 + 0.5 * cos(uv.y + t), 1.0);
+    gl_FragColor = vec4(col, 1.0);
+}`,
 };
 
 export function getTemplateForLanguage(lang: string = "tsx"): SandpackPredefinedTemplate {

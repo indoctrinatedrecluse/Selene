@@ -161,6 +161,9 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
   } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
     const djangoTitle = code.match(/"(?:cluster|title|name)":\s*"([^"]+)"/);
     if (djangoTitle) result.title = djangoTitle[1];
+  } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
+    const rustTitle = code.match(/<h[1-6][^>]*>\{\s*"([^"]+)"\s*\}<\/h[1-6]>/) || code.match(/let\s+cluster\s*=\s*"([^"]+)";/);
+    if (rustTitle) result.title = rustTitle[1];
   } else {
     const headingMatch = code.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
     if (headingMatch && headingMatch[1]) {
@@ -294,6 +297,9 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
   } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
     const pyCount = code.match(/"(?:workers|count|Count)":\s*(\d+)/);
     if (pyCount) result.initialCount = parseInt(pyCount[1], 10);
+  } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
+    const rustCount = code.match(/use_state\(\s*\|\|\s*(\d+)\s*\)/) || code.match(/create_signal\(\s*(\d+)\s*\)/);
+    if (rustCount) result.initialCount = parseInt(rustCount[1], 10);
   } else {
     // React / TSX
     const reactState = code.match(/useState\(\s*(\d+)\s*\)/);
@@ -324,9 +330,12 @@ export function applyVisualProps(
       updated = updated.replace(/("(?:Cluster|Title|Name)":\s*")[^"]+(")/, `$1${props.title}$2`);
     } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
       updated = updated.replace(/("(?:cluster|title|name)":\s*")[^"]+(")/, `$1${props.title}$2`);
+    } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
+      updated = updated.replace(/(<h[1-6][^>]*>\{\s*")[^"]+("\s*\}<\/h[1-6]>)/, `$1${props.title}$2`);
+      updated = updated.replace(/(let\s+cluster\s*=\s*")[^"]+(";)/, `$1${props.title}$2`);
     }
     const titleMatch = updated.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
-    if (titleMatch && !titleMatch[1].includes("{{") && !titleMatch[1].includes("<%")) {
+    if (titleMatch && !titleMatch[1].includes("{{") && !titleMatch[1].includes("<%") && !titleMatch[1].includes("{")) {
       updated = updated.replace(
         /<h([1-6])([^>]*)>(.*?)<\/h\1>/,
         `<h$1$2>${props.title}</h$1>`
@@ -450,6 +459,9 @@ export function applyVisualProps(
       updated = updated.replace(/("(?:Goroutines|Count|count)":\s*)\d+/g, `$1${props.initialCount}`);
     } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
       updated = updated.replace(/("(?:workers|count|Count)":\s*)\d+/g, `$1${props.initialCount}`);
+    } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
+      updated = updated.replace(/use_state\(\s*\|\|\s*\d+\s*\)/g, `use_state(|| ${props.initialCount})`);
+      updated = updated.replace(/create_signal\(\s*\d+\s*\)/g, `create_signal(${props.initialCount})`);
     } else {
       updated = updated.replace(/useState\(\s*\d+\s*\)/g, `useState(${props.initialCount})`);
     }

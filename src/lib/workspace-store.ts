@@ -1793,10 +1793,280 @@ Selene also supports FastAPI, Flask, and Jinja2 templates:
 \`\`\`
 `,
   },
+  {
+    id: "doc-rust-showcase",
+    title: "10_rust_yew_leptos_showcase.md",
+    icon: "🦀",
+    folder: "samples",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 60000,
+    content: `# 🦀 Rust WebAssembly (Yew & Leptos) Engine Showcase
+
+Selene brings native, high-performance live rendering for **Rust WebAssembly (\`wasm32-unknown-unknown\`)** components! This engine compiles and simulates Rust RSX macros (\`html! { ... }\` and \`view! { ... }\`), linear memory telemetry, and fine-grained reactive state inside an isolated sandbox with **Tailwind CSS 3.4**.
+
+> [!NOTE]
+> ⚡ **Dual Execution Runtime**:
+> 1. **In-Browser WASM Engine**: Evaluates Rust RSX macros, hooks (\`use_state\`), signals (\`create_signal\`), and linear memory bounds with 0ms latency.
+> 2. **Trunk Server Bridge**: Connect directly to your local Trunk or Cargo development server (\`trunk serve -p 8080\`) using the engine switcher in the block header!
+
+---
+
+## ⚡ 1. Rust Yew Microservice Telemetry Component (\`yew\`)
+
+Below is a live Rust Yew component featuring state hooks, thread-safe memory allocations, and visual property tweaking:
+
+\`\`\`rust
+use yew::prelude::*;
+
+#[function_component(TelemetryApp)]
+pub fn app() -> Html {
+    let count = use_state(|| 42);
+    let cluster = "Artemis-Rust-WASM";
+    let memory_alloc = "1.2 MB / 4.0 MB (Zero Garbage Collector)";
+
+    html! {
+        <div class="p-6 max-w-lg mx-auto bg-slate-900/90 rounded-2xl border border-amber-500/30 shadow-2xl backdrop-blur-md text-slate-100 font-sans">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-500 flex items-center justify-center text-white font-bold shadow-lg shadow-amber-500/20">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>{ "Artemis-Rust-WASM" }</span>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                { "OPTIMAL" }
+                            </span>
+                        </h3>
+                        <p class="text-xs text-amber-400/90 font-mono">{ "Yew 0.21 • wasm32-unknown-unknown" }</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-mono text-amber-400 font-semibold">{ "99.999%" }</span>
+                    <p class="text-[10px] text-slate-500">{ "Zero Panics" }</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">{ "Linear Memory" }</span>
+                    <span class="text-sm font-bold font-mono text-white">{ memory_alloc }</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">{ "Thread Safety" }</span>
+                    <span class="text-sm font-bold font-mono text-emerald-400">{ "Send + Sync Validated" }</span>
+                </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between border-t border-slate-800">
+                <button id="rust-counter-btn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-semibold shadow-lg shadow-amber-600/30 active:scale-95 transition-all cursor-pointer flex items-center gap-2">
+                    <span>{ "⚡ Execute WASM Cycle" }</span>
+                    <span id="rust-counter-val" class="px-1.5 py-0.2 rounded bg-black/30 font-mono text-[10px]">{ *count }</span>
+                </button>
+                <span class="text-xs text-slate-400 font-mono">{ "SIMD Enabled" }</span>
+            </div>
+        </div>
+    }
+}
+\`\`\`
+`,
+  },
+  {
+    id: "doc-sql-showcase",
+    title: "11_sql_sqlite_libsql_showcase.md",
+    icon: "🗄️",
+    folder: "samples",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 60000,
+    content: `# 🗄️ SQL & LibSQL In-Browser Data Studio Showcase
+
+Selene now features a native, zero-latency **SQL & LibSQL In-Browser Data Studio**! Execute relational queries, inspect data grids, filter records, sort columns, and export data directly within your markdown documents.
+
+> [!NOTE]
+> ⚡ **Interactive Data Studio Capabilities**:
+> 1. **In-Memory SQL Execution**: Evaluates \`SELECT\`, \`JOIN\`, \`GROUP BY\`, \`ORDER BY\`, \`ROUND()\`, \`AVG()\`, and aggregation functions with sub-millisecond latency.
+> 2. **Interactive Tabular Grid**: Sort by clicking column headers, filter records dynamically via the instant search input, and inspect schema structures.
+> 3. **Export Suite**: Export result sets to CSV with 1-click.
+
+---
+
+## ⚡ 1. Mission Telemetry Join (Aggregates & Metrics)
+
+Below is an interactive SQL query block joining \`celestial_missions\` with \`telemetry_nodes\`. Click **Run Query** (\`Ctrl+Enter\`) to evaluate in real-time:
+
+\`\`\`sql
+-- Selene SQL Data Studio • Mission Telemetry Aggregation
+SELECT 
+  m.name AS mission_name,
+  m.target_celestial_body,
+  m.status,
+  COUNT(t.node_id) AS active_nodes,
+  ROUND(AVG(t.latency_ms), 1) AS avg_latency_ms,
+  ROUND(SUM(t.bandwidth_mbps), 1) AS total_bandwidth_mbps
+FROM celestial_missions m
+LEFT JOIN telemetry_nodes t ON m.id = t.mission_id
+WHERE m.status IN ('active', 'nominal')
+GROUP BY m.id, m.name, m.target_celestial_body, m.status
+ORDER BY avg_latency_ms ASC;
+\`\`\`
+
+---
+
+## 🚀 2. High-Priority Lunar & Martian Missions
+
+Filter missions with budget thresholds over $400M:
+
+\`\`\`sqlite
+-- Filter active missions targeting Lunar or Martian orbit
+SELECT 
+  id,
+  name,
+  target_celestial_body,
+  budget_millions_usd,
+  launch_year,
+  status
+FROM celestial_missions
+WHERE budget_millions_usd >= 400.00
+ORDER BY budget_millions_usd DESC;
+\`\`\`
+
+---
+
+## 👥 3. Crew Manifest & Specialist Roster
+
+Inspect astronaut ranks, callsigns, and assigned missions:
+
+\`\`\`libsql
+-- Inspect officer ranks and specialist assignments
+SELECT 
+  c.callsign,
+  c.full_name,
+  c.rank,
+  c.specialization,
+  m.name AS assigned_mission
+FROM crew_manifest c
+INNER JOIN celestial_missions m ON c.mission_id = m.id
+ORDER BY c.rank DESC, c.full_name ASC;
+\`\`\`
+`,
+  },
+  {
+    id: "doc-shader-showcase",
+    title: "12_glsl_webgl_shaders_showcase.md",
+    icon: "🌌",
+    folder: "samples",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 60000,
+    content: `# 🌌 WebGL Canvas Shader Engine Showcase
+
+Selene brings native, hardware-accelerated **WebGL & GLSL Canvas Shaders** directly into your technical markdown canvas! Render mathematical animations, procedural noise, raymarched 3D geometries, and generative art in real time.
+
+> [!NOTE]
+> ⚡ **Shader Engine Features**:
+> 1. **Hardware Accelerated**: Full GPU rendering via WebGL2/WebGL1 context on HTML5 \`<canvas>\`.
+> 2. **Standard Shader Inputs**: Automatically provides \`u_time\` (elapsed seconds), \`u_resolution\` (viewport dimensions), and \`u_mouse\` (normalized cursor coordinates).
+> 3. **Animation Controls**: Play, pause, reset time, and live FPS counter.
+
+---
+
+## ⚡ 1. Cosmic Lunar Nebula (FBM Plasma)
+
+The block below runs a Fractional Brownian Motion (FBM) plasma shader producing celestial nebula clouds:
+
+\`\`\`glsl
+// Selene WebGL Fragment Shader • Cosmic Nebula
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    float t = u_time * 0.4;
+
+    // Fractional Brownian Motion (FBM) & Plasma rings
+    float d = length(uv);
+    for (float i = 1.0; i < 4.0; i++) {
+        uv.x += 0.3 / i * sin(i * 3.0 * uv.y + t) + 0.1;
+        uv.y += 0.3 / i * cos(i * 3.0 * uv.x + t) + 0.1;
+    }
+
+    vec3 col = vec3(0.0);
+    col.r = 0.5 + 0.5 * sin(uv.x + t * 0.8 + 0.0);
+    col.g = 0.5 + 0.5 * sin(uv.y + t * 0.6 + 2.0);
+    col.b = 0.5 + 0.5 * sin(uv.x + uv.y + t * 1.0 + 4.0);
+
+    // Deep moonlit vignette & glow
+    col *= 1.2 - d * 0.6;
+    col += vec3(0.05, 0.15, 0.25) / (d + 0.2);
+
+    gl_FragColor = vec4(col, 1.0);
+}
+\`\`\`
+
+---
+
+## 🪐 2. Raymarched Titan Orb (3D SDF Geometry)
+
+Render a 3D raymarched sphere with diffuse lighting, rim glow, and camera ray tracing:
+
+\`\`\`shader
+// Selene WebGL Fragment Shader • Raymarched Sphere
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+
+float sphereSDF(vec3 p, float r) {
+    return length(p) - r;
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+    vec3 ro = vec3(0.0, 0.0, -3.0); // Camera Ray origin
+    vec3 rd = normalize(vec3(uv, 1.0)); // Ray direction
+
+    // Raymarching loop
+    float t = 0.0;
+    vec3 spherePos = vec3(sin(u_time * 0.8) * 0.3, cos(u_time * 0.6) * 0.2, 0.0);
+    for (int i = 0; i < 40; i++) {
+        vec3 p = ro + rd * t;
+        float d = sphereSDF(p - spherePos, 1.0);
+        if (d < 0.001 || t > 10.0) break;
+        t += d;
+    }
+
+    vec3 col = vec3(0.03, 0.05, 0.1); // Background void
+    if (t < 10.0) {
+        vec3 p = ro + rd * t;
+        vec3 n = normalize(p - spherePos);
+        vec3 lightDir = normalize(vec3(1.0, 1.5, -1.0));
+        float diff = max(dot(n, lightDir), 0.0);
+        float rim = 1.0 - max(dot(n, -rd), 0.0);
+
+        vec3 surfaceColor = vec3(0.08, 0.45, 0.85); // Lunar Azure
+        col = surfaceColor * diff + vec3(0.2, 0.8, 1.0) * pow(rim, 3.0);
+    }
+
+    gl_FragColor = vec4(col, 1.0);
+}
+\`\`\`
+`,
+  },
 ];
 
-const STORAGE_KEY = "selene_documents_v9";
-const LEGACY_STORAGE_KEYS = ["selene_documents_v8", "selene_documents_v7", "selene_documents_v6"];
+const STORAGE_KEY = "selene_documents_v10";
+const LEGACY_STORAGE_KEYS = ["selene_documents_v9", "selene_documents_v8", "selene_documents_v7", "selene_documents_v6"];
 
 export function getDocumentFolder(doc: { id?: string | null; folder?: string | null }): string {
   if (doc.folder) return doc.folder;
@@ -1814,6 +2084,9 @@ export function getDocumentFolder(doc: { id?: string | null; folder?: string | n
     id === "doc-rails-showcase" ||
     id === "doc-go-showcase" ||
     id === "doc-django-showcase" ||
+    id === "doc-rust-showcase" ||
+    id === "doc-sql-showcase" ||
+    id === "doc-shader-showcase" ||
     id.startsWith("sample-")
   ) {
     return "samples";
