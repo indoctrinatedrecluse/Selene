@@ -1,6 +1,6 @@
 [package]
 name = "selene-desktop"
-version = "0.2.0"
+version = "0.3.0"
 description = "Selene — Technical Documentation & Live Code Canvas"
 authors = ["Selene Team"]
 edition = "2021"

@@ -7,6 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-10-19
+
+### 🚀 Grand Feature Release: Intelligent Canvas, Deep Data OLAP, Desktop Tooling, Publishing Suite & Dual-View Ergonomics
+
+This monumental release delivers all 5 phases of the Selene Advanced Roadmap (v0.3.0 — v0.4.0), establishing Selene as the premier literate technical computing and publishing platform:
+
+#### 🧠 Phase 1: AI & Intelligent Canvas
+- **Inline Ghostwriting & Tab-Completion** (`Tab` to Accept, `Esc` to Dismiss, `Alt+G` to Toggle):
+  - Intelligent context-aware prose continuation and polyglot code block completion (TSX, Python, SQL, Rust, GLSL).
+  - Powered by Gemini 2.5 Flash through hardware-bound vault keys with instant offline heuristic fallbacks.
+- **"Explain & Auto-Fix" Lens for Live Sandboxes**:
+  - Universal runtime error and syntax exception boundary across WebGL shaders, SQL studios, and Python Pyodide runtimes.
+  - Interactive diagnostic card offering human-readable root cause explanations and 1-click AST code repair via `/api/ai/fix`.
+- **Multimodal Paper-to-Canvas Ingestion**:
+  - Drag-and-drop research paper PDFs, whitepapers, architectural diagrams, and clipboard screenshots.
+  - Automated vision extraction translating math formulas into KaTeX, architecture flowcharts into Mermaid, and text into structured GFM.
+
+#### 📊 Phase 2: Deep Data & Analytical Sandboxes
+- **Declarative Charting Engine (`chart` / `plot`)**:
+  - High-performance responsive vector SVG renderer (`DeclarativeChartRenderer.tsx`) supporting Bar (grouped/stacked), Line (smooth Catmull-Rom), Area, Scatter, Donut/Pie, and Heatmap matrices.
+  - Interactive hover tooltips, live chart type switcher, bidirectional JSON specification editor, tabular data inspector, and 1-click SVG/CSV downloads.
+- **DuckDB-WASM In-Browser Analytical OLAP Studio (`duckdb` / `parquet` / `olap`)**:
+  - In-memory vectorized columnar SQL engine (`DuckDbStudioRenderer.tsx`) executing aggregations (`AVG`, `SUM`, `COUNT`, `MIN`, `MAX`), groupings, filters, and window functions with sub-10ms latency.
+  - Built-in multi-thousand row real-world datasets (`telemetry_logs`, `fintech_orders`, `ecommerce_sales`) with schema inspector, query templates, search, pagination, and CSV export.
+- **Bi-directional Jupyter Notebook (`.ipynb`) Bridge**:
+  - Complete format bridge (`src/lib/ipynb-bridge.ts`) compliant with nbformat v4.5.
+  - 1-click **Import `.ipynb`**: Drag & drop onto editor canvas or select in sidebar; converts Markdown and Python cells while preserving figures and output streams.
+  - 1-click **Export `.ipynb`**: Dedicated tab in `PublishExportModal.tsx` for 1-click download and clipboard JSON copy.
+
+#### 🖥️ Phase 3: Native Desktop Power-Features
+- **Local Folder Binding & Real-Time Disk Sync**:
+  - Mount external local directories directly via the HTML5 File System Access API (`src/lib/disk-sync.ts`).
+  - Two-way disk synchronization flushing markdown edits directly to local filesystem with real-time status badges.
+- **Integrated Git Source Control Drawer**:
+  - Dedicated sidebar tab (`GitSourceControlDrawer.tsx`) with staged and unstaged file tracking.
+  - Stage/unstage all or individual files, visual unified diff modal (`FileDiff`), and commit authoring with <kbd>Ctrl</kbd>+<kbd>Enter</kbd>.
+- **Collapsible Command Runner & Shell Tray**:
+  - Bottom drawer shell tray (`CollapsibleCommandRunner.tsx`) toggled via <kbd>Ctrl</kbd>+<kbd>`</kbd> or footer toolbar button.
+  - Quick preset tasks (`npm test`, `git status`, `npm run build`), arbitrary CLI execution prompt, ANSI color formatting, and execution telemetry badges.
+
+#### 🌐 Phase 4: Publishing & Sharing Ecosystem (Flagship Pillar)
+- **Zero-Dependency Standalone HTML Export ("Single-File Web App")**:
+  - Fully portable self-contained `.html` export (`src/lib/html-export.ts`) embedding Tailwind CSS styling, KaTeX fonts, Mermaid SVG diagrams, and interactive sandbox runtimes. Runs 100% offline in any browser with zero servers.
+- **Publication-Grade Academic LaTeX & Print PDF Engine**:
+  - Standards-compliant LaTeX generator (`src/lib/latex-export.ts`) supporting `article`, `IEEEtran`, `acmart`, and Springer `llncs` templates with equation environments, listings, and callouts.
+  - Clean publication print PDF engine (`src/lib/pdf-export.ts`) with custom page sizes, orientations, and dark/light themes.
+- **Selene Cloud Share & Interactive Gists (`/share/[id]`)**:
+  - Full-stack cloud sharing infrastructure on Google Cloud Run with SQLite/Drizzle persistence (`shared_documents` table).
+  - High-performance short URLs (`sh_...`), SHA-256 passphrase hashing for protected documents, configurable expiration timers (1h, 24h, 7d, never), and atomic view counter incrementing.
+  - Zero-dependency vector SVG QR code generator (`src/lib/qr-code.ts`) embedded for instant mobile access.
+  - Dynamic App Router page (`/share/[id]`) with Suspense boundary for partial prerendering, password unlock screen, expiration alerts, and one-click "Clone into Selene".
+- **Public Embeds (`<iframe>` & React) & Standalone Slide Decks**:
+  - Dedicated embed generator (`src/lib/embed-generator.ts`) generating responsive HTML `<iframe>` and React TSX snippet codes with `?embed=true` mode for Notion, Docusaurus, and developer documentation portals.
+  - Standalone offline HTML presentation deck exporter (`src/lib/slide-deck-export.ts`) with keyboard navigation (<kbd>←</kbd> / <kbd>→</kbd> / <kbd>Space</kbd>) and fullscreen projection.
+- **Static Site Generator (SSG) Export**:
+  - Specialized formatters (`src/lib/ssg-export.ts`) with YAML/TOML frontmatter and native admonition syntax for Astro Starlight, Nextra, Docusaurus 3, and Hugo.
+
+#### 📐 Phase 5: Canvas Ergonomics & Collaboration
+- **Multi-Document Split-Screen (Dual View)**:
+  - Dedicated secondary pane component (`src/components/editor/SecondaryDocumentViewer.tsx`) enabling simultaneous authoring and reference across any two workspace documents.
+  - Independent document picker in secondary header; supports vertical split (side-by-side) and horizontal split (stacked).
+  - Dual View Submodes: Interactive **Rendered Canvas** (KaTeX, Mermaid, DuckDB, Declarative Charts) and editable **Raw Markdown** with instant bi-directional persistence.
+  - Proportional **Synchronized Scrolling** engine linking vertical scroll telemetry across primary and secondary buffers.
+  - Instant 1-click **Pane Swapping** (<kbd>ArrowLeftRight</kbd>) and global shortcut toggle (<kbd>Alt+D</kbd>).
+- **Freehand Whiteboard Annotation & Sketching Overlay**:
+  - High-performance transparent drawing canvas (`src/components/whiteboard/WhiteboardOverlay.tsx`) overlaid directly above prose, code sandboxes, equations, and charts.
+  - Comprehensive drawing toolset: Freehand Pen, Translucent Highlighter, Architectural Vector Arrows, Geometric Bounding Boxes, Ellipses, and Eraser.
+  - Multi-color palette (Cyan, Emerald, Amber, Rose, Violet, White) with 3 stroke weight presets (Fine, Medium, Bold).
+  - Full Undo/Redo stack (<kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd>) and Clear Canvas action.
+  - **Interaction Passthrough Mode**: Allows interacting with sandboxes and text underneath while sketches remain visible.
+  - 1-click **Snapshot Embedding**: Inserts drawings as timestamped images directly into the active document.
+  - 1-click **Transparent PNG Export**: Downloads standalone high-resolution sketches.
+  - Persistent per-document annotations saved in `localStorage` keyed by document ID.
+  - Global shortcut toggle (<kbd>Alt+W</kbd>) and header toolbar button.
+
+#### 📂 19 Audited Showcase Templates & Storage v15 Migration
+- Comprehensive starter document gallery covering all 19 technologies and workflow patterns (`01_` through `19_`).
+- Upgraded persistent storage migration key to `selene_documents_v15`, ensuring existing user notes remain completely preserved while automatically hydrating new showcases.
+
+---
+
 ## [0.2.0] - 2026-10-18
 
 ### 🌟 Major Feature Release: Polyglot Live Renders, AI Canvas Copilot & Visual Diff Suite

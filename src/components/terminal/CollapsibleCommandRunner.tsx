@@ -9,6 +9,7 @@ import {
   Maximize2,
   Minimize2,
 } from "lucide-react";
+import { APP_VERSION } from "@/lib/version";
 
 interface TerminalLogLine {
   id: string;
@@ -83,7 +84,7 @@ export function CollapsibleCommandRunner({
     try {
       // Handle known preset commands with high-fidelity output
       if (cleanCmd === "npm test" || cleanCmd === "npm run test") {
-        appendLog("system", "> selene@0.2.0 test");
+        appendLog("system", `> selene@${APP_VERSION} test`);
         appendLog("system", "> npm run type-check && npm run lint");
         await new Promise((r) => setTimeout(r, 600));
         appendLog("stdout", "✓ TypeScript compilation passed (tsc --noEmit: 0 errors)");
