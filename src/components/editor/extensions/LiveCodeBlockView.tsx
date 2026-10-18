@@ -7,6 +7,8 @@ import { MermaidRenderer } from "@/components/render-engine/MermaidRenderer";
 import { MathRenderer } from "@/components/render-engine/MathRenderer";
 import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRenderer";
 import { PythonNotebookRenderer } from "@/components/render-engine/PythonNotebookRenderer";
+import { PhpLaravelRenderer } from "@/components/render-engine/PhpLaravelRenderer";
+import { RubyRailsRenderer } from "@/components/render-engine/RubyRailsRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -22,6 +24,8 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isLiveWeb = LIVE_WEB_LANGUAGES.includes(language);
   const isFlutter = language === "dart" || language === "flutter";
   const isPython = language === "python" || language === "py" || language === "notebook";
+  const isPhpLaravel = language === "php" || language === "laravel" || language === "blade";
+  const isRubyRails = language === "ruby" || language === "rails" || language === "erb";
   const isMermaid = language === "mermaid";
   const isMath = language === "math" || language === "latex";
 
@@ -89,6 +93,32 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's a PHP / Laravel Blade template and live render is enabled, render the Blade engine!
+  if (isPhpLaravel && showLiveRender) {
+    return (
+      <NodeViewWrapper className="php-laravel-block my-4">
+        <PhpLaravelRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a Ruby on Rails ERB template and live render is enabled, render the Rails engine!
+  if (isRubyRails && showLiveRender) {
+    return (
+      <NodeViewWrapper className="ruby-rails-block my-4">
+        <RubyRailsRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // If it's a Mermaid diagram
   if (isMermaid) {
     return (
@@ -128,6 +158,12 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="angular">angular (live)</option>
             <option value="flutter">flutter (live)</option>
             <option value="dart">dart (live)</option>
+            <option value="blade">blade (live)</option>
+            <option value="php">php (live)</option>
+            <option value="laravel">laravel (live)</option>
+            <option value="erb">erb (live)</option>
+            <option value="rails">rails (live)</option>
+            <option value="ruby">ruby (live)</option>
             <option value="html">html (live)</option>
             <option value="mermaid">mermaid (diagram)</option>
             <option value="python">python (live WASM)</option>
@@ -139,7 +175,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"

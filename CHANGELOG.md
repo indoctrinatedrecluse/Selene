@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] - Sprint 1: Full-Stack Polyglot Live Renders (PHP/Laravel & Ruby on Rails)
+
+### 🐘 PHP 8.3 & Laravel 11 Blade Live Render Engine (`PhpLaravelRenderer.tsx`)
+- **Native In-Browser Blade Compiler**: In-memory compilation of Blade directives including `@php ... @endphp`, `@foreach ($collection as $item) ... @endforeach`, `@if (...) ... @elseif (...) ... @else ... @endif`, `{{ $variable }}`, `{{ strtoupper(...) }}`, and `{{ count(...) }}`.
+- **Client-Side Alpine.js 3.x Execution**: Embedded Alpine.js runtime inside an isolated iframe sandbox enabling real-time tab switching, counters, and reactive attributes with 0ms latency.
+- **Dual Execution Modes**:
+  - *Blade Engine*: 100% offline in-browser playground.
+  - *Artisan Serve Bridge*: Seamless live iframe connection to local `php artisan serve` (port 8000) with automatic server health pinging.
+- **Responsive Device Previews & Layouts**: Desktop, Tablet, and Mobile phone views, plus Split, Canvas, and Code editor modes.
+- **Built-in Curated Presets**:
+  - ⚡ *Laravel Metric Card*: Dynamic telemetry with Alpine.js tabs and service loop.
+  - 📦 *Eloquent Collection Table*: `App\Models\CelestialTeam::all()` simulation with status badges.
+
+### 💎 Ruby 3.3 & Rails 8.0 ERB Live Render Engine (`RubyRailsRenderer.tsx`)
+- **Native In-Browser ERB Compiler**: Evaluates Ruby variable definitions (`<% @var = ... %>`), iteration loops (`<% @collection.each do |item| %> ... <% end %>`), conditionals (`<% if ... %> ... <% else %> ... <% end %>`), and string interpolations (`<%= @var %>`, `<%== @var %>`).
+- **Rails View Helpers & Hotwire Turbo Frames**: Native simulation of `<%= turbo_frame_tag "id" do %>`, `<%= number_to_currency(...) %>`, `<%= pluralize(...) %>`, and `<%= @status.upcase %>`.
+- **Stimulus Controller Simulation**: Interactive `data-controller`, `data-action`, and `data-target` event listeners running live in the sandboxed preview.
+- **Dual Execution Modes**:
+  - *ERB Engine*: 100% offline in-browser execution.
+  - *Puma Server Bridge*: Real-time bridge to local `bin/rails server` (port 3000) with active status monitoring.
+- **Responsive Previews & Layouts**: Desktop, Tablet, and Mobile frames with split, canvas, and code views.
+- **Built-in Curated Presets**:
+  - 🚀 *Rails Hotwire / Turbo Frame Card*: Real-time stream dispatcher and status metrics.
+  - 💎 *ActiveRecord Query Table*: `Deployment.recent.includes(:author)` relation with formatted columns.
+
+### 📁 Showcase Documents & Language Integration
+- Added dedicated showcase sample documents in `samples/`:
+  - `06_php_laravel_blade_showcase.md` (`🐘`)
+  - `07_ruby_on_rails_erb_showcase.md` (`💎`)
+- Updated `LiveCodeBlockView.tsx` with automatic routing for `blade`, `php`, `laravel`, `erb`, `rails`, and `ruby`.
+- Added starter snippets and language options to `stack-templates.ts`.
+- Implemented persistent storage migration (`selene_documents_v8`) preserving existing documents while delivering new starter showcases.
+
 ## [0.1.0] - 2026-10-18
 
 ### 🌟 Initial Major Milestone Release — "Titan Edition"

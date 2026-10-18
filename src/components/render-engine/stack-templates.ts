@@ -540,6 +540,169 @@ class _CounterScreenState extends State<CounterScreen> {
   }
 }
 `,
+  blade: `@php
+  $cluster = "Artemis-Prime-04";
+  $uptime = "99.98%";
+  $memoryUsage = "4.2 GB / 16 GB";
+  $status = "optimal";
+  $services = [
+    ["name" => "Auth Gatekeeper", "port" => 8080, "status" => "active", "latency" => "12ms"],
+    ["name" => "Polymorphic AST", "port" => 9000, "status" => "active", "latency" => "4ms"],
+    ["name" => "LibSQL Replica", "port" => 5432, "status" => "syncing", "latency" => "28ms"],
+  ];
+@endphp
+
+<div x-data="{ count: 42, activeTab: 'overview', boosted: false }" class="p-6 max-w-lg mx-auto bg-slate-900/90 rounded-2xl border border-red-500/30 shadow-2xl backdrop-blur-md text-slate-100 font-sans">
+  <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 flex items-center justify-center text-white font-bold shadow-lg shadow-red-500/20">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>{{ $cluster }}</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            {{ strtoupper($status) }}
+          </span>
+        </h3>
+        <p class="text-xs text-slate-400 font-mono">Laravel 11 • Blade Template Engine</p>
+      </div>
+    </div>
+    <div class="text-right">
+      <span class="text-xs font-mono text-red-400 font-semibold">{{ $uptime }}</span>
+      <p class="text-[10px] text-slate-500">Service SLA</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+      <span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Memory Allocation</span>
+      <span class="text-sm font-bold font-mono text-white">{{ $memoryUsage }}</span>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+      <span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Interactive Metric</span>
+      <span class="text-sm font-bold font-mono text-red-400" x-text="'Payload ' + count + ' MB/s'"></span>
+    </div>
+  </div>
+
+  <div class="pt-2 flex items-center justify-between">
+    <button @click="count += 5; boosted = true" class="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-semibold shadow-lg shadow-red-600/30 active:scale-95 transition-all cursor-pointer flex items-center gap-2">
+      <span>⚡ Trigger Pipeline Event</span>
+      <span class="px-1.5 py-0.2 rounded bg-black/30 font-mono text-[10px]" x-text="count"></span>
+    </button>
+    <span x-show="boosted" class="text-xs text-emerald-400 font-mono animate-pulse">✓ Signal Dispatched</span>
+  </div>
+</div>
+`,
+  php: `@php
+  $cluster = "Artemis-Prime-04";
+  $uptime = "99.98%";
+  $memoryUsage = "4.2 GB / 16 GB";
+  $status = "optimal";
+@endphp
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-red-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white">{{ $cluster }}</h3>
+    <span class="text-xs font-mono text-emerald-400">{{ strtoupper($status) }}</span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Memory: {{ $memoryUsage }}</p>
+  <p class="text-xs text-slate-400">Uptime: {{ $uptime }}</p>
+</div>
+`,
+  laravel: `@php
+  $cluster = "Artemis-Prime-04";
+  $uptime = "99.98%";
+  $memoryUsage = "4.2 GB / 16 GB";
+  $status = "optimal";
+@endphp
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-red-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white">{{ $cluster }}</h3>
+    <span class="text-xs font-mono text-emerald-400">{{ strtoupper($status) }}</span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Memory: {{ $memoryUsage }}</p>
+  <p class="text-xs text-slate-400">Uptime: {{ $uptime }}</p>
+</div>
+`,
+  erb: `<%
+  @cluster = "Olympus-Rails-08"
+  @uptime = "99.99%"
+  @mrr = 28450.00
+  @status = "optimal"
+  @services = [
+    { name: "Turbo Streams Hub", port: 3000, status: "healthy", latency: "3ms" },
+    { name: "Sidekiq Job Worker", port: 7433, status: "healthy", latency: "6ms" },
+    { name: "PostgreSQL Replica", port: 5432, status: "healthy", latency: "1ms" },
+    { name: "Redis Cache Store", port: 6379, status: "healthy", latency: "0.8ms" }
+  ]
+%>
+
+<%= turbo_frame_tag "metrics_panel" do %>
+  <div data-controller="telemetry" class="p-6 max-w-lg mx-auto bg-slate-900/90 rounded-2xl border border-rose-500/30 shadow-2xl backdrop-blur-md text-slate-100 font-sans">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+      <div>
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span><%= @cluster %></span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <%= @status.upcase %>
+          </span>
+        </h3>
+        <p class="text-xs text-rose-400/90 font-mono">Rails 8.0 • Hotwire & Turbo Frames</p>
+      </div>
+      <div class="text-right">
+        <span class="text-xs font-mono text-rose-400 font-semibold"><%= @uptime %></span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+        <span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Monthly Run Rate</span>
+        <span class="text-sm font-bold font-mono text-white"><%= number_to_currency(@mrr) %></span>
+      </div>
+      <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+        <span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Active Services</span>
+        <span class="text-sm font-bold font-mono text-rose-400"><%= pluralize(@services.count, "Worker Node") %></span>
+      </div>
+    </div>
+  </div>
+<% end %>
+`,
+  rails: `<%
+  @cluster = "Olympus-Rails-08"
+  @uptime = "99.99%"
+  @mrr = 28450.00
+  @status = "optimal"
+%>
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-rose-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white"><%= @cluster %></h3>
+    <span class="text-xs font-mono text-emerald-400"><%= @status.upcase %></span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Run Rate: <%= number_to_currency(@mrr) %></p>
+  <p class="text-xs text-slate-400">Uptime: <%= @uptime %></p>
+</div>
+`,
+  ruby: `<%
+  @cluster = "Olympus-Rails-08"
+  @uptime = "99.99%"
+  @mrr = 28450.00
+  @status = "optimal"
+%>
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-rose-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white"><%= @cluster %></h3>
+    <span class="text-xs font-mono text-emerald-400"><%= @status.upcase %></span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Run Rate: <%= number_to_currency(@mrr) %></p>
+  <p class="text-xs text-slate-400">Uptime: <%= @uptime %></p>
+</div>
+`,
 };
 
 export function getTemplateForLanguage(lang: string = "tsx"): SandpackPredefinedTemplate {
