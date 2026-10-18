@@ -1214,9 +1214,11 @@ export function loadDocuments(): DocumentItem[] {
       return STARTER_TEMPLATES;
     }
 
-    // Ensure all items have a folder assigned
+    // Ensure all items have valid titles, icons, and a folder assigned
     const mapped: DocumentItem[] = parsed.map((doc: DocumentItem) => ({
       ...doc,
+      title: doc.title && doc.title.trim() ? doc.title : "Untitled Document",
+      icon: doc.icon && doc.icon.trim() ? doc.icon : "📄",
       folder: getDocumentFolder(doc),
     }));
 

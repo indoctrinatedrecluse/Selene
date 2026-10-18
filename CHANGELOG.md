@@ -11,7 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🌟 Initial Major Milestone Release — "Titan Edition"
 
-This release marks the culmination of the 4 core roadmap pillars for Selene: Universal Visual Property Inspection, Publication & Export Suite, WebAssembly Computational Notebooks, and Native Desktop Packaging.
+This release marks the culmination of the core roadmap pillars for Selene: Universal Visual Property Inspection, Publication & Export Suite, WebAssembly Computational Notebooks, and Native Desktop Packaging.
+
+#### 🛠️ Left Sidebar & File Tree Visibility Resolution
+- **Eliminated Flex Collapse Bug**: Refactored `WorkspaceSidebar.tsx` file row structure from nested `min-w-0 flex-1 truncate` to guaranteed `flex items-center gap-2 min-w-0 flex-1` layout, ensuring document titles, folder headers (`samples/`, `documents/`), and file icons (`🌙`, `🎨`, `📄`) never squash to 0 width.
+- **Solid High-Contrast Background & Z-Index Elevation**: Set sidebar backdrop to `#070b16` with crisp `border-slate-800` and `relative z-20` stacking to prevent stars, canvas, or sticky toolbars from bleeding through or overlaying the explorer.
+- **Defensive Data Hydration**: Added automatic title healing (`doc.title || "Untitled Document"`) and icon healing in `workspace-store.ts` to guarantee clean rendering on startup.
+- **Cloud Run Deployment**: Upgraded live service on project `indoctrinated-licensor` to revision `selene-00003-qvc`.
 
 #### 🎛️ Phase 1: Universal No-Code "Visual Tweak Props & Inspector" (Bi-Directional AST Sync)
 - **Bi-Directional AST Synchronization Engine** (`src/lib/ast-transformer.ts`):

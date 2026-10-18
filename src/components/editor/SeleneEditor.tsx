@@ -870,7 +870,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
       )}
 
       {/* Main Workspace Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative z-10 min-h-0">
         {/* Workspace Documents Sidebar */}
         {!isZenMode && (
           <WorkspaceSidebar
@@ -893,7 +893,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
 
         {/* Editor Column */}
         <div
-          className={`flex-1 flex flex-col overflow-y-auto ${
+          className={`flex-1 min-w-0 flex flex-col overflow-y-auto ${
             viewMode === "markdown" ? "hidden" : ""
           }`}
         >
