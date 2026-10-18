@@ -22,6 +22,7 @@ import {
   FileCode2,
 } from "lucide-react";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
+import { SELENE_VERSION_DISPLAY } from "@/lib/version";
 
 interface WorkspaceSidebarProps {
   documents: DocumentItem[];
@@ -226,6 +227,9 @@ export function WorkspaceSidebar({
           <span className="text-xs font-bold text-slate-100 uppercase tracking-wider select-none">
             Explorer
           </span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/10 text-sky-400 font-mono font-medium border border-sky-500/20">
+            {SELENE_VERSION_DISPLAY}
+          </span>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
           <button
@@ -396,7 +400,7 @@ export function WorkspaceSidebar({
                       <Plus className="w-3 h-3" />
                     </button>
                   )}
-                  {isSamplesFolder && onRestoreSamples && docsInFolder.length < 5 && (
+                  {isSamplesFolder && onRestoreSamples && (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -404,7 +408,7 @@ export function WorkspaceSidebar({
                         onRestoreSamples();
                       }}
                       className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-sky-400 hover:text-sky-300 hover:bg-sky-500/20 transition-opacity"
-                      title="Restore Showcase Samples"
+                      title="Sync / Restore Built-in Showcase Samples (Ruby, PHP, Rust, etc.)"
                     >
                       <RotateCcw className="w-3 h-3" />
                     </button>

@@ -2,7 +2,7 @@
 # Selene Automated Production Google Cloud Run Deployment Script (Bash)
 set -euo pipefail
 
-SERVICE_NAME="${1:-selene-backend}"
+SERVICE_NAME="${1:-selene}"
 REGION="${2:-us-central1}"
 PROJECT_ID="${3:-$(gcloud config get-value project 2>/dev/null)}"
 

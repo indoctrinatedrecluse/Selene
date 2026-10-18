@@ -24,7 +24,7 @@
 param(
     [string]$ProjectID,
     [string]$Region = "us-central1",
-    [string]$ServiceName = "selene-backend",
+    [string]$ServiceName = "selene",
     [string]$BackendSecret,
     [string]$DatabaseUrl,
     [string]$DatabaseToken,

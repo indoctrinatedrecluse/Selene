@@ -102,4 +102,16 @@ if (fs.existsSync(electronSplashPath)) {
   console.log(`  [OK] electron/splash.html -> v${targetVersion}`);
 }
 
+// 7. Update package-lock.json
+const pkgLockPath = path.join(rootDir, 'package-lock.json');
+if (fs.existsSync(pkgLockPath)) {
+  const pkgLock = JSON.parse(fs.readFileSync(pkgLockPath, 'utf8'));
+  pkgLock.version = targetVersion;
+  if (pkgLock.packages && pkgLock.packages['']) {
+    pkgLock.packages[''].version = targetVersion;
+  }
+  fs.writeFileSync(pkgLockPath, JSON.stringify(pkgLock, null, 2) + '\n', 'utf8');
+  console.log(`  [OK] package-lock.json -> ${targetVersion}`);
+}
+
 console.log(`✨ All Selene version references synchronized to v${targetVersion} successfully.\n`);

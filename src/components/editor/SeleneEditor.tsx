@@ -32,6 +32,7 @@ import {
   SeleneLunarBackground,
   LunarBackgroundMode,
 } from "@/components/brand/SeleneLunarBackground";
+import { SELENE_VERSION_DISPLAY } from "@/lib/version";
 
 const THEME_CONFIG: Record<
   LunarBackgroundMode,
@@ -462,7 +463,14 @@ export function SeleneEditor() {
     setDocuments((prev) => {
       const existingIds = new Set(prev.map((d) => d.id));
       const missingStarters = STARTER_TEMPLATES.filter((s) => !existingIds.has(s.id));
-      const nextDocs = [...missingStarters, ...prev];
+      const refreshedExisting = prev.map((d) => {
+        const starter = STARTER_TEMPLATES.find((s) => s.id === d.id);
+        if (starter) {
+          return { ...starter, ...d, content: starter.content, title: starter.title };
+        }
+        return d;
+      });
+      const nextDocs = [...missingStarters, ...refreshedExisting];
       saveDocuments(nextDocs);
       return nextDocs;
     });
@@ -697,7 +705,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                   title="Help, License & Product Brief"
                 >
                   <HelpCircle className="w-2.5 h-2.5 text-sky-400" />
-                  <span>About</span>
+                  <span>About ({SELENE_VERSION_DISPLAY})</span>
                 </button>
                 <SeleneLicenseBadge
                   status={licenseStatus}

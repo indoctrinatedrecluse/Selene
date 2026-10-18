@@ -2065,8 +2065,19 @@ void main() {
   },
 ];
 
-const STORAGE_KEY = "selene_documents_v10";
-const LEGACY_STORAGE_KEYS = ["selene_documents_v9", "selene_documents_v8", "selene_documents_v7", "selene_documents_v6"];
+const STORAGE_KEY = "selene_documents_v11";
+const LEGACY_STORAGE_KEYS = [
+  "selene_documents_v10",
+  "selene_documents_v9",
+  "selene_documents_v8",
+  "selene_documents_v7",
+  "selene_documents_v6",
+  "selene_documents_v5",
+  "selene_documents_v4",
+  "selene_documents_v3",
+  "selene_documents_v2",
+  "selene_documents_v1",
+];
 
 export function getDocumentFolder(doc: { id?: string | null; folder?: string | null }): string {
   if (doc.folder) return doc.folder;
