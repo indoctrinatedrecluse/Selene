@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { SeleneTitanLogo } from "./SeleneTitanLogo";
 import { LunarBackgroundMode } from "./SeleneLunarBackground";
+import { SELENE_EDITION_DISPLAY } from "@/lib/version";
 
 export type LoreModalTab = "myth" | "philosophy" | "theme" | "about";
 
@@ -340,7 +341,7 @@ export function SeleneLoreModal({
                         Selene — Technical Document & Code Canvas
                       </h3>
                       <p className="text-[11px] text-sky-400 font-mono">
-                        Titan Edition • Version 0.1.0
+                        {SELENE_EDITION_DISPLAY}
                       </p>
                     </div>
                   </div>

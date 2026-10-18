@@ -13,6 +13,7 @@
     "tauri": "tauri",
     "desktop:tauri": "tauri dev",
     "desktop:tauri:build": "tauri build",
+    "version:sync": "node tools/scripts/version-sync.js",
     "deploy:cloudrun": "powershell -ExecutionPolicy Bypass -File tools/scripts/cloud/deploy-cloudrun.ps1"
   },
   "dependencies": {

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Sparkles, ArrowRight, ShieldCheck, Cpu } from "lucide-react";
+import { SELENE_VERSION_DISPLAY } from "@/lib/version";
 
 interface SeleneSplashScreenProps {
   onComplete?: () => void;
@@ -180,7 +181,7 @@ export function SeleneSplashScreen({
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white flex items-center justify-center gap-2">
             <span>Selene</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 font-mono font-medium">
-              v0.1.0
+              {SELENE_VERSION_DISPLAY}
             </span>
           </h1>
 

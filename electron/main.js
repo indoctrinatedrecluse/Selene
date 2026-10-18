@@ -163,7 +163,7 @@ function buildMenu() {
               type: "info",
               title: "About Selene",
               message: "🌙 Selene — Live Code Document Canvas",
-              detail: `Titan Edition v0.1.0\nProprietary License © 2026 Abhishek Mitra\nDesktop Shell: Electron ${process.versions.electron}\nRuntime: Node.js ${process.versions.node}\nChromium: ${process.versions.chrome}`,
+              detail: `Titan Edition v${app.getVersion() || "0.2.0"}\nProprietary License © 2026 Abhishek Mitra\nDesktop Shell: Electron ${process.versions.electron}\nRuntime: Node.js ${process.versions.node}\nChromium: ${process.versions.chrome}`,
             });
           },
         },

@@ -13,6 +13,8 @@ const REGISTRY_PATH = "HKCU\\Software\\Selene";
 const TRIAL_DURATION_DAYS = 60;
 const HMAC_SECRET = "selene_titan_moon_cryptographic_anchor_2026_salt_99";
 
+import { SELENE_VERSION } from "@/lib/version";
+
 export type LicenseTier = "ADMIN" | "DEV" | "USER" | "TRIAL";
 
 export interface LicenseStatus {
@@ -418,7 +420,7 @@ export async function activateLicense(payload: ActivationPayload): Promise<Activ
   const hwid = await getHardwareFingerprint();
   const machineName = os.hostname();
   const platform = `${process.platform}-${process.arch}`;
-  const appVersion = "0.1.0";
+  const appVersion = SELENE_VERSION;
 
   if (!key) {
     return { success: false, message: "License key is required." };
