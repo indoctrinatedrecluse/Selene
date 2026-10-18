@@ -5,13 +5,15 @@ export interface DocumentItem {
   createdAt: number;
   updatedAt: number;
   icon?: string;
+  folder?: string;
 }
 
 export const STARTER_TEMPLATES: DocumentItem[] = [
   {
     id: "doc-architecture",
-    title: "🌙 Selene Architecture & Live Canvas",
-    icon: "🚀",
+    title: "01_selene_architecture_and_live_canvas.md",
+    icon: "🌙",
+    folder: "samples",
     createdAt: Date.now() - 3600000,
     updatedAt: Date.now() - 60000,
     content: `# 🌙 Selene Technical Specification & Live Canvas
@@ -101,8 +103,9 @@ Equations typeset in sub-millisecond speeds:
   },
   {
     id: "doc-ui-playground",
-    title: "🎨 Interactive Web UI Components",
-    icon: "🧩",
+    title: "02_interactive_web_ui_components.md",
+    icon: "🎨",
+    folder: "samples",
     createdAt: Date.now() - 7200000,
     updatedAt: Date.now() - 120000,
     content: `# 🎨 Interactive Web UI Components
@@ -493,8 +496,9 @@ class _CounterScreenState extends State<CounterScreen> {
   },
   {
     id: "doc-api-rfc",
-    title: "📋 Distributed API RFC Document",
-    icon: "📑",
+    title: "04_distributed_api_rfc.md",
+    icon: "📋",
+    folder: "samples",
     createdAt: Date.now() - 14400000,
     updatedAt: Date.now() - 300000,
     content: `# 📋 RFC: Real-Time Event Ingestion Engine
@@ -529,8 +533,9 @@ export interface IngestionEvent {
   },
   {
     id: "doc-angular-showcase",
-    title: "🅰️ Angular Ivy Live Showcase",
+    title: "03_angular_and_flutter_showcase.md",
     icon: "🅰️",
+    folder: "samples",
     createdAt: Date.now() - 5400000,
     updatedAt: Date.now() - 45000,
     content: `# 🅰️ Angular Ivy Live Showcase & Architecture
@@ -775,8 +780,9 @@ When working on a real Angular workspace:
   },
   {
     id: "doc-flutter-showcase",
-    title: "🎯 Flutter & Dart Web Showcase",
+    title: "flutter_wasm_engine_demo.md",
     icon: "🎯",
+    folder: "samples",
     createdAt: Date.now() - 3600000,
     updatedAt: Date.now() - 30000,
     content: `# 🎯 Flutter & Dart Web Showcase & Hardware Engine
@@ -1054,8 +1060,9 @@ Selene supports Cupertino iOS widgets and Flutter \`CustomPainter\` shaders. Swi
   },
   {
     id: "doc-python-datascience",
-    title: "🐍 In-Browser Data Science & Computational Notebooks",
-    icon: "🧪",
+    title: "05_python_wasm_datascience_notebook.md",
+    icon: "🐍",
+    folder: "samples",
     createdAt: Date.now() - 1800000,
     updatedAt: Date.now() - 30000,
     content: `# 🐍 In-Browser Data Science & Computational Notebooks
@@ -1165,18 +1172,61 @@ print(telemetry.describe().round(2).to_string())
   },
 ];
 
-const STORAGE_KEY = "selene_documents_v6";
+const STORAGE_KEY = "selene_documents_v7";
+const LEGACY_STORAGE_KEY = "selene_documents_v6";
+
+export function getDocumentFolder(doc: { id?: string | null; folder?: string | null }): string {
+  if (doc.folder) return doc.folder;
+  const id = doc.id || "";
+  if (
+    id.startsWith("doc-starter") ||
+    id.startsWith("doc-sample") ||
+    id === "doc-architecture" ||
+    id === "doc-ui-playground" ||
+    id === "doc-api-rfc" ||
+    id === "doc-angular-showcase" ||
+    id === "doc-flutter-showcase" ||
+    id === "doc-python-datascience" ||
+    id.startsWith("sample-")
+  ) {
+    return "samples";
+  }
+  return "documents";
+}
 
 export function loadDocuments(): DocumentItem[] {
   if (typeof window === "undefined") return STARTER_TEMPLATES;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      // Check legacy v6 storage
+      raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    }
+
     if (!raw) {
       saveDocuments(STARTER_TEMPLATES);
       return STARTER_TEMPLATES;
     }
+
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : STARTER_TEMPLATES;
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      saveDocuments(STARTER_TEMPLATES);
+      return STARTER_TEMPLATES;
+    }
+
+    // Ensure all items have a folder assigned
+    const mapped: DocumentItem[] = parsed.map((doc: DocumentItem) => ({
+      ...doc,
+      folder: getDocumentFolder(doc),
+    }));
+
+    // Ensure built-in starter templates are present in samples/
+    const existingIds = new Set(mapped.map((d) => d.id));
+    const missingStarters = STARTER_TEMPLATES.filter((s) => !existingIds.has(s.id));
+    const finalDocs = missingStarters.length > 0 ? [...missingStarters, ...mapped] : mapped;
+
+    saveDocuments(finalDocs);
+    return finalDocs;
   } catch {
     return STARTER_TEMPLATES;
   }

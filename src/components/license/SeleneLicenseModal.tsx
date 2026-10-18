@@ -123,8 +123,8 @@ export function SeleneLicenseModal({
         setFeedback({ type: "error", message: data.message || "Failed to save key in vault." });
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setFeedback({ type: "error", message: `Vault encryption error: ${msg}` });
+      console.warn("Vault encryption error:", err);
+      setFeedback({ type: "error", message: "Failed to store key securely in the local vault. Please try again." });
     } finally {
       setSavingProvider(null);
     }
@@ -149,8 +149,8 @@ export function SeleneLicenseModal({
         if (data.keys) setAiKeys(data.keys);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setFeedback({ type: "error", message: `Deletion error: ${msg}` });
+      console.warn("Vault deletion error:", err);
+      setFeedback({ type: "error", message: "Failed to remove key from the vault. Please try again." });
     } finally {
       setSavingProvider(null);
     }
@@ -205,10 +205,10 @@ export function SeleneLicenseModal({
         }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("Activation error:", err);
       setFeedback({
         type: "error",
-        message: `Network error connecting to validation authority: ${msg}`,
+        message: "Unable to reach the license validation service. Please verify your internet connection and try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -252,10 +252,10 @@ export function SeleneLicenseModal({
         });
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("Deactivation error:", err);
       setFeedback({
         type: "error",
-        message: `Deactivation error: ${msg}`,
+        message: "Unable to reach the license authority. Please verify your internet connection and try again.",
       });
     } finally {
       setIsDeactivating(false);

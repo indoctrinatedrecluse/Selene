@@ -243,70 +243,82 @@ export function SeleneLoreModal({
                 {/* Titan Aura Mode */}
                 <button
                   onClick={() => onBackgroundModeChange("titan-aura")}
-                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
                     backgroundMode === "titan-aura"
-                      ? "bg-sky-500/10 border-sky-400 text-white shadow-lg shadow-sky-500/10"
+                      ? "bg-gradient-to-br from-cyan-950/50 via-slate-900 to-indigo-950/40 border-cyan-400 text-white shadow-lg shadow-cyan-500/15 ring-1 ring-cyan-400/30"
                       : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg">🌙</span>
-                    {backgroundMode === "titan-aura" && (
-                      <span className="text-[10px] font-mono text-sky-400 bg-sky-500/20 px-1.5 py-0.5 rounded">
+                    <span className="text-xl">🌙</span>
+                    {backgroundMode === "titan-aura" ? (
+                      <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/20 border border-cyan-400/30 px-1.5 py-0.5 rounded font-semibold">
                         Active
                       </span>
+                    ) : (
+                      <span className="text-[9px] font-mono text-slate-500">Sapphire</span>
                     )}
                   </div>
-                  <div className="text-xs font-semibold text-slate-200">Titan Aura</div>
-                  <div className="text-[10px] text-slate-400 mt-1">
-                    Luminous crescent, ethereal nebula haze & twinkling stardust.
+                  <div className="text-xs font-bold text-cyan-200">Titan Aura</div>
+                  <div className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                    Sapphire night sky, luminous cyan-blue corona halo & 75 drifting stardust particles.
                   </div>
+                  {/* Theme swatch visual */}
+                  <div className="mt-2.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-600 opacity-80" />
                 </button>
 
                 {/* Starry Cosmos Mode */}
                 <button
                   onClick={() => onBackgroundModeChange("starry-cosmos")}
-                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
                     backgroundMode === "starry-cosmos"
-                      ? "bg-sky-500/10 border-sky-400 text-white shadow-lg shadow-sky-500/10"
+                      ? "bg-gradient-to-br from-purple-950/60 via-slate-900 to-fuchsia-950/40 border-purple-400 text-white shadow-lg shadow-purple-500/15 ring-1 ring-purple-400/30"
                       : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg">✨</span>
-                    {backgroundMode === "starry-cosmos" && (
-                      <span className="text-[10px] font-mono text-sky-400 bg-sky-500/20 px-1.5 py-0.5 rounded">
+                    <span className="text-xl">✨</span>
+                    {backgroundMode === "starry-cosmos" ? (
+                      <span className="text-[10px] font-mono text-purple-300 bg-purple-500/20 border border-purple-400/30 px-1.5 py-0.5 rounded font-semibold">
                         Active
                       </span>
+                    ) : (
+                      <span className="text-[9px] font-mono text-slate-500">Galaxy</span>
                     )}
                   </div>
-                  <div className="text-xs font-semibold text-slate-200">Starry Cosmos</div>
-                  <div className="text-[10px] text-slate-400 mt-1">
-                    Gentle constellation particles with soft lunar crescent.
+                  <div className="text-xs font-bold text-purple-200">Starry Cosmos</div>
+                  <div className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                    Deep interstellar violet, 140+ dense galaxy stars, cosmic nebulae & meteor streaks.
                   </div>
+                  {/* Theme swatch visual */}
+                  <div className="mt-2.5 h-1.5 rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 opacity-80" />
                 </button>
 
                 {/* Midnight Dark Mode */}
                 <button
                   onClick={() => onBackgroundModeChange("midnight-dark")}
-                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
                     backgroundMode === "midnight-dark"
-                      ? "bg-sky-500/10 border-sky-400 text-white shadow-lg shadow-sky-500/10"
+                      ? "bg-gradient-to-br from-[#0c0e14] via-[#050609] to-[#020305] border-slate-400 text-white shadow-lg shadow-slate-500/10 ring-1 ring-slate-400/30"
                       : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg">🌑</span>
-                    {backgroundMode === "midnight-dark" && (
-                      <span className="text-[10px] font-mono text-sky-400 bg-sky-500/20 px-1.5 py-0.5 rounded">
+                    <span className="text-xl">🌑</span>
+                    {backgroundMode === "midnight-dark" ? (
+                      <span className="text-[10px] font-mono text-slate-200 bg-slate-700/40 border border-slate-600/40 px-1.5 py-0.5 rounded font-semibold">
                         Active
                       </span>
+                    ) : (
+                      <span className="text-[9px] font-mono text-slate-500">Stealth</span>
                     )}
                   </div>
-                  <div className="text-xs font-semibold text-slate-200">Midnight Dark</div>
-                  <div className="text-[10px] text-slate-400 mt-1">
-                    Pure, distraction-free deep dark canvas with zero ambient motion.
+                  <div className="text-xs font-bold text-slate-200">Midnight Dark</div>
+                  <div className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                    Pure pitch obsidian canvas with architectural coordinate dot grid & 0% CPU usage.
                   </div>
+                  {/* Theme swatch visual */}
+                  <div className="mt-2.5 h-1.5 rounded-full bg-gradient-to-r from-slate-600 via-slate-400 to-slate-200 opacity-60" />
                 </button>
               </div>
 

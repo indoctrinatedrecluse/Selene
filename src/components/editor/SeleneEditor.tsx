@@ -22,6 +22,7 @@ import {
   saveDocuments,
   DocumentItem,
   STARTER_TEMPLATES,
+  getDocumentFolder,
 } from "@/lib/workspace-store";
 import { createCollabSession, CollabSession, CollabUser } from "@/lib/collaboration";
 import { ProjectServerRenderer } from "@/components/render-engine/ProjectServerRenderer";
@@ -30,6 +31,47 @@ import {
   SeleneLunarBackground,
   LunarBackgroundMode,
 } from "@/components/brand/SeleneLunarBackground";
+
+const THEME_CONFIG: Record<
+  LunarBackgroundMode,
+  {
+    containerBg: string;
+    headerBg: string;
+    footerBg: string;
+    accentBadge: string;
+    accentText: string;
+    name: string;
+    icon: string;
+  }
+> = {
+  "titan-aura": {
+    containerBg: "bg-[#060913]",
+    headerBg: "bg-[#0b1120]/90 border-slate-800",
+    footerBg: "bg-[#0b1120]/90 border-slate-800",
+    accentBadge: "bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
+    accentText: "text-cyan-400",
+    name: "Titan Aura",
+    icon: "🌙",
+  },
+  "starry-cosmos": {
+    containerBg: "bg-[#080214]",
+    headerBg: "bg-[#130726]/90 border-purple-900/40",
+    footerBg: "bg-[#130726]/90 border-purple-900/40",
+    accentBadge: "bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30 text-purple-300",
+    accentText: "text-purple-400",
+    name: "Starry Cosmos",
+    icon: "✨",
+  },
+  "midnight-dark": {
+    containerBg: "bg-[#020305]",
+    headerBg: "bg-[#07080c]/95 border-slate-800/80",
+    footerBg: "bg-[#07080c]/95 border-slate-800/80",
+    accentBadge: "bg-slate-800/80 hover:bg-slate-800 border-slate-700/60 text-slate-300",
+    accentText: "text-slate-300",
+    name: "Midnight Dark",
+    icon: "🌑",
+  },
+};
 import { SeleneLoreModal, LoreModalTab } from "@/components/brand/SeleneLoreModal";
 import { SeleneSplashScreen } from "@/components/brand/SeleneSplashScreen";
 import { PublishExportModal } from "./PublishExportModal";
@@ -68,7 +110,36 @@ import { apiFetch, setCachedLicenseToken, setCachedHwid } from "@/lib/api-client
 export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
 export function SeleneEditor() {
-  const [lunarMode, setLunarMode] = useState<LunarBackgroundMode>("titan-aura");
+  const [lunarMode, setLunarModeState] = useState<LunarBackgroundMode>(() => {
+    if (typeof window === "undefined") return "titan-aura";
+    const saved = localStorage.getItem("selene_lunar_theme") as LunarBackgroundMode;
+    if (saved === "titan-aura" || saved === "starry-cosmos" || saved === "midnight-dark") {
+      return saved;
+    }
+    return "titan-aura";
+  });
+
+  const setLunarMode = useCallback((mode: LunarBackgroundMode) => {
+    setLunarModeState(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selene_lunar_theme", mode);
+    }
+  }, []);
+
+  const handleCycleTheme = useCallback(() => {
+    setLunarModeState((current) => {
+      let next: LunarBackgroundMode = "titan-aura";
+      if (current === "titan-aura") next = "starry-cosmos";
+      else if (current === "starry-cosmos") next = "midnight-dark";
+      else next = "titan-aura";
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("selene_lunar_theme", next);
+      }
+      return next;
+    });
+  }, []);
+
   const [isLoreModalOpen, setIsLoreModalOpen] = useState(false);
   const [loreInitialTab, setLoreInitialTab] = useState<LoreModalTab>("myth");
   const [showSplash, setShowSplash] = useState(() => {
@@ -154,6 +225,7 @@ export function SeleneEditor() {
                 title: string;
                 contentMarkdown: string;
                 icon?: string | null;
+                folder?: string | null;
                 createdAt: number;
                 updatedAt: number;
               }) => ({
@@ -161,6 +233,7 @@ export function SeleneEditor() {
                 title: d.title,
                 content: d.contentMarkdown,
                 icon: d.icon || "📄",
+                folder: getDocumentFolder(d),
                 createdAt: d.createdAt,
                 updatedAt: d.updatedAt,
               })
@@ -274,46 +347,51 @@ export function SeleneEditor() {
   };
 
   // Handle document creation
-  const handleCreateDoc = useCallback(async () => {
-    const newDoc: DocumentItem = {
-      id: `doc-${Date.now()}`,
-      title: "Untitled Document",
-      icon: "📄",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      content: `# Untitled Technical Canvas\n\nType \`/\` to insert live sandboxes, diagrams, or math formulas.\n`,
-    };
+  const handleCreateDoc = useCallback(
+    async (folder = "documents") => {
+      const newDoc: DocumentItem = {
+        id: `doc-${Date.now()}`,
+        title: "Untitled Document",
+        icon: "📄",
+        folder,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        content: `# Untitled Technical Canvas\n\nType \`/\` to insert live sandboxes, diagrams, or math formulas.\n`,
+      };
 
-    setDocuments((prev) => {
-      const nextDocs = [newDoc, ...prev];
-      saveDocuments(nextDocs);
-      return nextDocs;
-    });
-    setActiveDocId(newDoc.id);
-    setDocTitle(newDoc.title);
-    setMarkdownContent(newDoc.content);
-    if (editor) {
-      editor.commands.setContent(newDoc.content);
-    }
-
-    try {
-      await apiFetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newDoc),
+      setDocuments((prev) => {
+        const nextDocs = [newDoc, ...prev];
+        saveDocuments(nextDocs);
+        return nextDocs;
       });
-    } catch {
-      // Local storage fallback
-    }
-  }, [editor]);
+      setActiveDocId(newDoc.id);
+      setDocTitle(newDoc.title);
+      setMarkdownContent(newDoc.content);
+      if (editor) {
+        editor.commands.setContent(newDoc.content);
+      }
+
+      try {
+        await apiFetch("/api/documents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newDoc),
+        });
+      } catch {
+        // Local storage fallback
+      }
+    },
+    [editor]
+  );
 
   // Handle file import
   const handleImportDoc = useCallback(
-    async (title: string, content: string) => {
+    async (title: string, content: string, folder = "documents") => {
       const newDoc: DocumentItem = {
         id: `doc-${Date.now()}`,
         title,
         icon: "📥",
+        folder,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         content,
@@ -343,6 +421,38 @@ export function SeleneEditor() {
     },
     [editor]
   );
+
+  // Handle document rename from sidebar
+  const handleRenameDoc = useCallback(
+    (id: string, newTitle: string) => {
+      setDocuments((prev) => {
+        const updated = prev.map((d) =>
+          d.id === id ? { ...d, title: newTitle, updatedAt: Date.now() } : d
+        );
+        saveDocuments(updated);
+        return updated;
+      });
+      if (activeDocId === id) {
+        setDocTitle(newTitle);
+      }
+      const target = documents.find((d) => d.id === id);
+      if (target) {
+        debounceDbSave(id, newTitle, target.content);
+      }
+    },
+    [activeDocId, documents, debounceDbSave]
+  );
+
+  // Handle restoring built-in showcase samples
+  const handleRestoreSamples = useCallback(() => {
+    setDocuments((prev) => {
+      const existingIds = new Set(prev.map((d) => d.id));
+      const missingStarters = STARTER_TEMPLATES.filter((s) => !existingIds.has(s.id));
+      const nextDocs = [...missingStarters, ...prev];
+      saveDocuments(nextDocs);
+      return nextDocs;
+    });
+  }, []);
 
   // Desktop File I/O Handlers
   const handleDesktopOpen = useCallback(async () => {
@@ -527,14 +637,16 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
     setTimeout(() => setIsCopied(false), 2000);
   }, [markdownContent]);
 
+  const currentTheme = THEME_CONFIG[lunarMode] || THEME_CONFIG["titan-aura"];
+
   return (
-    <div className="relative flex flex-col h-screen bg-[#070A14] text-slate-100 overflow-hidden">
+    <div className={`relative flex flex-col h-screen ${currentTheme.containerBg} text-slate-100 overflow-hidden transition-colors duration-500`}>
       {/* Selene Ambient Lunar Background */}
       <SeleneLunarBackground mode={lunarMode} />
 
       {/* Top Navigation Bar */}
       {!isZenMode && (
-        <header className="relative z-10 flex items-center justify-between px-4 py-2 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shrink-0">
+        <header className={`relative z-10 flex items-center justify-between px-4 py-2 ${currentTheme.headerBg} backdrop-blur-md shrink-0 transition-colors duration-500`}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleOpenLore("myth")}
@@ -551,10 +663,19 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                 <button
                   onClick={() => handleOpenLore("myth")}
                   className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-300 text-[10px] font-mono transition-all cursor-pointer"
-                  title="View Moon Titan Lore & Canvas Themes"
+                  title="View Moon Titan Lore & Heritage"
                 >
                   <Sparkles className="w-2.5 h-2.5 text-amber-400" />
                   <span>Titan Lore</span>
+                </button>
+                {/* Quick 1-Click Theme Switcher */}
+                <button
+                  onClick={handleCycleTheme}
+                  className={`hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-mono transition-all cursor-pointer ${currentTheme.accentBadge}`}
+                  title={`Active Theme: ${currentTheme.name} (Click to toggle Titan Aura / Starry Cosmos / Midnight Dark)`}
+                >
+                  <span>{currentTheme.icon}</span>
+                  <span className="font-semibold">{currentTheme.name}</span>
                 </button>
                 <button
                   onClick={() => handleOpenLore("about")}
@@ -759,6 +880,8 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
             onCreateDoc={handleCreateDoc}
             onImportDoc={handleImportDoc}
             onDeleteDoc={handleDeleteDoc}
+            onRenameDoc={handleRenameDoc}
+            onRestoreSamples={handleRestoreSamples}
             onOpenRevisions={() => {
               loadRevisions(activeDocId);
               setShowRevisions(true);
@@ -894,7 +1017,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
 
       {/* Bottom Status Footer */}
       {!isZenMode && (
-        <footer className="relative z-10 flex items-center justify-between px-6 py-2 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 text-xs text-slate-400 shrink-0">
+        <footer className={`relative z-10 flex items-center justify-between px-6 py-2 ${currentTheme.footerBg} backdrop-blur-md text-xs text-slate-400 shrink-0 transition-colors duration-500`}>
           <div className="flex items-center gap-4">
             <button
               onClick={() => handleOpenLore("myth")}

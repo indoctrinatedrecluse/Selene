@@ -134,3 +134,17 @@ This release marks the culmination of the 4 core roadmap pillars for Selene: Uni
 #### 👥 Real-Time Collaboration & Persistence
 - Multiplayer CRDT editing powered by **Yjs** and **y-webrtc**.
 - Document storage with SQLite / LibSQL database persistence and automatic localStorage fallback.
+
+#### 🛠️ Polish, Explorer Architecture & Canvas Ambiance
+- **Workspace Explorer & File Manager** (`src/components/editor/WorkspaceSidebar.tsx`):
+  - Fixed CSS flexbox truncation bug ensuring document and folder titles never collapse and always display with high contrast and full width (`flex-1 min-w-0`).
+  - Hierarchical folder structure separating `samples/` product showcase from user `documents/`.
+  - Added custom folder creation (`+ Folder`), inline renaming (`Edit2`), and real-time multi-folder search.
+- **Three Distinct Lunar Canvas Ambiance Themes** (`SeleneLunarBackground.tsx`, `SeleneEditor.tsx`):
+  - *Titan Aura*: Sapphire night sky (`#060913`), pulsing cyan/sapphire lunar corona halo, and 75 drifting stardust particles.
+  - *Starry Cosmos*: Deep interstellar violet void (`#080214`), vibrant galactic nebulae, 140+ dense galaxy stars with cross-flares, and animated meteor shooting stars.
+  - *Midnight Dark*: Pure pitch obsidian (`#020305`), architectural 28px coordinate dot-matrix grid, and cold silver moonlit rim silhouette with 0% CPU overhead.
+  - Global container, header, and footer theme adaptation with 1-click header switcher and `localStorage` persistence.
+- **Engine Loading Screen & Sensitive URL Redaction** (`desktop-dist/index.html`, `electron/splash.html`, `SeleneLicenseModal.tsx`):
+  - Redacted internal backend endpoints from initial desktop loading splash screens in favor of clean, user-friendly status messages ("Loading Selene polymorphic engine...").
+  - Formatted network and license errors into human-readable alerts without exposing infrastructure URLs or stack traces.
