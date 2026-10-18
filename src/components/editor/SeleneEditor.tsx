@@ -96,7 +96,10 @@ import {
   Save,
   Monitor,
   HelpCircle,
+  BookOpen,
+  X,
 } from "lucide-react";
+import { PaperToCanvasModal } from "@/components/ai/PaperToCanvasModal";
 import {
   openLocalDocument,
   saveLocalDocument,
@@ -179,18 +182,9 @@ export function SeleneEditor() {
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
   const [isAiCopilotOpen, setIsAiCopilotOpen] = useState(false);
-
-  // Global Keyboard Shortcuts (Ctrl+Shift+A for AI Copilot)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
-        e.preventDefault();
-        setIsAiCopilotOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  const [isGhostwritingEnabled, setIsGhostwritingEnabled] = useState(true);
+  const [ghostSuggestion, setGhostSuggestion] = useState<string | null>(null);
+  const [isPaperToCanvasOpen, setIsPaperToCanvasOpen] = useState(false);
 
   // Fetch License Status from Registry Authority on mount
   useEffect(() => {
@@ -323,10 +317,40 @@ export function SeleneEditor() {
 
         // Trigger debounced cloud save
         debounceDbSave(activeDocId, docTitle, md);
+
+        // Trigger debounced AI ghostwriter
+        if (isGhostwritingEnabled) {
+          setGhostSuggestion(null);
+          if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+          ghostTimeoutRef.current = setTimeout(async () => {
+            try {
+              const { from } = editor.state.selection;
+              const textBefore = editor.state.doc.textBetween(Math.max(0, from - 800), from, "\n");
+              if (!textBefore || textBefore.trim().length < 8) return;
+
+              const res = await fetch("/api/ai/complete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contextBefore: textBefore,
+                  mode: "prose",
+                }),
+              });
+              const data = await res.json();
+              if (data.success && data.completion && data.completion.trim()) {
+                setGhostSuggestion(data.completion.trim());
+              }
+            } catch {
+              // Ignore abort or network failure
+            }
+          }, 650);
+        }
       }
     },
     immediatelyRender: false,
   });
+
+  const ghostTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced DB persistence
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -347,6 +371,29 @@ export function SeleneEditor() {
       }
     }, 800);
   }, []);
+
+  // Global Keyboard Shortcuts (Ctrl+Shift+A: Copilot, Alt+G: Ghostwriter, Tab: Accept Ghost)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+        e.preventDefault();
+        setIsAiCopilotOpen((prev) => !prev);
+      } else if (e.altKey && (e.key === "G" || e.key === "g")) {
+        e.preventDefault();
+        setIsGhostwritingEnabled((prev) => !prev);
+      } else if (e.key === "Tab" && ghostSuggestion) {
+        e.preventDefault();
+        if (editor) {
+          editor.commands.insertContent(ghostSuggestion);
+        }
+        setGhostSuggestion(null);
+      } else if (e.key === "Escape" && ghostSuggestion) {
+        setGhostSuggestion(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [editor, ghostSuggestion]);
 
   // Handle document selection
   const handleSelectDoc = (id: string) => {
@@ -751,6 +798,23 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               )}
             </button>
 
+            {/* AI Ghostwriter Autocomplete Toggle */}
+            <button
+              onClick={() => setIsGhostwritingEnabled(!isGhostwritingEnabled)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                isGhostwritingEnabled
+                  ? "bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm"
+                  : "bg-slate-800/80 text-slate-400 border border-slate-700/60"
+              }`}
+              title="Toggle AI Ghostwriting & Autocomplete (Alt+G)"
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${isGhostwritingEnabled ? "text-amber-400" : "text-slate-500"}`} />
+              <span className="hidden xl:inline">Ghostwriter</span>
+              <span className="text-[10px] font-mono px-1 rounded bg-slate-900/80">
+                {isGhostwritingEnabled ? "ON" : "OFF"}
+              </span>
+            </button>
+
             {/* Selene AI Canvas Copilot Button */}
             <button
               onClick={() => setIsAiCopilotOpen(true)}
@@ -759,6 +823,16 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
             >
               <Sparkles className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
               <span>AI Copilot</span>
+            </button>
+
+            {/* Paper-to-Canvas Multimodal Ingestion */}
+            <button
+              onClick={() => setIsPaperToCanvasOpen(true)}
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-all shadow-sm cursor-pointer"
+              title="Paper-to-Canvas: Ingest PDF, Screenshot, or Hand-drawn Math"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Paper Ingest</span>
             </button>
 
             {/* Version History Toggle */}
@@ -918,6 +992,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               loadRevisions(activeDocId);
               setShowRevisions(true);
             }}
+            onOpenPaperIngest={() => setIsPaperToCanvasOpen(true)}
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           />
@@ -1061,6 +1136,48 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         documentTitle={docTitle}
         markdownContent={markdownContent}
       />
+
+      {/* Paper-to-Canvas Multimodal Ingestion Modal */}
+      <PaperToCanvasModal
+        isOpen={isPaperToCanvasOpen}
+        onClose={() => setIsPaperToCanvasOpen(false)}
+        onInsertContent={(md) => {
+          if (editor) {
+            editor.commands.insertContent(`\n\n${md}\n\n`);
+          } else {
+            setMarkdownContent((prev) => `${prev}\n\n${md}\n\n`);
+          }
+        }}
+        onCreateNewDoc={(title, md) => {
+          handleImportDoc(title, md, "documents");
+        }}
+      />
+
+      {/* Floating Ghostwriter Suggestion Bar */}
+      {ghostSuggestion && isGhostwritingEnabled && (
+        <div className="fixed bottom-14 right-8 z-40 max-w-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-slate-900/95 p-3.5 shadow-[0_10px_35px_rgba(251,191,36,0.15)] backdrop-blur-md">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-400 animate-pulse" />
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <div className="flex items-center gap-2 text-[10px] font-mono text-amber-400 font-bold">
+                <span>AI GHOSTWRITER</span>
+                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">Tab to Accept</span>
+                <span className="text-slate-500">Esc to Dismiss</span>
+              </div>
+              <p className="text-xs text-slate-200 italic font-sans leading-relaxed break-words">
+                &ldquo;{ghostSuggestion}&rdquo;
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setGhostSuggestion(null)}
+              className="rounded p-1 text-slate-500 hover:text-white transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Status Footer */}
       {!isZenMode && (

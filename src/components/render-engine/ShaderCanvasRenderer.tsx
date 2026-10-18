@@ -12,6 +12,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 interface ShaderCanvasRendererProps {
   initialCode?: string;
@@ -427,12 +428,19 @@ export function ShaderCanvasRenderer({
         {/* Live Canvas Viewport Pane */}
         {(viewMode === "split" || viewMode === "canvas") && (
           <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-3 bg-black relative overflow-hidden`}>
-            {shaderError ? (
-              <div className="p-4 bg-red-950/80 border border-red-500 text-red-200 text-xs font-mono rounded-xl max-w-md overflow-auto z-10">
-                <div className="font-bold text-red-400 mb-1">Shader Compile Error:</div>
-                <pre className="whitespace-pre-wrap">{shaderError}</pre>
+            {shaderError && (
+              <div className="absolute inset-x-4 top-4 z-20">
+                <SandboxAutoFixLens
+                  code={code}
+                  language="glsl"
+                  errorMessage={shaderError}
+                  onApplyFix={(fixedCode) => {
+                    setCode(fixedCode);
+                    if (onCodeChange) onCodeChange(fixedCode);
+                  }}
+                />
               </div>
-            ) : null}
+            )}
 
             <canvas
               ref={canvasRef}

@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { executePythonCode, PythonExecutionResult } from "@/lib/pyodide-engine";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 interface PythonNotebookRendererProps {
   initialCode?: string;
@@ -357,16 +358,28 @@ export function PythonNotebookRenderer({
 
           {/* Standard Error / Traceback (stderr) */}
           {output.stderr && (
-            <div className="rounded-xl bg-rose-950/30 border border-rose-900/50 p-3 shadow-inner">
-              <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-rose-900/40 text-[10px] font-mono text-rose-400">
-                <span className="flex items-center gap-1 font-semibold">
-                  <AlertCircle className="w-3 h-3" />
-                  <span>TRACEBACK / STDERR</span>
-                </span>
+            <div className="space-y-2">
+              <div className="rounded-xl bg-rose-950/30 border border-rose-900/50 p-3 shadow-inner">
+                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-rose-900/40 text-[10px] font-mono text-rose-400">
+                  <span className="flex items-center gap-1 font-semibold">
+                    <AlertCircle className="w-3 h-3" />
+                    <span>TRACEBACK / STDERR</span>
+                  </span>
+                </div>
+                <pre className="font-mono text-xs text-rose-300/90 whitespace-pre-wrap leading-relaxed overflow-x-auto">
+                  {output.stderr}
+                </pre>
               </div>
-              <pre className="font-mono text-xs text-rose-300/90 whitespace-pre-wrap leading-relaxed overflow-x-auto">
-                {output.stderr}
-              </pre>
+
+              <SandboxAutoFixLens
+                code={code}
+                language="python"
+                errorMessage={output.stderr}
+                onApplyFix={(fixedCode) => {
+                  setCode(fixedCode);
+                  if (onCodeChange) onCodeChange(fixedCode);
+                }}
+              />
             </div>
           )}
         </div>

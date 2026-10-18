@@ -12,6 +12,7 @@ import {
   Columns,
   Eye,
 } from "lucide-react";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 interface SqlDataStudioRendererProps {
   initialCode?: string;
@@ -493,11 +494,20 @@ export function SqlDataStudioRenderer({
             </div>
 
             {/* Error Message */}
-            {result.error ? (
-              <div className="p-4 bg-red-950/60 border-l-4 border-red-500 text-red-200 text-xs font-mono m-3 rounded-lg">
-                <strong>SQL Syntax Error:</strong> {result.error}
+            {result.error && (
+              <div className="m-3">
+                <SandboxAutoFixLens
+                  code={query}
+                  language="sql"
+                  errorMessage={result.error}
+                  onApplyFix={(fixedCode) => {
+                    setQuery(fixedCode);
+                    if (onCodeChange) onCodeChange(fixedCode);
+                  }}
+                />
               </div>
-            ) : result.rows.length === 0 ? (
+            )}
+            {!result.error && result.rows.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-xs text-slate-500 p-8">
                 No records matched the query criteria.
               </div>

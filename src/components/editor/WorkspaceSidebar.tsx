@@ -20,6 +20,7 @@ import {
   Edit2,
   Check,
   FileCode2,
+  BookOpen,
 } from "lucide-react";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 import { SELENE_VERSION_DISPLAY } from "@/lib/version";
@@ -34,6 +35,7 @@ interface WorkspaceSidebarProps {
   onRenameDoc?: (id: string, newTitle: string) => void;
   onRestoreSamples?: () => void;
   onOpenRevisions: () => void;
+  onOpenPaperIngest?: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -48,6 +50,7 @@ export function WorkspaceSidebar({
   onRenameDoc,
   onRestoreSamples,
   onOpenRevisions,
+  onOpenPaperIngest,
   isCollapsed,
   onToggleCollapse,
 }: WorkspaceSidebarProps) {
@@ -253,6 +256,15 @@ export function WorkspaceSidebar({
           >
             <Upload className="w-3.5 h-3.5" />
           </button>
+          {onOpenPaperIngest && (
+            <button
+              onClick={onOpenPaperIngest}
+              className="w-6 h-6 flex items-center justify-center rounded text-indigo-400 hover:text-indigo-300 hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Paper-to-Canvas Ingestion (PDF / Image / Formulas)"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button
             onClick={handleToggleAllFolders}
             className="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
