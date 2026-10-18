@@ -16,7 +16,8 @@ export type AccentColorId =
   | "rose"
   | "amber"
   | "violet"
-  | "fuchsia";
+  | "fuchsia"
+  | "red";
 
 export type SurfaceThemeId =
   | "slate"
@@ -81,6 +82,7 @@ export const ACCENT_THEMES = [
   { id: "amber" as const, name: "Amber Solar", bg: "bg-amber-500", text: "text-amber-400", hex: "#f59e0b", darkHex: "#d97706" },
   { id: "violet" as const, name: "Violet Nebulae", bg: "bg-violet-500", text: "text-violet-400", hex: "#8b5cf6", darkHex: "#7c3aed" },
   { id: "fuchsia" as const, name: "Fuchsia Flare", bg: "bg-fuchsia-500", text: "text-fuchsia-400", hex: "#d946ef", darkHex: "#c026d3" },
+  { id: "red" as const, name: "Crimson Titan", bg: "bg-red-500", text: "text-red-400", hex: "#ef4444", darkHex: "#dc2626" },
 ];
 
 export const SURFACE_THEMES = [
@@ -144,11 +146,27 @@ export const DEFAULT_UNIVERSAL_PROPS: UniversalVisualProps = {
 export function extractVisualProps(code: string, language = "tsx"): UniversalVisualProps {
   const result: UniversalVisualProps = { ...DEFAULT_UNIVERSAL_PROPS };
 
+  const lang = language.toLowerCase();
+
   // 1. Title Extraction
-  const headingMatch = code.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
-  if (headingMatch && headingMatch[1]) {
-    // Strip inner HTML/JSX tags if any
-    result.title = headingMatch[1].replace(/<[^>]+>/g, "").trim();
+  if (lang === "blade" || lang === "php" || lang === "laravel") {
+    const phpTitle = code.match(/\$(?:cluster|title|name)\s*=\s*["']([^"']+)["']/);
+    if (phpTitle) result.title = phpTitle[1];
+  } else if (lang === "erb" || lang === "ruby" || lang === "rails") {
+    const rubyTitle = code.match(/@(?:cluster|title|name)\s*=\s*["']([^"']+)["']/);
+    if (rubyTitle) result.title = rubyTitle[1];
+  } else if (lang === "go" || lang === "golang" || lang === "gotemplate" || lang === "hugo") {
+    const goTitle = code.match(/"(?:Cluster|Title|Name)":\s*"([^"]+)"/);
+    if (goTitle) result.title = goTitle[1];
+  } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
+    const djangoTitle = code.match(/"(?:cluster|title|name)":\s*"([^"]+)"/);
+    if (djangoTitle) result.title = djangoTitle[1];
+  } else {
+    const headingMatch = code.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
+    if (headingMatch && headingMatch[1]) {
+      // Strip inner HTML/JSX tags if any
+      result.title = headingMatch[1].replace(/<[^>]+>/g, "").trim();
+    }
   }
 
   // 2. Subtitle / Description Extraction
@@ -181,10 +199,10 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
       const val = parseFloat(cssPadding[1]);
       const unit = cssPadding[2];
       const px = unit === "rem" ? val * 16 : val;
-      if (px <= 14) result.padding = "p-3";
-      else if (px <= 18) result.padding = "p-4";
-      else if (px <= 26) result.padding = "p-6";
-      else if (px <= 34) result.padding = "p-8";
+      if (px <= 12) result.padding = "p-3";
+      else if (px <= 16) result.padding = "p-4";
+      else if (px <= 24) result.padding = "p-6";
+      else if (px <= 32) result.padding = "p-8";
       else result.padding = "p-10";
     }
   }
@@ -216,7 +234,7 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
 
   // 7. Accent Color Detection
   const colorMatch = code.match(
-    /\b(?:bg|text|from|to|border)-(sky|cyan|indigo|emerald|rose|amber|violet|fuchsia)-[0-9]{2,3}\b/
+    /\b(?:bg|text|from|to|border)-(sky|cyan|indigo|emerald|rose|amber|violet|fuchsia|red)-[0-9]{2,3}\b/
   );
   if (colorMatch) {
     result.accentColor = colorMatch[1] as AccentColorId;
@@ -255,15 +273,27 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
   }
 
   // 10. Initial Count / Numeric State
-  if (language === "vue") {
+  if (lang === "vue") {
     const vueRef = code.match(/ref\(\s*(\d+)\s*\)/);
     if (vueRef) result.initialCount = parseInt(vueRef[1], 10);
-  } else if (language === "svelte") {
+  } else if (lang === "svelte") {
     const svelteCount = code.match(/let\s+count\s*=\s*(\d+)/);
     if (svelteCount) result.initialCount = parseInt(svelteCount[1], 10);
-  } else if (language === "angular") {
+  } else if (lang === "angular") {
     const ngCount = code.match(/(?:count|score|velocity)\s*=\s*(\d+(?:\.\d+)?)/);
     if (ngCount) result.initialCount = parseFloat(ngCount[1]);
+  } else if (lang === "blade" || lang === "php" || lang === "laravel") {
+    const alpineCount = code.match(/count:\s*(\d+)/) || code.match(/\$count\s*=\s*(\d+)/);
+    if (alpineCount) result.initialCount = parseInt(alpineCount[1], 10);
+  } else if (lang === "erb" || lang === "ruby" || lang === "rails") {
+    const rubyCount = code.match(/@count\s*=\s*(\d+)/) || code.match(/counter"[^>]*>(\d+)</);
+    if (rubyCount) result.initialCount = parseInt(rubyCount[1], 10);
+  } else if (lang === "go" || lang === "golang" || lang === "gotemplate" || lang === "hugo") {
+    const goCount = code.match(/"(?:Goroutines|Count|count)":\s*(\d+)/);
+    if (goCount) result.initialCount = parseInt(goCount[1], 10);
+  } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
+    const pyCount = code.match(/"(?:workers|count|Count)":\s*(\d+)/);
+    if (pyCount) result.initialCount = parseInt(pyCount[1], 10);
   } else {
     // React / TSX
     const reactState = code.match(/useState\(\s*(\d+)\s*\)/);
@@ -282,11 +312,21 @@ export function applyVisualProps(
   props: UniversalVisualProps
 ): string {
   let updated = code;
+  const lang = language.toLowerCase();
 
   // 1. Update Title
   if (props.title) {
+    if (lang === "blade" || lang === "php" || lang === "laravel") {
+      updated = updated.replace(/(\$(?:cluster|title|name)\s*=\s*["'])[^"']+(["'])/, `$1${props.title}$2`);
+    } else if (lang === "erb" || lang === "ruby" || lang === "rails") {
+      updated = updated.replace(/(@(?:cluster|title|name)\s*=\s*["'])[^"']+(["'])/, `$1${props.title}$2`);
+    } else if (lang === "go" || lang === "golang" || lang === "gotemplate" || lang === "hugo") {
+      updated = updated.replace(/("(?:Cluster|Title|Name)":\s*")[^"]+(")/, `$1${props.title}$2`);
+    } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
+      updated = updated.replace(/("(?:cluster|title|name)":\s*")[^"]+(")/, `$1${props.title}$2`);
+    }
     const titleMatch = updated.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
-    if (titleMatch) {
+    if (titleMatch && !titleMatch[1].includes("{{") && !titleMatch[1].includes("<%")) {
       updated = updated.replace(
         /<h([1-6])([^>]*)>(.*?)<\/h\1>/,
         `<h$1$2>${props.title}</h$1>`
@@ -345,7 +385,7 @@ export function applyVisualProps(
   // 6. Update Accent Color (Tailwind classes)
   const targetTheme = ACCENT_THEMES.find((t) => t.id === props.accentColor) || ACCENT_THEMES[0];
   updated = updated.replace(
-    /\b(bg|text|from|to|border)-(?:sky|cyan|indigo|emerald|rose|amber|violet|fuchsia)-([0-9]{2,3})\b/g,
+    /\b(bg|text|from|to|border)-(?:sky|cyan|indigo|emerald|rose|amber|violet|fuchsia|red)-([0-9]{2,3})\b/g,
     `$1-${targetTheme.id}-$2`
   );
 
@@ -390,15 +430,26 @@ export function applyVisualProps(
 
   // 9. Update Initial Count / Numeric State if provided
   if (props.initialCount !== undefined && !isNaN(props.initialCount)) {
-    if (language === "vue") {
+    if (lang === "vue") {
       updated = updated.replace(/ref\(\s*\d+\s*\)/g, `ref(${props.initialCount})`);
-    } else if (language === "svelte") {
+    } else if (lang === "svelte") {
       updated = updated.replace(/let\s+count\s*=\s*\d+;/g, `let count = ${props.initialCount};`);
-    } else if (language === "angular") {
+    } else if (lang === "angular") {
       updated = updated.replace(
         /(count|score|velocity)\s*=\s*\d+(?:\.\d+)?/g,
         `$1 = ${props.initialCount}`
       );
+    } else if (lang === "blade" || lang === "php" || lang === "laravel") {
+      updated = updated.replace(/count:\s*\d+/g, `count: ${props.initialCount}`);
+      updated = updated.replace(/\$count\s*=\s*\d+/g, `$count = ${props.initialCount}`);
+      updated = updated.replace(/(x-text="[^"]*"[^>]*>)\d*(<\/span>)/g, `$1${props.initialCount}$2`);
+    } else if (lang === "erb" || lang === "ruby" || lang === "rails") {
+      updated = updated.replace(/@count\s*=\s*\d+/g, `@count = ${props.initialCount}`);
+      updated = updated.replace(/(data-telemetry-target="counter"[^>]*>)\d*(<\/span>)/g, `$1${props.initialCount}$2`);
+    } else if (lang === "go" || lang === "golang" || lang === "gotemplate" || lang === "hugo") {
+      updated = updated.replace(/("(?:Goroutines|Count|count)":\s*)\d+/g, `$1${props.initialCount}`);
+    } else if (lang === "django" || lang === "jinja" || lang === "jinja2") {
+      updated = updated.replace(/("(?:workers|count|Count)":\s*)\d+/g, `$1${props.initialCount}`);
     } else {
       updated = updated.replace(/useState\(\s*\d+\s*\)/g, `useState(${props.initialCount})`);
     }

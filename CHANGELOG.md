@@ -7,38 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] - Sprint 1: Full-Stack Polyglot Live Renders (PHP/Laravel & Ruby on Rails)
+## [Unreleased] - Sprint 2: Go (Hugo) & Django (Jinja2) Live Engines + Universal Visual Inspector
 
-### 🐘 PHP 8.3 & Laravel 11 Blade Live Render Engine (`PhpLaravelRenderer.tsx`)
-- **Native In-Browser Blade Compiler**: In-memory compilation of Blade directives including `@php ... @endphp`, `@foreach ($collection as $item) ... @endforeach`, `@if (...) ... @elseif (...) ... @else ... @endif`, `{{ $variable }}`, `{{ strtoupper(...) }}`, and `{{ count(...) }}`.
-- **Client-Side Alpine.js 3.x Execution**: Embedded Alpine.js runtime inside an isolated iframe sandbox enabling real-time tab switching, counters, and reactive attributes with 0ms latency.
-- **Dual Execution Modes**:
-  - *Blade Engine*: 100% offline in-browser playground.
-  - *Artisan Serve Bridge*: Seamless live iframe connection to local `php artisan serve` (port 8000) with automatic server health pinging.
-- **Responsive Device Previews & Layouts**: Desktop, Tablet, and Mobile phone views, plus Split, Canvas, and Code editor modes.
-- **Built-in Curated Presets**:
-  - ⚡ *Laravel Metric Card*: Dynamic telemetry with Alpine.js tabs and service loop.
-  - 📦 *Eloquent Collection Table*: `App\Models\CelestialTeam::all()` simulation with status badges.
+### 🐹 Go 1.23 `html/template` & Hugo Live Render Engine (`GoTemplateRenderer.tsx`)
+- **Native In-Browser Go Template Compiler**: Instant client-side evaluation of `html/template` syntax including `{{ .Property }}`, `{{ range .Collection }} ... {{ end }}`, `{{ if eq .Field "val" }} ... {{ else }} ... {{ end }}`, and pipeline functions (`upper`, `lower`, `len`).
+- **Embedded Mock Context Extraction**: Automatic parsing of `{{/* Context: { ... } */}}` JSON comment blocks for zero-latency in-memory data binding.
+- **Dual Execution Runtime**:
+  - *Go Template Engine*: 100% offline in-browser execution with Tailwind CSS 3.4 integration.
+  - *Go HTTP Server Bridge*: Direct connection to local Go servers (`http://localhost:8080`) or Hugo dev server (`http://localhost:1313`).
+- **Responsive Device Previews & Layouts**: Desktop, Tablet, and Mobile frames with split, canvas, and code modes.
+- **Universal Visual Inspector Support**: Connected to `UniversalPropertyInspector` with bi-directional AST patching for Go template contexts, padding, border radius, colors, and elevations.
 
-### 💎 Ruby 3.3 & Rails 8.0 ERB Live Render Engine (`RubyRailsRenderer.tsx`)
-- **Native In-Browser ERB Compiler**: Evaluates Ruby variable definitions (`<% @var = ... %>`), iteration loops (`<% @collection.each do |item| %> ... <% end %>`), conditionals (`<% if ... %> ... <% else %> ... <% end %>`), and string interpolations (`<%= @var %>`, `<%== @var %>`).
-- **Rails View Helpers & Hotwire Turbo Frames**: Native simulation of `<%= turbo_frame_tag "id" do %>`, `<%= number_to_currency(...) %>`, `<%= pluralize(...) %>`, and `<%= @status.upcase %>`.
-- **Stimulus Controller Simulation**: Interactive `data-controller`, `data-action`, and `data-target` event listeners running live in the sandboxed preview.
-- **Dual Execution Modes**:
-  - *ERB Engine*: 100% offline in-browser execution.
-  - *Puma Server Bridge*: Real-time bridge to local `bin/rails server` (port 3000) with active status monitoring.
-- **Responsive Previews & Layouts**: Desktop, Tablet, and Mobile frames with split, canvas, and code views.
-- **Built-in Curated Presets**:
-  - 🚀 *Rails Hotwire / Turbo Frame Card*: Real-time stream dispatcher and status metrics.
-  - 💎 *ActiveRecord Query Table*: `Deployment.recent.includes(:author)` relation with formatted columns.
+### 🐍 Django 5.0 & Jinja2 Live Render Engine (`DjangoJinjaRenderer.tsx`)
+- **Native In-Browser DTL / Jinja2 Compiler**: Real-time client-side evaluation of Django Template Language and Jinja2 syntax including `{{ variable }}`, `{{ variable|filter }}`, `{% for item in collection %} ... {% endfor %}`, and `{% if condition %} ... {% endif %}`.
+- **Embedded Mock Context Extraction**: Automatic parsing of `{# Context: { ... } #}` JSON comment blocks for instant mock data binding.
+- **Dual Execution Runtime**:
+  - *Jinja Engine*: 100% offline in-browser sandbox with Tailwind CSS 3.4 integration.
+  - *Django / FastAPI Server Bridge*: Direct iframe proxy to local Django servers (`http://localhost:8000`) or FastAPI/Flask instances.
+- **Responsive Device Previews & Layouts**: Desktop, Tablet, and Mobile phone frames with split, canvas, and code modes.
+- **Universal Visual Inspector Support**: Connected to `UniversalPropertyInspector` with bi-directional AST patching for context variables, sizing, themes, and colors.
+
+### 🎛️ Point 2: Universal Visual Inspector Extension (Blade & ERB)
+- Enhanced `UniversalPropertyInspector` and `ast-transformer.ts` with bidirectional visual tweaking support for:
+  - **PHP / Laravel Blade**: `$cluster`, `$count`, Alpine.js `x-text`, padding, rounded corners, surface themes, and accent colors.
+  - **Ruby on Rails ERB**: `@cluster`, `@count`, Hotwire `data-telemetry-target="counter"`, padding, border radiuses, surface themes, and accent colors.
+- Added Crimson Titan (`red`) accent color theme to `ACCENT_THEMES` for Laravel's signature aesthetic.
 
 ### 📁 Showcase Documents & Language Integration
-- Added dedicated showcase sample documents in `samples/`:
-  - `06_php_laravel_blade_showcase.md` (`🐘`)
-  - `07_ruby_on_rails_erb_showcase.md` (`💎`)
-- Updated `LiveCodeBlockView.tsx` with automatic routing for `blade`, `php`, `laravel`, `erb`, `rails`, and `ruby`.
-- Added starter snippets and language options to `stack-templates.ts`.
-- Implemented persistent storage migration (`selene_documents_v8`) preserving existing documents while delivering new starter showcases.
+- Added dedicated showcase sample documents in `samples/` and `src/lib/workspace-store.ts`:
+  - `06_php_laravel_blade_showcase.md` (`🐘` PHP & Laravel Blade)
+  - `07_ruby_on_rails_erb_showcase.md` (`💎` Ruby on Rails ERB)
+  - `08_go_template_hugo_showcase.md` (`🐹` Go `html/template` & Hugo)
+  - `09_django_jinja2_python_showcase.md` (`🐍` Django DTL & Jinja2)
+- Updated `LiveCodeBlockView.tsx` with automatic routing for `go`, `golang`, `gotemplate`, `hugo`, `django`, `jinja`, and `jinja2`.
+- Updated `stack-templates.ts` with default snippets for all new template languages.
+- Upgraded persistent storage migration key to `selene_documents_v9`, seamlessly hydrating new starter showcases without overwriting existing user documents.
 
 ## [0.1.0] - 2026-10-18
 

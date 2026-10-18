@@ -31,6 +31,30 @@ This directory contains curated, production-grade sample documents demonstrating
    - Live running widgets executing directly on slides.
    - Press **Deck Mode** or `F5` to present.
 
+6. [`06_php_laravel_blade_showcase.md`](./06_php_laravel_blade_showcase.md)
+   - PHP 8.3 & Laravel 11 Blade engine integration.
+   - In-browser Blade directive parsing (`@php`, `@foreach`, `@if`, `{{ }}`).
+   - Client-side Alpine.js 3.x reactivity & Tailwind CSS styling.
+   - Dual-runtime support (in-browser sandbox & local `php artisan serve` bridge).
+
+7. [`07_ruby_on_rails_erb_showcase.md`](./07_ruby_on_rails_erb_showcase.md)
+   - Ruby 3.3 & Rails 8.0 ERB engine integration.
+   - In-browser ERB scriptlet and helper parsing (`<%= turbo_frame_tag %>`, `<%= number_to_currency %>`, `<%= pluralize %>`).
+   - Hotwire Turbo Frames and Stimulus controller simulation.
+   - Dual-runtime support (in-browser sandbox & local `bin/rails server` Puma bridge).
+
+8. [`08_go_template_hugo_showcase.md`](./08_go_template_hugo_showcase.md)
+   - Go 1.23 `html/template` & Hugo static site template engine integration.
+   - In-browser parser for variables (`{{ .Field }}`), loops (`{{ range }}`), conditionals (`{{ if }}`), and pipeline filters (`upper`, `len`).
+   - Embedded mock context evaluation with 0ms latency.
+   - Dual-runtime support (in-browser sandbox & local Go HTTP server bridge on port 8080).
+
+9. [`09_django_jinja2_python_showcase.md`](./09_django_jinja2_python_showcase.md)
+   - Python 3.12, Django Template Language (DTL), and Jinja2 engine integration.
+   - In-browser parser for template filters (`|upper`, `|length`), control tags (`{% for %}`, `{% if %}`), and context variables.
+   - Fast client-side sandbox execution with Tailwind CSS styling.
+   - Dual-runtime support (in-browser sandbox & local Django / FastAPI server bridge on port 8000).
+
 ---
 
 ## 🚀 How to Open in Selene

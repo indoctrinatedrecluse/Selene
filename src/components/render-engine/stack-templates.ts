@@ -703,6 +703,101 @@ class _CounterScreenState extends State<CounterScreen> {
   <p class="text-xs text-slate-400">Uptime: <%= @uptime %></p>
 </div>
 `,
+  go: `{{/* Context:
+{
+  "Cluster": "Artemis-Golang-10",
+  "Uptime": "99.99%",
+  "Goroutines": 14280,
+  "Throughput": "184.2 MB/s",
+  "Status": "optimal"
+}
+*/}}
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-cyan-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white">{{ .Cluster }}</h3>
+    <span class="text-xs font-mono text-emerald-400">{{ upper .Status }}</span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Throughput: {{ .Throughput }}</p>
+  <p class="text-xs text-slate-400">Uptime: {{ .Uptime }}</p>
+</div>
+`,
+  gotemplate: `{{/* Context:
+{
+  "Cluster": "Artemis-Golang-10",
+  "Uptime": "99.99%",
+  "Goroutines": 14280,
+  "Throughput": "184.2 MB/s",
+  "Status": "optimal"
+}
+*/}}
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-cyan-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white">{{ .Cluster }}</h3>
+    <span class="text-xs font-mono text-emerald-400">{{ upper .Status }}</span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Throughput: {{ .Throughput }}</p>
+  <p class="text-xs text-slate-400">Uptime: {{ .Uptime }}</p>
+</div>
+`,
+  django: `{# Context:
+{
+  "cluster": "Artemis-Django-11",
+  "uptime": "99.98%",
+  "workers": 8,
+  "status": "optimal",
+  "throughput": "9,420 req/s"
+}
+#}
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-emerald-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white">{{ cluster }}</h3>
+    <span class="text-xs font-mono text-emerald-400">{{ status|upper }}</span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Throughput: {{ throughput }}</p>
+  <p class="text-xs text-slate-400">Uptime: {{ uptime }}</p>
+</div>
+`,
+  jinja: `{# Context:
+{
+  "cluster": "Artemis-Django-11",
+  "uptime": "99.98%",
+  "workers": 8,
+  "status": "optimal",
+  "throughput": "9,420 req/s"
+}
+#}
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-emerald-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white">{{ cluster }}</h3>
+    <span class="text-xs font-mono text-emerald-400">{{ status|upper }}</span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Throughput: {{ throughput }}</p>
+  <p class="text-xs text-slate-400">Uptime: {{ uptime }}</p>
+</div>
+`,
+  jinja2: `{# Context:
+{
+  "cluster": "Artemis-Django-11",
+  "uptime": "99.98%",
+  "workers": 8,
+  "status": "optimal",
+  "throughput": "9,420 req/s"
+}
+#}
+
+<div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-emerald-500/30 shadow-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-base font-bold text-white">{{ cluster }}</h3>
+    <span class="text-xs font-mono text-emerald-400">{{ status|upper }}</span>
+  </div>
+  <p class="text-xs text-slate-400 mb-2">Throughput: {{ throughput }}</p>
+  <p class="text-xs text-slate-400">Uptime: {{ uptime }}</p>
+</div>
+`,
 };
 
 export function getTemplateForLanguage(lang: string = "tsx"): SandpackPredefinedTemplate {

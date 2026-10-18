@@ -13,7 +13,10 @@ import {
   Check,
   Server,
   Zap,
+  SlidersHorizontal,
 } from "lucide-react";
+import { UniversalPropertyInspector } from "./UniversalPropertyInspector";
+import { applyVisualProps, UniversalVisualProps } from "@/lib/ast-transformer";
 
 export type PhpDevicePreset = "desktop" | "iphone" | "tablet";
 export type PhpViewMode = "split" | "canvas" | "code";
@@ -294,7 +297,14 @@ export function PhpLaravelRenderer({
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [serverOnline, setServerOnline] = useState(false);
+  const [showInspector, setShowInspector] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const handleApplyVisualProps = (newProps: UniversalVisualProps) => {
+    const patched = applyVisualProps(code, "blade", newProps);
+    setCode(patched);
+    if (onCodeChange) onCodeChange(patched);
+  };
 
   // Sync prop changes without effect cascading renders
   const [prevInitialCode, setPrevInitialCode] = useState(initialCode);
@@ -520,6 +530,21 @@ export function PhpLaravelRenderer({
             </button>
           </div>
 
+          {/* Tweak Props Button (Visual Property Inspector) */}
+          <button
+            type="button"
+            onClick={() => setShowInspector(!showInspector)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              showInspector
+                ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-sm"
+                : "bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+            }`}
+            title="Toggle Visual Property Controls (No-Code)"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-red-400" />
+            <span>Tweak Props</span>
+          </button>
+
           {/* Reload Button */}
           <button
             type="button"
@@ -541,6 +566,15 @@ export function PhpLaravelRenderer({
           </button>
         </div>
       </div>
+
+      {/* Universal No-Code Visual Property Inspector */}
+      <UniversalPropertyInspector
+        isOpen={showInspector}
+        onClose={() => setShowInspector(false)}
+        code={code}
+        language="blade"
+        onApplyToProps={handleApplyVisualProps}
+      />
 
       {/* Main Execution Body */}
       <div className="flex-1 flex overflow-hidden min-h-[440px]">

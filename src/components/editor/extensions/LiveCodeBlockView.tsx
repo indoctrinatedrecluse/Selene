@@ -9,6 +9,8 @@ import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRendere
 import { PythonNotebookRenderer } from "@/components/render-engine/PythonNotebookRenderer";
 import { PhpLaravelRenderer } from "@/components/render-engine/PhpLaravelRenderer";
 import { RubyRailsRenderer } from "@/components/render-engine/RubyRailsRenderer";
+import { GoTemplateRenderer } from "@/components/render-engine/GoTemplateRenderer";
+import { DjangoJinjaRenderer } from "@/components/render-engine/DjangoJinjaRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -26,6 +28,8 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isPython = language === "python" || language === "py" || language === "notebook";
   const isPhpLaravel = language === "php" || language === "laravel" || language === "blade";
   const isRubyRails = language === "ruby" || language === "rails" || language === "erb";
+  const isGoTemplate = language === "go" || language === "golang" || language === "gotemplate" || language === "hugo";
+  const isDjangoJinja = language === "django" || language === "jinja" || language === "jinja2";
   const isMermaid = language === "mermaid";
   const isMath = language === "math" || language === "latex";
 
@@ -119,6 +123,32 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's a Go html/template and live render is enabled, render the Go engine!
+  if (isGoTemplate && showLiveRender) {
+    return (
+      <NodeViewWrapper className="go-template-block my-4">
+        <GoTemplateRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a Django / Jinja2 template and live render is enabled, render the Django engine!
+  if (isDjangoJinja && showLiveRender) {
+    return (
+      <NodeViewWrapper className="django-jinja-block my-4">
+        <DjangoJinjaRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // If it's a Mermaid diagram
   if (isMermaid) {
     return (
@@ -164,6 +194,10 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="erb">erb (live)</option>
             <option value="rails">rails (live)</option>
             <option value="ruby">ruby (live)</option>
+            <option value="go">go (live template)</option>
+            <option value="gotemplate">gotemplate (live)</option>
+            <option value="django">django (live)</option>
+            <option value="jinja2">jinja2 (live)</option>
             <option value="html">html (live)</option>
             <option value="mermaid">mermaid (diagram)</option>
             <option value="python">python (live WASM)</option>
@@ -175,7 +209,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"
