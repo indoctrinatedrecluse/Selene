@@ -238,6 +238,8 @@ Selene features an industry-grade cryptographic licensing subsystem backed by **
 
 Selene's backend is containerized for seamless, serverless deployment to **Google Cloud Run**:
 
+- **Live Production Service**: [https://selene-h5zdysrkqa-uc.a.run.app](https://selene-h5zdysrkqa-uc.a.run.app)
+- **Health Check Probe**: [https://selene-h5zdysrkqa-uc.a.run.app/api/health](https://selene-h5zdysrkqa-uc.a.run.app/api/health)
 - **Multi-Stage Container** (`Dockerfile`): Next.js 16 standalone compilation with non-root security user (`nextjs:nodejs`), sub-100MB image footprint, and zero cold-start delay.
 - **Automated Deployment Scripts**:
   - Windows: `.\tools\scripts\cloud\deploy-cloudrun.ps1` (or `npm run deploy:cloudrun`)

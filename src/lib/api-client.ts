@@ -91,6 +91,18 @@ async function computeSignature(
   return nodeCrypto.createHmac("sha256", secret).update(raw).digest("hex");
 }
 
+export const CLOUD_RUN_BACKEND_URL = "https://selene-h5zdysrkqa-uc.a.run.app";
+
+export function getBaseApiUrl(): string {
+  if (typeof window !== "undefined") {
+    if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+      return window.location.origin;
+    }
+    return localStorage.getItem("selene_server_url") || CLOUD_RUN_BACKEND_URL;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || CLOUD_RUN_BACKEND_URL;
+}
+
 /**
  * Authenticated fetch wrapper that automatically computes and attaches:
  * - App Attestation proof (App ID, Timestamp, HWID, Signature)
@@ -98,12 +110,20 @@ async function computeSignature(
  */
 export async function apiFetch(input: string | URL | Request, init: RequestInit = {}): Promise<Response> {
   const urlStr = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+  let targetUrl = urlStr;
   let pathname = urlStr;
-  try {
-    const parsed = new URL(urlStr, typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
-    pathname = parsed.pathname;
-  } catch {
-    // Keep relative string
+
+  if (typeof urlStr === "string" && urlStr.startsWith("/api/")) {
+    const base = getBaseApiUrl();
+    targetUrl = `${base.replace(/\/+$/, "")}${urlStr}`;
+    pathname = urlStr;
+  } else {
+    try {
+      const parsed = new URL(urlStr, typeof window !== "undefined" ? window.location.origin : CLOUD_RUN_BACKEND_URL);
+      pathname = parsed.pathname;
+    } catch {
+      // Keep relative string
+    }
   }
 
   const method = (init.method || "GET").toUpperCase();
@@ -124,7 +144,7 @@ export async function apiFetch(input: string | URL | Request, init: RequestInit 
     headers.set("x-selene-license-token", licenseToken);
   }
 
-  const response = await fetch(input, {
+  const response = await fetch(targetUrl, {
     ...init,
     headers,
   });

@@ -55,7 +55,7 @@ function Write-Fail([string]$msg) {
 
 Clear-Host
 Write-Host "==========================================================" -ForegroundColor DarkCyan
-Write-Host "  🌙 Selene — Google Cloud Run Production Deployment      " -ForegroundColor White
+Write-Host "  SELENE - Google Cloud Run Production Deployment         " -ForegroundColor White
 Write-Host "==========================================================" -ForegroundColor DarkCyan
 Write-Host "  Project Root : $ProjectRoot" -ForegroundColor Gray
 Write-Host "  Service Name : $ServiceName" -ForegroundColor Yellow
@@ -77,13 +77,13 @@ if (-not $ProjectID) {
 }
 
 if (-not $ProjectID -or $ProjectID -eq "(unset)") {
-    Write-Fail "No GCP project specified or set in active gcloud config. Pass -ProjectID <your-project-id>."
+    Write-Fail "No GCP project specified or set in active gcloud config. Pass -ProjectID [your-project-id]."
 }
 Write-Success "Target GCP Project: $ProjectID"
 
-# 2. Run Sanity Checks & Tests
+# 2. Run Sanity Checks and Tests
 if (-not $SkipTests) {
-    Write-Step "[2/5] Running TypeScript Type-Check & ESLint..."
+    Write-Step "[2/5] Running TypeScript Type-Check and ESLint..."
     Push-Location $ProjectRoot
     try {
         & npm run type-check
@@ -101,7 +101,7 @@ if (-not $SkipTests) {
 }
 
 # 3. Prepare Environment Variables
-Write-Step "[3/5] Configuring Environment Variables & Secrets..."
+Write-Step "[3/5] Configuring Environment Variables and Secrets..."
 $envList = @(
     "NODE_ENV=production",
     "NEXT_TELEMETRY_DISABLED=1",
@@ -150,7 +150,7 @@ try {
     Pop-Location
 }
 
-# 5. Fetch Deployed URL & Health Verification
+# 5. Fetch Deployed URL and Health Verification
 Write-Step "[5/5] Verifying Deployment Health..."
 $serviceUrl = & gcloud run services describe $ServiceName --project $ProjectID --region $Region --format "value(status.url)" 2>$null
 if ($serviceUrl) {
@@ -159,7 +159,7 @@ if ($serviceUrl) {
 
 if ($serviceUrl) {
     Write-Host "`n==========================================================" -ForegroundColor Green
-    Write-Host "  🌙 SELENE CLOUD RUN DEPLOYMENT SUCCESSFUL!              " -ForegroundColor White
+    Write-Host "  SELENE CLOUD RUN DEPLOYMENT SUCCESSFUL!                 " -ForegroundColor White
     Write-Host "==========================================================" -ForegroundColor Green
     Write-Host "  Live Service URL   : $serviceUrl" -ForegroundColor Cyan
     Write-Host "  Health Probe       : $serviceUrl/api/health" -ForegroundColor Cyan
