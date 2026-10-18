@@ -10,9 +10,11 @@ import {
   FileText,
   Copy,
   Check,
+  Sparkles,
 } from "lucide-react";
 import { exportDocumentToPdf } from "@/lib/pdf-export";
 import { exportStandaloneHtml } from "@/lib/html-export";
+import { exportMarkdownToIpynb } from "@/lib/ipynb-bridge";
 import { parseMarkdownToSlides } from "@/components/presentation/SlideDeckViewer";
 
 interface PublishExportModalProps {
@@ -23,7 +25,7 @@ interface PublishExportModalProps {
   onLaunchSlideDeck: () => void;
 }
 
-type PublishTab = "pdf" | "html" | "slides" | "markdown";
+type PublishTab = "pdf" | "html" | "slides" | "markdown" | "ipynb";
 
 export function PublishExportModal({
   isOpen,
@@ -80,6 +82,24 @@ export function PublishExportModal({
     link.download = `${documentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportIpynb = () => {
+    const ipynbContent = exportMarkdownToIpynb(markdownContent, documentTitle);
+    const blob = new Blob([ipynbContent], { type: "application/x-ipynb+json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${documentTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.ipynb`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyIpynb = () => {
+    const ipynbContent = exportMarkdownToIpynb(markdownContent, documentTitle);
+    navigator.clipboard.writeText(ipynbContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -156,6 +176,17 @@ export function PublishExportModal({
           >
             <FileText className="w-4 h-4" />
             <span>Markdown Source</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("ipynb")}
+            className={`flex items-center gap-2 py-3 border-b-2 font-medium transition-all ${
+              activeTab === "ipynb"
+                ? "border-amber-400 text-amber-400 font-semibold"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Jupyter (.ipynb)</span>
           </button>
         </div>
 
@@ -357,6 +388,60 @@ export function PublishExportModal({
                 >
                   <FileDown className="w-4 h-4" />
                   <span>Download .md File</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* --- TAB 5: JUPYTER NOTEBOOK (.ipynb) --- */}
+          {activeTab === "ipynb" && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span>Standard Jupyter Notebook (.ipynb v4)</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed text-[11px]">
+                  Converts your prose, formulas, and Python code blocks into standard Jupyter Notebook JSON format. Fully compatible with Google Colab, JupyterLab, VS Code, and Kaggle.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-slate-400 text-[11px]">
+                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="font-semibold text-slate-300">🐍 Python 3 Kernel</span>
+                  <p className="text-slate-500">Auto-detects code cells and maps them to standard ipykernel execution blocks.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                  <span className="font-semibold text-slate-300">📐 KaTeX & Math Preservation</span>
+                  <p className="text-slate-500">Equations and Markdown formatting are preserved verbatim.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCopyIpynb}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition-all border border-slate-700 cursor-pointer"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span className="text-emerald-400">Copied .ipynb JSON!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy Notebook JSON</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportIpynb}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold transition-all shadow-md cursor-pointer"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span>Download .ipynb Notebook</span>
                 </button>
               </div>
             </div>

@@ -99,6 +99,44 @@ Equations typeset in sub-millisecond speeds:
 \`\`\`math
 \\mathcal{L}_{\\text{total}} = \\lambda_1 \\mathcal{L}_{\\text{fidelity}} + \\lambda_2 \\sum_{i=1}^N \\| \\hat{y}_i - y_i \\|^2 + \\mathbb{E}_{x \\sim p_{\\text{data}}}[\\log D(x)]
 \`\`\`
+
+---
+
+## 📊 4. Declarative Vector Charting Engine
+
+Render vector line, bar, area, scatter, donut, and heatmap graphics directly using declarative specifications:
+
+\`\`\`chart
+{
+  "type": "area",
+  "title": "Selene Distributed Inferences & Latency",
+  "xKey": "epoch",
+  "yKey": ["throughput", "efficiency"],
+  "colors": ["#38bdf8", "#818cf8"],
+  "data": [
+    { "epoch": "E1", "throughput": 120, "efficiency": 85 },
+    { "epoch": "E2", "throughput": 240, "efficiency": 110 },
+    { "epoch": "E3", "throughput": 390, "efficiency": 160 },
+    { "epoch": "E4", "throughput": 560, "efficiency": 230 }
+  ]
+}
+\`\`\`
+
+---
+
+## 🦆 5. DuckDB Analytical OLAP Studio
+
+Query thousands of rows locally with sub-10ms in-memory SIMD execution:
+
+\`\`\`duckdb
+SELECT 
+  region,
+  COUNT(*) AS count,
+  ROUND(AVG(latency_ms), 1) AS mean_latency
+FROM telemetry_logs
+GROUP BY region
+ORDER BY mean_latency ASC;
+\`\`\`
 `,
   },
   {
@@ -2063,10 +2101,156 @@ void main() {
 \`\`\`
 `,
   },
+  {
+    id: "doc-chart-showcase",
+    title: "13_declarative_charts_and_plots.md",
+    icon: "📊",
+    folder: "samples",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 60000,
+    content: `# 📊 Declarative Charting & Data Plotting Engine
+
+Selene introduces a native **Declarative Charting Engine** (\`chart\` / \`plot\`) allowing data scientists, engineers, and researchers to author interactive vector charts directly inside markdown canvases.
+
+> [!NOTE]
+> 📈 **Declarative Vector Graphics**:
+> - **Zero External Bundle Dependencies**: Rendered using ultra-crisp responsive SVGs with hardware-accelerated animations.
+> - **Supported Visualizations**: Bar (grouped/stacked), Line (smooth Catmull-Rom), Area, Scatter, Donut / Pie, and Heatmap matrices.
+> - **Interactive Controls**: Real-time chart-type switcher, interactive hover tooltips, live specification editor, tabular data inspector, and 1-click SVG/CSV downloads.
+
+---
+
+## ⚡ 1. High-Performance Multi-Series Line Chart
+
+Below is a declarative line plot tracking inference throughput across global clusters:
+
+\`\`\`chart
+{
+  "type": "line",
+  "title": "Global Neural Cluster Throughput",
+  "description": "Requests per second (kRPS) across distributed edge nodes",
+  "xKey": "month",
+  "yKey": ["us_east", "eu_west", "ap_southeast"],
+  "colors": ["#38bdf8", "#818cf8", "#34d399"],
+  "data": [
+    { "month": "Jan", "us_east": 45, "eu_west": 32, "ap_southeast": 28 },
+    { "month": "Feb", "us_east": 58, "eu_west": 41, "ap_southeast": 36 },
+    { "month": "Mar", "us_east": 72, "eu_west": 54, "ap_southeast": 49 },
+    { "month": "Apr", "us_east": 89, "eu_west": 68, "ap_southeast": 61 },
+    { "month": "May", "us_east": 115, "eu_west": 87, "ap_southeast": 79 },
+    { "month": "Jun", "us_east": 142, "eu_west": 105, "ap_southeast": 98 }
+  ]
+}
+\`\`\`
+
+---
+
+## ⚡ 2. Grouped Bar & Cost Efficiency Breakdown
+
+\`\`\`chart
+{
+  "type": "bar",
+  "title": "Cloud Compute vs On-Premises Cost (USD/M Tokens)",
+  "description": "Comparison of inferencing unit cost across hardware architectures",
+  "xKey": "model",
+  "yKey": ["cloud_gpu", "local_fpga", "optimized_npu"],
+  "colors": ["#f472b6", "#fbbf24", "#38bdf8"],
+  "data": [
+    { "model": "Mistral-7B", "cloud_gpu": 0.42, "local_fpga": 0.28, "optimized_npu": 0.14 },
+    { "model": "Llama-3-70B", "cloud_gpu": 2.85, "local_fpga": 1.95, "optimized_npu": 1.12 },
+    { "model": "DeepSeek-V3", "cloud_gpu": 1.65, "local_fpga": 1.10, "optimized_npu": 0.65 },
+    { "model": "Gemini-2.5", "cloud_gpu": 0.95, "local_fpga": 0.65, "optimized_npu": 0.38 }
+  ]
+}
+\`\`\`
+
+---
+
+## ⚡ 3. Donut Market Share Distribution
+
+\`\`\`chart
+{
+  "type": "donut",
+  "title": "Global Model Ingestion Distribution",
+  "description": "Proportion of documents transcribed via multimodal vision pipelines",
+  "xKey": "modality",
+  "yKey": "volume_share",
+  "colors": ["#38bdf8", "#818cf8", "#34d399", "#fbbf24"],
+  "data": [
+    { "modality": "Academic Papers (PDF)", "volume_share": 42 },
+    { "modality": "Architecture Diagrams", "volume_share": 28 },
+    { "modality": "Handwritten Math", "volume_share": 18 },
+    { "modality": "Technical Code Docs", "volume_share": 12 }
+  ]
+}
+\`\`\`
+`,
+  },
+  {
+    id: "doc-duckdb-showcase",
+    title: "14_duckdb_wasm_analytical_olap.md",
+    icon: "🦆",
+    folder: "samples",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 60000,
+    content: `# 🦆 DuckDB-WASM In-Browser Analytical OLAP Engine
+
+Welcome to the **DuckDB-WASM Analytical OLAP Studio**! Selene brings true vectorized columnar SQL querying directly into your browser, allowing you to run aggregations, percentiles, and complex group-by analytical queries over multi-thousand row datasets in **single-digit milliseconds**.
+
+> [!NOTE]
+> ⚡ **DuckDB In-Browser Capabilities**:
+> - **Vectorized Columnar Execution**: Scans thousands of rows with SIMD-optimized memory layouts.
+> - **Zero Server Dependencies**: Executes 100% locally in-memory inside the browser runtime.
+> - **Pre-Loaded & Custom Datasets**: Query real-time telemetry logs, fintech orders, or retail orders with instantaneous responsiveness.
+> - **Interactive Studio**: Built-in syntax highlighting, <kbd>Ctrl</kbd>+<kbd>Enter</kbd> execution, column sorting, pagination, and CSV export.
+
+---
+
+## ⚡ 1. Edge Telemetry Analysis (Aggregation & Group By)
+
+Run the query below to calculate mean latency, CPU utilization, and request volume grouped across global cloud regions:
+
+\`\`\`duckdb
+-- In-Browser Analytical OLAP Query
+SELECT 
+  region,
+  COUNT(*) AS total_samples,
+  ROUND(AVG(latency_ms), 1) AS mean_latency_ms,
+  MAX(latency_ms) AS peak_latency_ms,
+  ROUND(AVG(cpu_pct), 1) AS avg_cpu_pct
+FROM telemetry_logs
+WHERE latency_ms > 25
+GROUP BY region
+ORDER BY mean_latency_ms ASC;
+\`\`\`
+
+---
+
+## ⚡ 2. High-Frequency Fintech Volume-Weighted Analysis
+
+Switch the dataset to \`fintech_orders\` to analyze volume-weighted average price (VWAP) across major tickers:
+
+\`\`\`duckdb
+SELECT 
+  ticker,
+  exchange,
+  COUNT(*) AS order_count,
+  SUM(volume) AS total_shares,
+  ROUND(AVG(price_usd), 2) AS avg_execution_price,
+  ROUND(SUM(fee_usd), 2) AS total_fees_paid
+FROM fintech_orders
+WHERE volume > 200
+GROUP BY ticker, exchange
+ORDER BY total_shares DESC
+LIMIT 20;
+\`\`\`
+`,
+  },
 ];
 
-const STORAGE_KEY = "selene_documents_v11";
+const STORAGE_KEY = "selene_documents_v12";
 const LEGACY_STORAGE_KEYS = [
+  "selene_documents_v11",
   "selene_documents_v10",
   "selene_documents_v9",
   "selene_documents_v8",
@@ -2098,6 +2282,8 @@ export function getDocumentFolder(doc: { id?: string | null; folder?: string | n
     id === "doc-rust-showcase" ||
     id === "doc-sql-showcase" ||
     id === "doc-shader-showcase" ||
+    id === "doc-chart-showcase" ||
+    id === "doc-duckdb-showcase" ||
     id.startsWith("sample-")
   ) {
     return "samples";

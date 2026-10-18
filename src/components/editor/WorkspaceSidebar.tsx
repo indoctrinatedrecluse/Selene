@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 import { SELENE_VERSION_DISPLAY } from "@/lib/version";
+import { parseIpynbToMarkdown } from "@/lib/ipynb-bridge";
 
 interface WorkspaceSidebarProps {
   documents: DocumentItem[];
@@ -122,9 +123,23 @@ export function WorkspaceSidebar({
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const content = event.target?.result as string;
-      const title = file.name.replace(/\.[^/.]+$/, "");
-      onImportDoc(title, content, targetImportFolderRef.current);
+      const rawContent = event.target?.result as string;
+      const baseTitle = file.name.replace(/\.[^/.]+$/, "");
+
+      let finalTitle = baseTitle;
+      let finalContent = rawContent;
+
+      if (file.name.toLowerCase().endsWith(".ipynb")) {
+        try {
+          const parsed = parseIpynbToMarkdown(rawContent, baseTitle);
+          finalContent = parsed.markdown;
+          finalTitle = parsed.title;
+        } catch (err) {
+          console.error("Failed to parse .ipynb file", err);
+        }
+      }
+
+      onImportDoc(finalTitle, finalContent, targetImportFolderRef.current);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -204,7 +219,7 @@ export function WorkspaceSidebar({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".md,.markdown,.txt"
+          accept=".md,.markdown,.txt,.ipynb,application/x-ipynb+json"
           onChange={handleFileUpload}
           className="hidden"
         />
@@ -218,7 +233,7 @@ export function WorkspaceSidebar({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".md,.markdown,.txt"
+        accept=".md,.markdown,.txt,.ipynb,application/x-ipynb+json"
         onChange={handleFileUpload}
         className="hidden"
       />

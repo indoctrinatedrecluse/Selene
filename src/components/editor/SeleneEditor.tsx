@@ -111,6 +111,7 @@ import { SeleneLicenseModal } from "@/components/license/SeleneLicenseModal";
 import { SeleneTimeLockBarrier } from "@/components/license/SeleneTimeLockBarrier";
 import type { LicenseStatus } from "@/lib/licensing/license-service";
 import { apiFetch, setCachedLicenseToken, setCachedHwid } from "@/lib/api-client";
+import { parseIpynbToMarkdown } from "@/lib/ipynb-bridge";
 
 export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
@@ -531,6 +532,36 @@ export function SeleneEditor() {
       await handleImportDoc(title, result.content);
     }
   }, [handleImportDoc]);
+
+  // Handle Drag-and-Drop Notebook / Markdown files onto canvas
+  const handleCanvasDrop = useCallback(
+    (e: React.DragEvent) => {
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        const baseTitle = file.name.replace(/\.[^/.]+$/, "");
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const rawContent = event.target?.result as string;
+          let finalTitle = baseTitle;
+          let finalContent = rawContent;
+
+          if (file.name.toLowerCase().endsWith(".ipynb")) {
+            try {
+              const parsed = parseIpynbToMarkdown(rawContent, baseTitle);
+              finalContent = parsed.markdown;
+              finalTitle = parsed.title;
+            } catch (err) {
+              console.error("Failed to parse .ipynb file", err);
+            }
+          }
+          handleImportDoc(finalTitle, finalContent, "documents");
+        };
+        reader.readAsText(file);
+      }
+    },
+    [handleImportDoc]
+  );
 
   const handleDesktopSave = useCallback(async () => {
     const cleanTitle = docTitle.replace(/[^\w\s-]/g, "").trim() || "document";
@@ -1000,6 +1031,8 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
 
         {/* Editor Column */}
         <div
+          onDrop={handleCanvasDrop}
+          onDragOver={(e) => e.preventDefault()}
           className={`flex-1 min-w-0 flex flex-col overflow-y-auto ${
             viewMode === "markdown" ? "hidden" : ""
           }`}

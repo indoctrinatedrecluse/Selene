@@ -14,6 +14,8 @@ import { DjangoJinjaRenderer } from "@/components/render-engine/DjangoJinjaRende
 import { RustWasmRenderer } from "@/components/render-engine/RustWasmRenderer";
 import { SqlDataStudioRenderer } from "@/components/render-engine/SqlDataStudioRenderer";
 import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRenderer";
+import { DeclarativeChartRenderer } from "@/components/render-engine/DeclarativeChartRenderer";
+import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -38,6 +40,8 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isShader = language === "glsl" || language === "wgsl" || language === "shader" || language === "cpp";
   const isMermaid = language === "mermaid";
   const isMath = language === "math" || language === "latex";
+  const isChart = language === "chart" || language === "plot";
+  const isDuckDb = language === "duckdb" || language === "olap" || language === "parquet";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(rawCode);
@@ -212,6 +216,32 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's a Declarative Chart / Plot block
+  if (isChart && showLiveRender) {
+    return (
+      <NodeViewWrapper className="chart-block my-4">
+        <DeclarativeChartRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's an Analytical DuckDB / OLAP SQL block
+  if (isDuckDb && showLiveRender) {
+    return (
+      <NodeViewWrapper className="duckdb-block my-4">
+        <DuckDbStudioRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // Standard high-performance code block
   return (
     <NodeViewWrapper className="relative my-4 rounded-xl border border-slate-800 bg-slate-950/90 overflow-hidden shadow-xl">
@@ -226,6 +256,11 @@ export function LiveCodeBlockView(props: NodeViewProps) {
           >
             <option value="typescript">typescript</option>
             <option value="javascript">javascript</option>
+            <option value="chart">chart (declarative)</option>
+            <option value="plot">plot (declarative)</option>
+            <option value="duckdb">duckdb (live OLAP)</option>
+            <option value="parquet">parquet (columnar)</option>
+            <option value="sql">sql (studio)</option>
             <option value="tsx">tsx (live)</option>
             <option value="jsx">jsx (live)</option>
             <option value="vue">vue (live)</option>
@@ -248,13 +283,14 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="python">python (live WASM)</option>
             <option value="py">py (live WASM)</option>
             <option value="rust">rust</option>
+            <option value="glsl">glsl (shader)</option>
             <option value="json">json</option>
             <option value="css">css</option>
           </select>
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isChart || isDuckDb || isSql || isShader) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"
