@@ -141,12 +141,12 @@ ORDER BY mean_latency ASC;
   },
   {
     id: "doc-ui-playground",
-    title: "02_interactive_web_ui_components.md",
+    title: "02_react_tailwind_ui_components.md",
     icon: "🎨",
     folder: "samples",
     createdAt: Date.now() - 7200000,
     updatedAt: Date.now() - 120000,
-    content: `# 🎨 Interactive Web UI Components
+    content: `# 🎨 React & Multi-Stack Web UI Playground
 
 Test multiple web framework stacks side-by-side with zero CSS leakage.
 
@@ -533,50 +533,13 @@ class _CounterScreenState extends State<CounterScreen> {
 `,
   },
   {
-    id: "doc-api-rfc",
-    title: "04_distributed_api_rfc.md",
-    icon: "📋",
-    folder: "samples",
-    createdAt: Date.now() - 14400000,
-    updatedAt: Date.now() - 300000,
-    content: `# 📋 RFC: Real-Time Event Ingestion Engine
-
-> [!WARNING]
-> This RFC introduces breaking changes to existing REST endpoints in favor of gRPC and WebSocket streaming.
-
----
-
-### Architecture Overview
-
-\`\`\`mermaid
-flowchart LR
-    A[Client App] -->|WebSocket| B[Edge Ingestion Gateway]
-    B --> C[(Kafka Message Stream)]
-    C --> D[Flink Event Processor]
-    D --> E[(ClickHouse Analytics)]
-\`\`\`
-
-### Payload Contract
-
-\`\`\`typescript
-export interface IngestionEvent {
-  id: string;
-  timestamp: number;
-  source: string;
-  eventType: 'USER_ACTION' | 'SYSTEM_ALERT';
-  payload: Record<string, unknown>;
-}
-\`\`\`
-`,
-  },
-  {
     id: "doc-angular-showcase",
-    title: "03_angular_and_flutter_showcase.md",
+    title: "03_angular_signals_web_components.md",
     icon: "🅰️",
     folder: "samples",
     createdAt: Date.now() - 5400000,
     updatedAt: Date.now() - 45000,
-    content: `# 🅰️ Angular Ivy Live Showcase & Architecture
+    content: `# 🅰️ Angular Ivy & Signals Showcase
 
 Selene includes full first-class live rendering for **Angular** components running through an optimized Ivy in-memory compiler with real-time template compilation, emulated view encapsulation, dependency injection, and Tailwind utility class integration!
 
@@ -818,7 +781,7 @@ When working on a real Angular workspace:
   },
   {
     id: "doc-flutter-showcase",
-    title: "flutter_wasm_engine_demo.md",
+    title: "04_flutter_dart_web_canvas.md",
     icon: "🎯",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -1098,7 +1061,7 @@ Selene supports Cupertino iOS widgets and Flutter \`CustomPainter\` shaders. Swi
   },
   {
     id: "doc-python-datascience",
-    title: "05_python_wasm_datascience_notebook.md",
+    title: "05_python_pyodide_data_science_notebook.md",
     icon: "🐍",
     folder: "samples",
     createdAt: Date.now() - 1800000,
@@ -1210,7 +1173,7 @@ print(telemetry.describe().round(2).to_string())
   },
   {
     id: "doc-laravel-showcase",
-    title: "06_php_laravel_blade_showcase.md",
+    title: "06_php_laravel_blade_engine.md",
     icon: "🐘",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -1379,7 +1342,7 @@ Below is a live Blade component featuring variable scopes, nested associative ar
   },
   {
     id: "doc-rails-showcase",
-    title: "07_ruby_on_rails_erb_showcase.md",
+    title: "07_ruby_on_rails_erb_engine.md",
     icon: "💎",
     folder: "samples",
     createdAt: Date.now() - 1800000,
@@ -1549,7 +1512,7 @@ Below is an interactive Rails component rendering within a Turbo Frame and respo
   },
   {
     id: "doc-go-showcase",
-    title: "08_go_template_hugo_showcase.md",
+    title: "08_go_hugo_html_template_engine.md",
     icon: "🐹",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -1692,7 +1655,7 @@ Selene also supports Hugo site generators and shortcodes, parsing templates seam
   },
   {
     id: "doc-django-showcase",
-    title: "09_django_jinja2_python_showcase.md",
+    title: "09_django_jinja2_python_engine.md",
     icon: "🐍",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -1833,7 +1796,7 @@ Selene also supports FastAPI, Flask, and Jinja2 templates:
   },
   {
     id: "doc-rust-showcase",
-    title: "10_rust_yew_leptos_showcase.md",
+    title: "10_rust_wasm_yew_leptos.md",
     icon: "🦀",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -1915,7 +1878,7 @@ pub fn app() -> Html {
   },
   {
     id: "doc-sql-showcase",
-    title: "11_sql_sqlite_libsql_showcase.md",
+    title: "11_sql_sqlite_data_studio.md",
     icon: "🗄️",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -1994,7 +1957,7 @@ ORDER BY c.rank DESC, c.full_name ASC;
   },
   {
     id: "doc-shader-showcase",
-    title: "12_glsl_webgl_shaders_showcase.md",
+    title: "12_webgl_glsl_canvas_shaders.md",
     icon: "🌌",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2246,10 +2209,190 @@ LIMIT 20;
 \`\`\`
 `,
   },
+  {
+    id: "doc-jupyter-bridge",
+    title: "15_jupyter_notebook_colab_bridge.md",
+    icon: "📓",
+    folder: "samples",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 60000,
+    content: `# 📓 Jupyter Notebook & Google Colab Bridge
+
+Selene features seamless bi-directional integration with **Jupyter Notebooks (\`.ipynb\`)**, **Google Colab**, and computational data science environments. Import raw notebook JSON, render live markdown equations and interactive Python cells, and export publication-ready notebooks with a single click!
+
+> [!NOTE]
+> ⚡ **Jupyter Bridge Capabilities**:
+> - **Bi-Directional Conversion**: Converts between \`.ipynb\` v4 notebook JSON and clean, human-readable Selene Markdown with code fences and output metadata.
+> - **Drag-and-Drop Ingestion**: Simply drag any \`.ipynb\` file from your desktop directly onto the Selene canvas or workspace sidebar.
+> - **Zero Python Dependencies**: Parse, transform, and export notebook ASTs completely in-browser with zero server requirements.
+> - **Live Execution**: Run data science cells client-side via Pyodide or DuckDB-WASM, capturing cell outputs and inline plots.
+
+---
+
+## 🐍 1. Trans-Lunar Injection Trajectory Simulation
+
+Execute the computational cell below to simulate a free-return lunar transfer orbit:
+
+\`\`\`python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate simulated lunar trajectory orbital coordinates
+t = np.linspace(0, 4 * np.pi, 250)
+earth_orbit = np.cos(t * 0.5) * 1.5
+lunar_orbit = np.sin(t * 0.5) * 1.5
+velocity_vector = np.sqrt(earth_orbit**2 + lunar_orbit**2)
+
+print(f"Computed {len(t)} orbital trajectory waypoints.")
+print(f"Apogee velocity: {velocity_vector.max():.3f} km/s | Perigee: {velocity_vector.min():.3f} km/s")
+\`\`\`
+
+---
+
+## 🦆 2. In-Browser Analytical OLAP & SQL Telemetry
+
+Combine Python logic with vectorized DuckDB-WASM queries within the same computational notebook:
+
+\`\`\`duckdb
+SELECT 
+  region,
+  COUNT(*) AS total_samples,
+  ROUND(AVG(latency_ms), 1) AS mean_latency_ms,
+  MAX(latency_ms) AS peak_latency_ms
+FROM telemetry_logs
+WHERE latency_ms > 20
+GROUP BY region
+ORDER BY mean_latency_ms ASC;
+\`\`\`
+
+---
+
+## 📊 3. Declarative Mission Telemetry Visualization
+
+Render publication-ready vector charts embedded directly within the notebook workflow:
+
+\`\`\`chart
+{
+  "type": "area",
+  "title": "Orbital Telemetry Trajectory Stability",
+  "description": "Signal to noise ratio (dB) across lunar transfer phases",
+  "xKey": "phase",
+  "yKey": ["snr_db", "beacon_strength"],
+  "colors": ["#38bdf8", "#34d399"],
+  "data": [
+    { "phase": "Low Earth Orbit", "snr_db": 48.2, "beacon_strength": 96.5 },
+    { "phase": "TLI Burn", "snr_db": 42.1, "beacon_strength": 89.2 },
+    { "phase": "Translunar Coast", "snr_db": 38.6, "beacon_strength": 82.4 },
+    { "phase": "Lunar Insertion", "snr_db": 44.8, "beacon_strength": 91.0 },
+    { "phase": "Polar Orbit", "snr_db": 47.3, "beacon_strength": 94.8 }
+  ]
+}
+\`\`\`
+
+---
+
+## 💾 4. 1-Click Colab / JupyterLab Export
+
+Export this document at any time as an \`.ipynb\` file using the **Export Notebook** option in the canvas toolbar. You can immediately open the resulting file in:
+1. **Google Colab**: Open in Colab with GPU/TPU acceleration.
+2. **VS Code**: Native Jupyter notebook viewer with interactive variables.
+3. **JupyterLab / Classic Notebook**: Full Jupyter server compatibility.
+`,
+  },
+  {
+    id: "doc-desktop-power",
+    title: "16_local_folder_sync_and_git_source_control.md",
+    icon: "⚡",
+    folder: "samples",
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 60000,
+    content: `# ⚡ Local Folder Binding & Integrated Git Source Control
+
+Selene delivers high-productivity **Native Desktop Power Features** designed for engineers who work directly with local repositories, documentation trees, and production pipelines.
+
+> [!NOTE]
+> 🚀 **Desktop Power Capabilities**:
+> - **Local Folder Binding**: Mount external directories via the HTML5 File System Access API. Edits in Selene automatically flush to your local disk in real time.
+> - **Git Source Control Drawer**: Track staged and unstaged file modifications, author atomic commits (<kbd>Ctrl</kbd>+<kbd>Enter</kbd>), review visual unified diffs, and push changes to remote origins.
+> - **Collapsible Command Runner**: Built-in shell tray (<kbd>Ctrl</kbd>+<kbd>\`</kbd>) to run unit tests, build commands, and Git CLI workflows without leaving your editing canvas.
+
+---
+
+## 📂 1. Two-Way Local Disk Synchronization
+
+To bind a local folder:
+1. In the **Workspace Sidebar**, click the folder mount button: **"Mount Local Directory"**.
+2. Select any local folder (e.g., your project's \`docs/\` directory or repository root).
+3. Any changes you make inside Selene immediately stream to your local file system, and external edits reload seamlessly.
+
+---
+
+## 🌿 2. Integrated Git Source Control Drawer
+
+Click the **Git Source** tab in the sidebar (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>) to open the Git Source Control Drawer:
+- **Status Badges**: Visual indicators for modified (\`M\`), added (\`A\`), and untracked (\`U\`) files.
+- **Stage / Unstage All**: 1-click staging of document changes.
+- **Visual Diff Inspector**: Inspect colored side-by-side and unified diffs before finalizing your commits.
+- **Commit Authoring**: Enter commit summaries with full multi-line commit message support.
+
+---
+
+## 💻 3. Collapsible Command Runner & Shell Tray
+
+Press <kbd>Ctrl</kbd>+<kbd>\`</kbd> (or click **Shell Tray** in the bottom footer) to expand the bottom terminal drawer:
+- **Preset Task Runners**: Instant buttons for \`npm test\`, \`git status\`, and \`npm run build\`.
+- **Arbitrary Command Execution**: Enter any shell command directly with ANSI colored output formatting.
+- **Execution Telemetry**: Badges indicating execution time and process exit codes (0 for success, non-zero for failures).
+
+\`\`\`bash
+# Run tests directly from the Selene Command Runner
+npm test -- --coverage
+git status --short
+\`\`\`
+`,
+  },
+  {
+    id: "doc-api-rfc",
+    title: "17_distributed_api_rfc_specification.md",
+    icon: "📋",
+    folder: "samples",
+    createdAt: Date.now() - 14400000,
+    updatedAt: Date.now() - 300000,
+    content: `# 📋 RFC: Real-Time Event Ingestion Engine
+
+> [!WARNING]
+> This RFC introduces breaking changes to existing REST endpoints in favor of gRPC and WebSocket streaming.
+
+---
+
+### Architecture Overview
+
+\`\`\`mermaid
+flowchart LR
+    A[Client App] -->|WebSocket| B[Edge Ingestion Gateway]
+    B --> C[(Kafka Message Stream)]
+    C --> D[Flink Event Processor]
+    D --> E[(ClickHouse Analytics)]
+\`\`\`
+
+### Payload Contract
+
+\`\`\`typescript
+export interface IngestionEvent {
+  id: string;
+  timestamp: number;
+  source: string;
+  eventType: 'USER_ACTION' | 'SYSTEM_ALERT';
+  payload: Record<string, unknown>;
+}
+\`\`\`
+`,
+  },
 ];
 
-const STORAGE_KEY = "selene_documents_v12";
+const STORAGE_KEY = "selene_documents_v13";
 const LEGACY_STORAGE_KEYS = [
+  "selene_documents_v12",
   "selene_documents_v11",
   "selene_documents_v10",
   "selene_documents_v9",
@@ -2271,7 +2414,6 @@ export function getDocumentFolder(doc: { id?: string | null; folder?: string | n
     id.startsWith("doc-sample") ||
     id === "doc-architecture" ||
     id === "doc-ui-playground" ||
-    id === "doc-api-rfc" ||
     id === "doc-angular-showcase" ||
     id === "doc-flutter-showcase" ||
     id === "doc-python-datascience" ||
@@ -2284,6 +2426,9 @@ export function getDocumentFolder(doc: { id?: string | null; folder?: string | n
     id === "doc-shader-showcase" ||
     id === "doc-chart-showcase" ||
     id === "doc-duckdb-showcase" ||
+    id === "doc-jupyter-bridge" ||
+    id === "doc-desktop-power" ||
+    id === "doc-api-rfc" ||
     id.startsWith("sample-")
   ) {
     return "samples";
@@ -2314,12 +2459,16 @@ export function loadDocuments(): DocumentItem[] {
     }
 
     // Ensure all items have valid titles, icons, and a folder assigned
-    const mapped: DocumentItem[] = parsed.map((doc: DocumentItem) => ({
-      ...doc,
-      title: doc.title && doc.title.trim() ? doc.title : "Untitled Document",
-      icon: doc.icon && doc.icon.trim() ? doc.icon : "📄",
-      folder: getDocumentFolder(doc),
-    }));
+    // Synchronize canonical titles and icons for built-in starter templates
+    const mapped: DocumentItem[] = parsed.map((doc: DocumentItem) => {
+      const canonicalStarter = STARTER_TEMPLATES.find((s) => s.id === doc.id);
+      return {
+        ...doc,
+        title: canonicalStarter ? canonicalStarter.title : (doc.title && doc.title.trim() ? doc.title : "Untitled Document"),
+        icon: canonicalStarter ? canonicalStarter.icon : (doc.icon && doc.icon.trim() ? doc.icon : "📄"),
+        folder: getDocumentFolder(doc),
+      };
+    });
 
     // Ensure built-in starter templates are present in samples/
     const existingIds = new Set(mapped.map((d) => d.id));

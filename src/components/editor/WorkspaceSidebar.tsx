@@ -21,10 +21,14 @@ import {
   Check,
   FileCode2,
   BookOpen,
+  GitBranch,
+  HardDrive,
 } from "lucide-react";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 import { SELENE_VERSION_DISPLAY } from "@/lib/version";
 import { parseIpynbToMarkdown } from "@/lib/ipynb-bridge";
+import { GitSourceControlDrawer } from "@/components/git/GitSourceControlDrawer";
+import { bindLocalFolder, getBoundFolderInfo, BoundFolderInfo } from "@/lib/disk-sync";
 
 interface WorkspaceSidebarProps {
   documents: DocumentItem[];
@@ -58,6 +62,16 @@ export function WorkspaceSidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const targetImportFolderRef = useRef<string>("documents");
+
+  const [sidebarTab, setSidebarTab] = useState<"explorer" | "git">("explorer");
+  const [boundFolder, setBoundFolder] = useState<BoundFolderInfo>(() => getBoundFolderInfo());
+
+  const handleMountFolder = async () => {
+    const res = await bindLocalFolder();
+    if (res) {
+      setBoundFolder(res);
+    }
+  };
 
   // Track expanded folder state (default: all expanded)
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
@@ -297,12 +311,63 @@ export function WorkspaceSidebar({
         </div>
       </div>
 
-      {/* Search Input Bar */}
-      <div className="p-2 border-b border-slate-800 bg-[#070b16] shrink-0">
-        <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
+      {/* Sidebar View Tabs (Explorer vs Source Control) */}
+      <div className="flex items-center border-b border-slate-800 bg-[#060a14] px-2 text-xs shrink-0">
+        <button
+          onClick={() => setSidebarTab("explorer")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 border-b-2 font-medium transition-colors cursor-pointer ${
+            sidebarTab === "explorer"
+              ? "border-sky-400 text-sky-400 font-semibold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+          <span>Explorer</span>
+        </button>
+        <button
+          onClick={() => setSidebarTab("git")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 border-b-2 font-medium transition-colors cursor-pointer ${
+            sidebarTab === "git"
+              ? "border-sky-400 text-sky-400 font-semibold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <GitBranch className="w-3.5 h-3.5" />
+          <span>Git Source</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-400 font-mono">
+            3
+          </span>
+        </button>
+      </div>
+
+      {sidebarTab === "git" ? (
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <GitSourceControlDrawer branchName="main" />
+        </div>
+      ) : (
+        <>
+          {/* Bound Local Folder Indicator / Mount Action */}
+          <div className="px-3 py-1.5 bg-[#080d1e] border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+            <div className="flex items-center gap-1.5 truncate">
+              <HardDrive className="w-3 h-3 text-sky-400 shrink-0" />
+              <span className="truncate">
+                {boundFolder.isBound ? boundFolder.name : "Local Disk Sync"}
+              </span>
+            </div>
+            <button
+              onClick={handleMountFolder}
+              className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-300 font-mono transition-colors cursor-pointer"
+            >
+              {boundFolder.isBound ? "Remount" : "Mount Folder"}
+            </button>
+          </div>
+
+          {/* Search Input Bar */}
+          <div className="p-2 border-b border-slate-800 bg-[#070b16] shrink-0">
+            <div className="relative flex items-center">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search documents & samples..."
@@ -556,6 +621,8 @@ export function WorkspaceSidebar({
           );
         })}
       </div>
+      </>
+      )}
 
       {/* Explorer Footer Bar */}
       <div className="h-9 min-h-[2.25rem] px-3 border-t border-slate-800 text-[10px] text-slate-300 flex items-center justify-between bg-[#090e1d] shrink-0">

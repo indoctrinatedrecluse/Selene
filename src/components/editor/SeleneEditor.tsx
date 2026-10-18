@@ -98,7 +98,9 @@ import {
   HelpCircle,
   BookOpen,
   X,
+  Terminal as TerminalIcon,
 } from "lucide-react";
+import { CollapsibleCommandRunner } from "@/components/terminal/CollapsibleCommandRunner";
 import { PaperToCanvasModal } from "@/components/ai/PaperToCanvasModal";
 import {
   openLocalDocument,
@@ -159,6 +161,7 @@ export function SeleneEditor() {
   });
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isSlideDeckOpen, setIsSlideDeckOpen] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
     if (typeof window !== "undefined") {
       return loadDocuments();
@@ -610,6 +613,9 @@ export function SeleneEditor() {
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
         handleDesktopSave();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === "`" || e.key === "~")) {
+        e.preventDefault();
+        setIsTerminalOpen((prev) => !prev);
       }
     };
 
@@ -1212,6 +1218,12 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         </div>
       )}
 
+      {/* Collapsible Command Runner & Shell Tray */}
+      <CollapsibleCommandRunner
+        isOpen={isTerminalOpen}
+        onClose={() => setIsTerminalOpen(false)}
+      />
+
       {/* Bottom Status Footer */}
       {!isZenMode && (
         <footer className={`relative z-10 flex items-center justify-between px-6 py-2 ${currentTheme.footerBg} backdrop-blur-md text-xs text-slate-400 shrink-0 transition-colors duration-500`}>
@@ -1223,6 +1235,21 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>Selene Titan of the Moon</span>
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => setIsTerminalOpen((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors ${
+                isTerminalOpen
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+              }`}
+              title="Toggle Shell Tray & Command Runner (Ctrl+`)"
+            >
+              <TerminalIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Shell Tray</span>
+              <kbd className="hidden sm:inline-block text-[10px] bg-slate-800 text-slate-400 px-1 rounded border border-slate-700">^`</kbd>
             </button>
             <span>•</span>
             <span>Polymorphic Engine Active</span>
