@@ -58,4 +58,18 @@ export async function initDb() {
       FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE
     );
   `);
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS shared_documents (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL DEFAULT 'Untitled Shared Document',
+      content_markdown TEXT NOT NULL,
+      author TEXT DEFAULT 'Anonymous',
+      is_password_protected INTEGER DEFAULT 0,
+      password_hash TEXT,
+      expires_at INTEGER,
+      view_count INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL
+    );
+  `);
 }

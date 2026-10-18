@@ -21,6 +21,20 @@ export const documentRevisions = sqliteTable("document_revisions", {
   createdAt: integer("created_at").notNull(),
 });
 
+export const sharedDocuments = sqliteTable("shared_documents", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull().default("Untitled Shared Document"),
+  contentMarkdown: text("content_markdown").notNull(),
+  author: text("author").default("Anonymous"),
+  isPasswordProtected: integer("is_password_protected", { mode: "boolean" }).default(false),
+  passwordHash: text("password_hash"),
+  expiresAt: integer("expires_at"),
+  viewCount: integer("view_count").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+});
+
 export type DocumentRecord = typeof documents.$inferSelect;
 export type NewDocumentRecord = typeof documents.$inferInsert;
 export type RevisionRecord = typeof documentRevisions.$inferSelect;
+export type SharedDocumentRecord = typeof sharedDocuments.$inferSelect;
+export type NewSharedDocumentRecord = typeof sharedDocuments.$inferInsert;
