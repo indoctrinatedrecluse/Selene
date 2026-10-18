@@ -100,7 +100,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. For all protected data and computation endpoints:
+  // 3. Public Cloud Share & Gist endpoints: Allowed so public readers and embedded iframes can load shared documents
+  if (pathname.startsWith("/api/share")) {
+    return NextResponse.next();
+  }
+
+  // 4. For all protected data and computation endpoints:
   // (/api/documents, /api/vault, /api/project, /api/ai/*)
 
   // A. App Attestation Verification
