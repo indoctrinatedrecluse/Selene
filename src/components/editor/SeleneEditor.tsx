@@ -99,9 +99,13 @@ import {
   BookOpen,
   X,
   Terminal as TerminalIcon,
+  Columns,
+  PenTool,
 } from "lucide-react";
 import { CollapsibleCommandRunner } from "@/components/terminal/CollapsibleCommandRunner";
 import { PaperToCanvasModal } from "@/components/ai/PaperToCanvasModal";
+import { WhiteboardOverlay } from "@/components/whiteboard/WhiteboardOverlay";
+import { SecondaryDocumentViewer } from "./SecondaryDocumentViewer";
 import {
   openLocalDocument,
   saveLocalDocument,
@@ -115,7 +119,7 @@ import type { LicenseStatus } from "@/lib/licensing/license-service";
 import { apiFetch, setCachedLicenseToken, setCachedHwid } from "@/lib/api-client";
 import { parseIpynbToMarkdown } from "@/lib/ipynb-bridge";
 
-export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
+export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown" | "dual-doc";
 
 export function SeleneEditor() {
   const [lunarMode, setLunarModeState] = useState<LunarBackgroundMode>(() => {
@@ -189,6 +193,20 @@ export function SeleneEditor() {
   const [isGhostwritingEnabled, setIsGhostwritingEnabled] = useState(true);
   const [ghostSuggestion, setGhostSuggestion] = useState<string | null>(null);
   const [isPaperToCanvasOpen, setIsPaperToCanvasOpen] = useState(false);
+
+  // Phase 5: Dual View & Whiteboard Overlay States
+  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
+  const [secondaryDocId, setSecondaryDocId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const loaded = loadDocuments();
+      return loaded[1]?.id || STARTER_TEMPLATES[1]?.id || STARTER_TEMPLATES[0].id;
+    }
+    return STARTER_TEMPLATES[1]?.id || STARTER_TEMPLATES[0].id;
+  });
+  const [splitOrientation, setSplitOrientation] = useState<"vertical" | "horizontal">("vertical");
+  const [isSyncScroll, setIsSyncScroll] = useState(false);
+  const [primaryScrollProgress, setPrimaryScrollProgress] = useState(0);
+  const editorScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch License Status from Registry Authority on mount
   useEffect(() => {
@@ -391,6 +409,12 @@ export function SeleneEditor() {
           editor.commands.insertContent(ghostSuggestion);
         }
         setGhostSuggestion(null);
+      } else if (e.altKey && (e.key === "W" || e.key === "w")) {
+        e.preventDefault();
+        setIsWhiteboardOpen((prev) => !prev);
+      } else if (e.altKey && (e.key === "D" || e.key === "d")) {
+        e.preventDefault();
+        setViewMode((prev) => (prev === "dual-doc" ? "wysiwyg" : "dual-doc"));
       } else if (e.key === "Escape" && ghostSuggestion) {
         setGhostSuggestion(null);
       }
@@ -398,6 +422,71 @@ export function SeleneEditor() {
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [editor, ghostSuggestion]);
+
+  // Phase 5: Dual View & Whiteboard Handlers
+  const handleSwapDualDocs = useCallback(() => {
+    const currentPrimary = activeDocId;
+    const currentSecondary = secondaryDocId;
+    const target = documents.find((d) => d.id === currentSecondary);
+    if (target) {
+      setActiveDocId(currentSecondary);
+      setDocTitle(target.title);
+      setMarkdownContent(target.content);
+      if (editor) {
+        editor.commands.setContent(target.content);
+      }
+      loadRevisions(currentSecondary);
+    }
+    setSecondaryDocId(currentPrimary);
+  }, [activeDocId, secondaryDocId, documents, editor, loadRevisions]);
+
+  const handleUpdateSecondaryDocContent = useCallback(
+    (id: string, content: string) => {
+      setDocuments((prev) => {
+        const updated = prev.map((d) =>
+          d.id === id ? { ...d, content, updatedAt: Date.now() } : d
+        );
+        saveDocuments(updated);
+        return updated;
+      });
+      const targetDoc = documents.find((d) => d.id === id);
+      debounceDbSave(id, targetDoc?.title || "Untitled", content);
+    },
+    [debounceDbSave, documents]
+  );
+
+  const handlePrimaryScroll = () => {
+    if (!isSyncScroll) return;
+    const container = editorScrollRef.current;
+    if (!container) return;
+    const max = container.scrollHeight - container.clientHeight;
+    if (max > 0) {
+      setPrimaryScrollProgress(container.scrollTop / max);
+    }
+  };
+
+  const handleSecondaryScrollProgress = (progress: number) => {
+    if (!isSyncScroll) return;
+    const container = editorScrollRef.current;
+    if (!container) return;
+    const max = container.scrollHeight - container.clientHeight;
+    if (max > 0) {
+      container.scrollTop = progress * max;
+    }
+  };
+
+  const handleInsertWhiteboardSnapshot = useCallback(
+    (dataUrl: string) => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus()
+        .insertContent(`\n\n![Whiteboard Annotation Snapshot](${dataUrl})\n\n`)
+        .run();
+      setIsWhiteboardOpen(false);
+    },
+    [editor]
+  );
 
   // Handle document selection
   const handleSelectDoc = (id: string) => {
@@ -940,6 +1029,18 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                 <span>Split MD</span>
               </button>
               <button
+                onClick={() => setViewMode(viewMode === "dual-doc" ? "wysiwyg" : "dual-doc")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
+                  viewMode === "dual-doc"
+                    ? "bg-slate-800 text-sky-400 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                title="Multi-Document Split-Screen Dual View (Alt+D)"
+              >
+                <Columns className="w-3.5 h-3.5" />
+                <span>Dual View</span>
+              </button>
+              <button
                 onClick={() => setViewMode("markdown")}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition-all ${
                   viewMode === "markdown"
@@ -951,6 +1052,20 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                 <span>Raw MD</span>
               </button>
             </div>
+
+            {/* Whiteboard Markup Overlay */}
+            <button
+              onClick={() => setIsWhiteboardOpen(!isWhiteboardOpen)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                isWhiteboardOpen
+                  ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm"
+                  : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border-slate-700/60"
+              }`}
+              title="Whiteboard & Freehand Sketching Overlay (Alt+W)"
+            >
+              <PenTool className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Markup</span>
+            </button>
 
             {/* Slide Deck Mode */}
             <button
@@ -1035,75 +1150,112 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
           />
         )}
 
-        {/* Editor Column */}
+        {/* Workspace Central Area */}
         <div
-          onDrop={handleCanvasDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className={`flex-1 min-w-0 flex flex-col overflow-y-auto ${
-            viewMode === "markdown" ? "hidden" : ""
+          className={`flex-1 min-w-0 flex overflow-hidden ${
+            viewMode === "dual-doc" && splitOrientation === "horizontal"
+              ? "flex-col"
+              : "flex-row"
           }`}
         >
-          {/* TipTap Toolbar */}
-          {!isZenMode && (
-            <EditorToolbar
-              editor={editor}
-              isCopied={isCopied}
-              onInsertLiveSandbox={handleInsertLiveSandbox}
-              onInsertMermaid={handleInsertMermaid}
-              onInsertMath={handleInsertMath}
-              onExportMarkdown={handleExportMarkdown}
-              onCopyMarkdown={handleCopyMarkdown}
-              onOpenPublishModal={() => setIsPublishModalOpen(true)}
-              onLaunchSlides={() => setIsSlideDeckOpen(true)}
+          {/* Editor Column */}
+          <div
+            ref={editorScrollRef}
+            onScroll={handlePrimaryScroll}
+            onDrop={handleCanvasDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className={`min-w-0 flex flex-col overflow-y-auto ${
+              viewMode === "markdown" ? "hidden" : ""
+            } ${
+              viewMode === "dual-doc"
+                ? splitOrientation === "vertical"
+                  ? "w-1/2 flex-1"
+                  : "w-full h-1/2 border-b border-slate-800"
+                : "flex-1"
+            }`}
+          >
+            {/* TipTap Toolbar */}
+            {!isZenMode && (
+              <EditorToolbar
+                editor={editor}
+                isCopied={isCopied}
+                onInsertLiveSandbox={handleInsertLiveSandbox}
+                onInsertMermaid={handleInsertMermaid}
+                onInsertMath={handleInsertMath}
+                onExportMarkdown={handleExportMarkdown}
+                onCopyMarkdown={handleCopyMarkdown}
+                onOpenPublishModal={() => setIsPublishModalOpen(true)}
+                onLaunchSlides={() => setIsSlideDeckOpen(true)}
+              />
+            )}
+
+            {/* TipTap Document Canvas */}
+            <div className="flex-1 max-w-4xl w-full mx-auto pb-24 pt-4">
+              <EditorBubbleMenu editor={editor} />
+              <EditorContent editor={editor} />
+            </div>
+          </div>
+
+          {/* Dual View: Secondary Document Pane */}
+          {viewMode === "dual-doc" && (
+            <SecondaryDocumentViewer
+              documents={documents}
+              secondaryDocId={secondaryDocId}
+              onSelectDoc={setSecondaryDocId}
+              onClose={() => setViewMode("wysiwyg")}
+              onSwapDocuments={handleSwapDualDocs}
+              onUpdateDocumentContent={handleUpdateSecondaryDocContent}
+              splitOrientation={splitOrientation}
+              onToggleOrientation={() =>
+                setSplitOrientation((o) => (o === "vertical" ? "horizontal" : "vertical"))
+              }
+              isSyncScroll={isSyncScroll}
+              onToggleSyncScroll={() => setIsSyncScroll((s) => !s)}
+              primaryScrollProgress={primaryScrollProgress}
+              onScrollProgressChange={handleSecondaryScrollProgress}
             />
           )}
 
-          {/* TipTap Document Canvas */}
-          <div className="flex-1 max-w-4xl w-full mx-auto pb-24 pt-4">
-            <EditorBubbleMenu editor={editor} />
-            <EditorContent editor={editor} />
-          </div>
-        </div>
-
-        {/* Right Pane: Live Project Render */}
-        {viewMode === "project" && (
-          <div className="border-l border-slate-800 bg-slate-900/60 flex flex-col w-1/2 overflow-hidden">
-            <ProjectServerRenderer
-              currentFilePath={activeDoc.title}
-              defaultRoute="/"
-              className="border-none !rounded-none h-full"
-            />
-          </div>
-        )}
-
-        {/* Split Raw Markdown Pane */}
-        {(viewMode === "split" || viewMode === "markdown") && (
-          <div
-            className={`border-l border-slate-800 bg-slate-900/60 flex flex-col ${
-              viewMode === "split" ? "w-1/2" : "w-full"
-            }`}
-          >
-            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono text-slate-400">
-              <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-sky-400" />
-                <span>Raw Markdown (GFM Stream)</span>
-              </div>
-              <span className="text-[11px] text-slate-500">Live Bi-directional Sync</span>
+          {/* Right Pane: Live Project Render */}
+          {viewMode === "project" && (
+            <div className="border-l border-slate-800 bg-slate-900/60 flex flex-col w-1/2 overflow-hidden">
+              <ProjectServerRenderer
+                currentFilePath={activeDoc.title}
+                defaultRoute="/"
+                className="border-none !rounded-none h-full"
+              />
             </div>
-            <textarea
-              value={markdownContent}
-              onChange={(e) => {
-                const val = e.target.value;
-                setMarkdownContent(val);
-                if (editor) {
-                  editor.commands.setContent(val);
-                }
-              }}
-              className="flex-1 p-6 bg-transparent font-mono text-xs text-slate-300 resize-none focus:outline-none leading-relaxed overflow-y-auto selection:bg-sky-500/30"
-              spellCheck={false}
-            />
-          </div>
-        )}
+          )}
+
+          {/* Split Raw Markdown Pane */}
+          {(viewMode === "split" || viewMode === "markdown") && (
+            <div
+              className={`border-l border-slate-800 bg-slate-900/60 flex flex-col ${
+                viewMode === "split" ? "w-1/2" : "w-full"
+              }`}
+            >
+              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono text-slate-400">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Raw Markdown (GFM Stream)</span>
+                </div>
+                <span className="text-[11px] text-slate-500">Live Bi-directional Sync</span>
+              </div>
+              <textarea
+                value={markdownContent}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setMarkdownContent(val);
+                  if (editor) {
+                    editor.commands.setContent(val);
+                  }
+                }}
+                className="flex-1 p-6 bg-transparent font-mono text-xs text-slate-300 resize-none focus:outline-none leading-relaxed overflow-y-auto selection:bg-sky-500/30"
+                spellCheck={false}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Revision History Drawer with Visual Diff Inspector */}
@@ -1265,6 +1417,14 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
           </div>
         </footer>
       )}
+
+      {/* Whiteboard / Freehand Sketching Annotation Overlay */}
+      <WhiteboardOverlay
+        isOpen={isWhiteboardOpen}
+        onClose={() => setIsWhiteboardOpen(false)}
+        documentId={activeDocId}
+        onInsertSnapshot={handleInsertWhiteboardSnapshot}
+      />
     </div>
   );
 }
