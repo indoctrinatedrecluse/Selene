@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.gitignore
+.github
+src-tauri/target
+electron
+data
+*.log
+README.md
+CHANGELOG.md

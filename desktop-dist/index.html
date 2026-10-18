@@ -186,7 +186,10 @@
     </div>
     <div id="status" class="status">Connecting to Selene engine on http://localhost:3000...</div>
 
-    <button id="retryBtn" class="retry-btn" onclick="checkConnection()">Retry Connection</button>
+    <div style="display: flex; gap: 8px;">
+      <button id="retryBtn" class="retry-btn" onclick="checkConnection()">Retry Connection</button>
+      <button id="changeUrlBtn" class="retry-btn" style="display: inline-block; border-color: rgba(99, 102, 241, 0.4); color: #818CF8; background: rgba(99, 102, 241, 0.1);" onclick="setCustomUrl()">Connect to Cloud Run URL</button>
+    </div>
 
     <div id="manualHint" class="manual-hint">
       <strong>Local engine not yet detected.</strong><br />
@@ -196,9 +199,22 @@
   </div>
 
   <script>
-    const TARGET_URL = "http://localhost:3000";
+    const DEFAULT_TARGET = localStorage.getItem("selene_server_url") || "http://localhost:3000";
+    let TARGET_URL = DEFAULT_TARGET;
     let attempts = 0;
     const maxQuietAttempts = 4;
+
+    function setCustomUrl() {
+      const current = localStorage.getItem("selene_server_url") || "https://selene-backend-xxxx.a.run.app";
+      const userUrl = prompt("Enter your Selene Hosted Cloud Run or Local Server URL:", current);
+      if (userUrl && userUrl.trim()) {
+        const clean = userUrl.trim().replace(/\/+$/, "");
+        localStorage.setItem("selene_server_url", clean);
+        TARGET_URL = clean;
+        attempts = 0;
+        checkConnection();
+      }
+    }
 
     async function checkConnection() {
       attempts++;
@@ -206,9 +222,11 @@
       const hintEl = document.getElementById("manualHint");
       const retryBtn = document.getElementById("retryBtn");
 
+      statusEl.textContent = "Connecting to Selene engine on " + TARGET_URL + "...";
+
       try {
-        // Ping local server
-        const res = await fetch(TARGET_URL + "/api/license/status", {
+        // Ping health / status
+        const res = await fetch(TARGET_URL + "/api/health", {
           method: "GET",
           cache: "no-store",
           headers: { "Accept": "application/json" }
@@ -219,9 +237,9 @@
           return;
         }
       } catch (err) {
-        // Try fallback root ping
+        // Fallback root ping
         try {
-          const resRoot = await fetch(TARGET_URL, { mode: "no-cors", cache: "no-store" });
+          await fetch(TARGET_URL, { mode: "no-cors", cache: "no-store" });
           statusEl.textContent = "Server detected! Loading canvas...";
           window.location.replace(TARGET_URL);
           return;
@@ -231,12 +249,12 @@
       }
 
       if (attempts >= maxQuietAttempts) {
-        statusEl.textContent = "Waiting for local Selene server (attempt " + attempts + ")...";
+        statusEl.textContent = "Waiting for server on " + TARGET_URL + " (attempt " + attempts + ")...";
         hintEl.style.display = "block";
         retryBtn.style.display = "inline-block";
       }
 
-      setTimeout(checkConnection, 1200);
+      setTimeout(checkConnection, 1500);
     }
 
     // Auto-commence probing immediately

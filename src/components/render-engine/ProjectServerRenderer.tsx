@@ -16,6 +16,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { ProjectMetadata, RouteResolution } from "@/lib/project-detector";
+import { apiFetch } from "@/lib/api-client";
 
 export type ViewportMode = "desktop" | "laptop" | "tablet" | "mobile";
 
@@ -55,7 +56,7 @@ export function ProjectServerRenderer({
         const url = `/api/project/status?filePath=${encodeURIComponent(
           currentFilePath
         )}&port=${serverPort}`;
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         if (res.ok && isMounted) {
           const data = await res.json();
           setIsServerRunning(data.server.isRunning);
@@ -105,14 +106,14 @@ export function ProjectServerRenderer({
   const handleStartServer = async () => {
     setIsStartingServer(true);
     try {
-      await fetch("/api/project/server", {
+      await apiFetch("/api/project/server", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "start" }),
       });
       setTimeout(async () => {
         try {
-          const res = await fetch(
+          const res = await apiFetch(
             `/api/project/status?filePath=${encodeURIComponent(currentFilePath)}&port=${serverPort}`
           );
           if (res.ok) {

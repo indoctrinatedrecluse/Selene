@@ -26,6 +26,7 @@ import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 import type { LicenseStatus, LicenseTier } from "@/lib/licensing/license-service";
 import type { AIKeyMetadata, AIProvider } from "@/lib/security/secure-vault";
 import { SeleneLicenseBadge } from "./SeleneLicenseBadge";
+import { apiFetch, setCachedLicenseToken } from "@/lib/api-client";
 
 interface SeleneLicenseModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export function SeleneLicenseModal({
 
   const loadAiKeys = async () => {
     try {
-      const res = await fetch("/api/vault/keys");
+      const res = await apiFetch("/api/vault/keys");
       if (res.ok) {
         const data = await res.json();
         setAiKeys(data);
@@ -106,7 +107,7 @@ export function SeleneLicenseModal({
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/vault/keys", {
+      const res = await apiFetch("/api/vault/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider, apiKey: keyVal.trim() }),
@@ -137,7 +138,7 @@ export function SeleneLicenseModal({
     setFeedback(null);
 
     try {
-      const res = await fetch("/api/vault/keys", {
+      const res = await apiFetch("/api/vault/keys", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider }),
@@ -169,7 +170,7 @@ export function SeleneLicenseModal({
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/license/activate", {
+      const res = await apiFetch("/api/license/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -192,6 +193,9 @@ export function SeleneLicenseModal({
           message: data.message || "License successfully activated!",
         });
         if (data.license) {
+          if (data.license.licenseToken) {
+            setCachedLicenseToken(data.license.licenseToken);
+          }
           onLicenseUpdated(data.license);
         }
         if (!forcedLock) {
@@ -220,7 +224,7 @@ export function SeleneLicenseModal({
     setIsDeactivating(true);
 
     try {
-      const res = await fetch("/api/license/deactivate", {
+      const res = await apiFetch("/api/license/deactivate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -233,9 +237,12 @@ export function SeleneLicenseModal({
           message: data.message || "License removed. Reverted to 60-day trial.",
         });
 
-        const statusRes = await fetch("/api/license/status");
+        const statusRes = await apiFetch("/api/license/status");
         if (statusRes.ok) {
           const newStatus = await statusRes.json();
+          if (newStatus.licenseToken) {
+            setCachedLicenseToken(newStatus.licenseToken);
+          }
           onLicenseUpdated(newStatus);
         }
       } else {

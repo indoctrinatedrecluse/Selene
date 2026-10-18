@@ -29,6 +29,7 @@ export interface LicenseStatus {
   tamperReason?: string;
   message: string;
   lastValidatedAt?: string;
+  licenseToken?: string;
 }
 
 export interface ActivationPayload {
@@ -47,6 +48,7 @@ export interface ActivationResponse {
 
 import { getHardwareFingerprint } from "@/lib/security/hwid";
 import { saveEncryptedLicenseKey, getDecryptedLicenseKey } from "@/lib/security/secure-vault";
+import { issueLicenseToken } from "@/lib/security/attestation";
 
 export { getHardwareFingerprint };
 
@@ -319,6 +321,16 @@ async function evaluateTrialStatus(hwid: string, reg: Record<string, string>): P
 
   const isExpired = msRemaining <= 0;
 
+  const trialToken = !isExpired
+    ? issueLicenseToken({
+        tier: "TRIAL",
+        licenseKey: "TRIAL-EVALUATION",
+        hwid,
+        username: "Trial User",
+        status: "trial",
+      })
+    : undefined;
+
   return {
     type: "TRIAL",
     key: "TRIAL-EVALUATION",
@@ -330,6 +342,7 @@ async function evaluateTrialStatus(hwid: string, reg: Record<string, string>): P
     hwid,
     machineName: os.hostname(),
     isLocked: isExpired,
+    licenseToken: trialToken,
     message: isExpired
       ? "Your 60-day trial period has expired. Please enter an Admin, Developer, or User license to continue."
       : `Selene 60-Day Trial active (${daysRemaining} day${daysRemaining === 1 ? "" : "s"} remaining).`,
@@ -366,6 +379,17 @@ export async function getLicenseStatus(): Promise<LicenseStatus> {
     }
   }
 
+  const tier = (licenseType === "ADMIN" ? "ADM" : licenseType) as "ADM" | "DEV" | "USER" | "TRIAL";
+  const activeToken = !isExpired
+    ? issueLicenseToken({
+        tier,
+        licenseKey: activeKey,
+        hwid,
+        username,
+        status: isExpired ? "expired" : "active",
+      })
+    : undefined;
+
   return {
     type: licenseType,
     key: activeKey,
@@ -378,6 +402,7 @@ export async function getLicenseStatus(): Promise<LicenseStatus> {
     machineName: os.hostname(),
     isLocked: isExpired,
     lastValidatedAt,
+    licenseToken: activeToken,
     message: isExpired
       ? `Your ${licenseType} license has expired on ${expiresAt}.`
       : `${licenseType} license verified and active on this device.`,

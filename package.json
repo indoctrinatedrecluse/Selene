@@ -12,7 +12,8 @@
     "desktop:dev": "electron electron/main.js",
     "tauri": "tauri",
     "desktop:tauri": "tauri dev",
-    "desktop:tauri:build": "tauri build"
+    "desktop:tauri:build": "tauri build",
+    "deploy:cloudrun": "powershell -ExecutionPolicy Bypass -File tools/scripts/cloud/deploy-cloudrun.ps1"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.20.0",

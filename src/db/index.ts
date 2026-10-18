@@ -4,15 +4,31 @@ import * as schema from "./schema";
 import fs from "fs";
 import path from "path";
 
-// Ensure local data directory exists for local development SQLite database
-const dataDir = path.join(process.cwd(), "data");
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// Support DATABASE_URL (Turso / remote LibSQL) or fallback to local SQLite
+const databaseUrl = process.env.DATABASE_URL;
+
+let dbUrl = databaseUrl;
+if (!dbUrl) {
+  // In serverless / container environments (like Cloud Run), use /tmp if root is read-only
+  const isServerless = process.env.K_SERVICE || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+  const baseDir = isServerless ? "/tmp" : process.cwd();
+  const dataDir = path.join(baseDir, "data");
+
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  } catch (err) {
+    console.warn("Could not create local dataDir, falling back to /tmp:", err);
+  }
+
+  const dbPath = path.join(dataDir, "selene.db");
+  dbUrl = `file:${dbPath.replace(/\\/g, "/")}`;
 }
 
-const dbPath = path.join(dataDir, "selene.db");
 const client = createClient({
-  url: `file:${dbPath.replace(/\\/g, "/")}`,
+  url: dbUrl,
+  authToken: process.env.DATABASE_AUTH_TOKEN,
 });
 
 export const db = drizzle(client, { schema });

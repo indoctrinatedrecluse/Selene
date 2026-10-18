@@ -228,6 +228,21 @@ Selene features an industry-grade cryptographic licensing subsystem backed by **
 - **Device Node-Locking (HWID)**: Machine hardware fingerprints (MachineGuid + CPU architecture + host parameters) bind licenses securely to designated seats.
 - **Hardware-Bound AES-256-GCM Secure Vault**: License keys and future AI credentials (**Google Gemini**, **OpenAI**, **Anthropic Claude**) are encrypted with authenticated AES-256-GCM using keys derived via PBKDF2 (100,000 rounds SHA-512) keyed to the machine's hardware fingerprint and Windows user account. Persists permanently in `HKCU\Software\Selene\Vault`.
 - **License & Vault Manager**: Accessible directly from the top header or **Help -> Manage License & Device...** to manage keys, toggle digit masking, view seat duration, configure AI keys, or revert to trial.
+- **Client App Attestation & API Gatekeeper** (`src/middleware.ts`):
+  - Every API request from the client app carries a cryptographic HMAC-SHA256 signature (`X-Selene-Signature`), application attestation ID (`X-Selene-App-ID`), anti-replay timestamp (`X-Selene-Timestamp`), HWID (`X-Selene-HWID`), and a cryptographically signed license attestation token (`X-Selene-License-Token`).
+  - Next.js server middleware strictly validates all incoming calls: raw cURL scripts, Postman probes, external websites, and requests without a valid active license or trial are rejected immediately with `401 Unauthorized` or `403 Forbidden`.
+
+---
+
+## ☁️ Google Cloud Run Backend Deployment
+
+Selene's backend is containerized for seamless, serverless deployment to **Google Cloud Run**:
+
+- **Multi-Stage Container** (`Dockerfile`): Next.js 16 standalone compilation with non-root security user (`nextjs:nodejs`), sub-100MB image footprint, and zero cold-start delay.
+- **Automated Deployment Scripts**:
+  - Windows: `.\tools\scripts\cloud\deploy-cloudrun.ps1` (or `npm run deploy:cloudrun`)
+  - Linux/macOS: `./tools/scripts/cloud/deploy-cloudrun.sh`
+- **Database Flexibility**: Supports remote LibSQL / Turso databases via `DATABASE_URL` or serverless container-safe `/tmp` persistence.
 
 ---
 

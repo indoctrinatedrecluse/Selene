@@ -112,6 +112,18 @@ This release marks the culmination of the 4 core roadmap pillars for Selene: Uni
     - Accessible via header badge or **Help -> Manage License & Device...**.
     - Digit masking with reveal toggle, 1-click HWID clipboard copy, and "Remove License & Revert to Trial" capability.
     - Dedicated **AI Security Vault** tab with masked key displays, eye-reveal toggles, and hardware-vault key storage/deletion controls.
+  - **Client Application Attestation & Backend Gatekeeper** (`src/middleware.ts`, `src/lib/security/attestation.ts`, `src/lib/api-client.ts`):
+    - Enforces that backend API endpoints strictly accept requests originating from the authentic Selene client application (Tauri desktop, Electron shell, or authenticated Web frontend).
+    - Requires valid cryptographic HMAC-SHA256 signatures (`X-Selene-Signature`), application attestation ID (`X-Selene-App-ID`), anti-replay timestamps (`X-Selene-Timestamp`), and verified active license attestation tokens (`X-Selene-License-Token`).
+    - Automatically blocks unauthorized cURL scripts, Postman probes, web scrapers, and unlicensed callers with `401 Unauthorized` or `403 Forbidden`.
+
+#### ☁️ Google Cloud Run Backend Containerization
+- **Multi-Stage Container** (`Dockerfile`): Next.js standalone build running under dedicated non-root user (`nextjs:nodejs`), sub-100MB footprint, and instant cold-start response.
+- **Container Health Probes** (`src/app/api/health/route.ts`): Liveness and readiness endpoints for Cloud Run and load balancers.
+- **Automated Deployment Suite** (`tools/scripts/cloud/`):
+  - `deploy-cloudrun.ps1` (PowerShell) & `deploy-cloudrun.sh` (Bash) for 1-click builds and Cloud Run deployment.
+  - Integrated `npm run deploy:cloudrun` script.
+- **Desktop Cloud Bridge** (`desktop-dist/index.html`): Added instant "Connect to Cloud Run URL" configuration to switch between local development and hosted cloud engines.
 
 #### 📄 Proprietary License Transition
 - Updated license terms to **Proprietary Source-Available License**.

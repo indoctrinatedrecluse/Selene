@@ -63,6 +63,7 @@ import { SeleneLicenseBadge } from "@/components/license/SeleneLicenseBadge";
 import { SeleneLicenseModal } from "@/components/license/SeleneLicenseModal";
 import { SeleneTimeLockBarrier } from "@/components/license/SeleneTimeLockBarrier";
 import type { LicenseStatus } from "@/lib/licensing/license-service";
+import { apiFetch, setCachedLicenseToken, setCachedHwid } from "@/lib/api-client";
 
 export type EditorViewMode = "wysiwyg" | "split" | "project" | "markdown";
 
@@ -109,10 +110,16 @@ export function SeleneEditor() {
   useEffect(() => {
     async function fetchLicense() {
       try {
-        const res = await fetch("/api/license/status");
+        const res = await apiFetch("/api/license/status");
         if (res.ok) {
           const data = await res.json();
           setLicenseStatus(data);
+          if (data.licenseToken) {
+            setCachedLicenseToken(data.licenseToken);
+          }
+          if (data.hwid) {
+            setCachedHwid(data.hwid);
+          }
         }
       } catch (err) {
         console.warn("Using offline trial mode (License status fetch failed)", err);
@@ -137,7 +144,7 @@ export function SeleneEditor() {
   useEffect(() => {
     async function syncFromDb() {
       try {
-        const res = await fetch("/api/documents");
+        const res = await apiFetch("/api/documents");
         if (res.ok) {
           const dbDocs = await res.json();
           if (Array.isArray(dbDocs) && dbDocs.length > 0) {
@@ -172,7 +179,7 @@ export function SeleneEditor() {
   // Fetch revisions when active document changes
   const loadRevisions = useCallback(async (docId: string) => {
     try {
-      const res = await fetch(`/api/documents/${docId}`);
+      const res = await apiFetch(`/api/documents/${docId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.revisions) {
@@ -240,7 +247,7 @@ export function SeleneEditor() {
     setIsSavingDb(true);
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        await fetch(`/api/documents/${id}`, {
+        await apiFetch(`/api/documents/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title, contentMarkdown: content }),
@@ -290,7 +297,7 @@ export function SeleneEditor() {
     }
 
     try {
-      await fetch("/api/documents", {
+      await apiFetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newDoc),
@@ -325,7 +332,7 @@ export function SeleneEditor() {
       }
 
       try {
-        await fetch("/api/documents", {
+        await apiFetch("/api/documents", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newDoc),
@@ -420,7 +427,7 @@ export function SeleneEditor() {
     }
 
     try {
-      await fetch(`/api/documents/${id}`, { method: "DELETE" });
+      await apiFetch(`/api/documents/${id}`, { method: "DELETE" });
     } catch {
       // Local fallback
     }
