@@ -89,6 +89,16 @@ This directory contains curated, production-grade sample documents demonstrating
     - Synchronized scroll locking across parallel documents for seamless side-by-side reading and editing.
     - Freeform Whiteboard drawing overlay with pen, highlighter, shapes, arrow annotations, and PNG export.
 
+16. [`16_elixir_phoenix_liveview_showcase.md`](./16_elixir_phoenix_liveview_showcase.md)
+    - Phoenix of Olympus: Elixir 1.16 & Phoenix 1.7 LiveView HEEx engine integration.
+    - In-browser compiler for assigns (`@cluster`), maps (`%{}`), loops (`<%= for %>`), conditionals (`<%= if %>`), and interactive `phx-click` events.
+    - Dual-runtime support (in-browser sandbox & local `mix phx.server` on port 4000).
+
+17. [`17_swift_swiftui_multiplatform_showcase.md`](./17_swift_swiftui_multiplatform_showcase.md)
+    - Zephyr Swift Canvas: Apple Swift & SwiftUI multiplatform declarative UI engine.
+    - In-browser parser for `@State` reactive bindings, `VStack`/`HStack`/`ZStack` view hierarchies, SF Symbols, and Cupertino dark mode components.
+    - Dual-runtime support (in-browser sandbox & local Swift server on port 8080).
+
 ---
 
 ## 🚀 How to Open in Selene

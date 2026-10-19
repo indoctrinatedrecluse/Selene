@@ -16,6 +16,8 @@ import { SqlDataStudioRenderer } from "@/components/render-engine/SqlDataStudioR
 import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRenderer";
 import { DeclarativeChartRenderer } from "@/components/render-engine/DeclarativeChartRenderer";
 import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRenderer";
+import { PhoenixLiveViewRenderer } from "@/components/render-engine/PhoenixLiveViewRenderer";
+import { SwiftUiRenderer } from "@/components/render-engine/SwiftUiRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -42,6 +44,8 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isMath = language === "math" || language === "latex";
   const isChart = language === "chart" || language === "plot";
   const isDuckDb = language === "duckdb" || language === "olap" || language === "parquet";
+  const isPhoenixLiveView = language === "heex" || language === "liveview" || language === "elixir" || language === "phoenix";
+  const isSwiftUi = language === "swift" || language === "swiftui";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(rawCode);
@@ -242,6 +246,32 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's an Elixir / Phoenix LiveView HEEx block
+  if (isPhoenixLiveView && showLiveRender) {
+    return (
+      <NodeViewWrapper className="phoenix-liveview-block my-4">
+        <PhoenixLiveViewRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's an Apple Swift / SwiftUI declarative component block
+  if (isSwiftUi && showLiveRender) {
+    return (
+      <NodeViewWrapper className="swiftui-block my-4">
+        <SwiftUiRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // Standard high-performance code block
   return (
     <NodeViewWrapper className="relative my-4 rounded-xl border border-slate-800 bg-slate-950/90 overflow-hidden shadow-xl">
@@ -278,6 +308,11 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="gotemplate">gotemplate (live)</option>
             <option value="django">django (live)</option>
             <option value="jinja2">jinja2 (live)</option>
+            <option value="heex">heex (Phoenix LiveView)</option>
+            <option value="liveview">liveview (Phoenix)</option>
+            <option value="elixir">elixir (Phoenix)</option>
+            <option value="swift">swift (SwiftUI)</option>
+            <option value="swiftui">swiftui (live)</option>
             <option value="html">html (live)</option>
             <option value="mermaid">mermaid (diagram)</option>
             <option value="python">python (live WASM)</option>
@@ -290,7 +325,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isRustWasm || isChart || isDuckDb || isSql || isShader) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isRustWasm || isChart || isDuckDb || isSql || isShader || isPhoenixLiveView || isSwiftUi) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"

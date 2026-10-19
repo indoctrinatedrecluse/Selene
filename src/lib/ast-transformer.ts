@@ -164,6 +164,12 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
   } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
     const rustTitle = code.match(/<h[1-6][^>]*>\{\s*"([^"]+)"\s*\}<\/h[1-6]>/) || code.match(/let\s+cluster\s*=\s*"([^"]+)";/);
     if (rustTitle) result.title = rustTitle[1];
+  } else if (lang === "heex" || lang === "liveview" || lang === "elixir" || lang === "phoenix") {
+    const phoenixTitle = code.match(/assign\(.*?:(?:title|cluster|name),\s*"([^"]+)"\)/) || code.match(/@(?:title|cluster|name)\s*=\s*"([^"]+)"/);
+    if (phoenixTitle) result.title = phoenixTitle[1];
+  } else if (lang === "swift" || lang === "swiftui") {
+    const swiftTitle = code.match(/Text\(\s*"([^"]+)"\s*\)\s*\.font\(\.(?:largeTitle|title|title2|headline)/) || code.match(/(?:let|var)\s+(?:title|name)\s*=\s*"([^"]+)"/);
+    if (swiftTitle) result.title = swiftTitle[1];
   } else {
     const headingMatch = code.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
     if (headingMatch && headingMatch[1]) {
@@ -181,13 +187,18 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
   }
 
   // 3. Button Text Extraction
-  const buttonMatch = code.match(/<button[^>]*>([\s\S]*?)<\/button>/);
-  if (buttonMatch && buttonMatch[1]) {
-    const rawBtn = buttonMatch[1].replace(/<[^>]+>/g, "").trim();
-    // Clean dynamic template variables like ({{ count }} or {likes})
-    const cleanedBtn = rawBtn.replace(/(\(\s*\{.*?\}\s*\)|\(\s*\{\{.*?\}\}\s*\))/g, "").trim();
-    if (cleanedBtn) {
-      result.buttonText = cleanedBtn;
+  if (lang === "swift" || lang === "swiftui") {
+    const swiftBtn = code.match(/Button\(\s*"([^"]+)"\s*\)/) || code.match(/Button\(action:[^)]*\)\s*\{\s*Text\(\s*"([^"]+)"\s*\)/);
+    if (swiftBtn && swiftBtn[1]) result.buttonText = swiftBtn[1];
+  } else {
+    const buttonMatch = code.match(/<button[^>]*>([\s\S]*?)<\/button>/);
+    if (buttonMatch && buttonMatch[1]) {
+      const rawBtn = buttonMatch[1].replace(/<[^>]+>/g, "").trim();
+      // Clean dynamic template variables like ({{ count }} or {likes})
+      const cleanedBtn = rawBtn.replace(/(\(\s*\{.*?\}\s*\)|\(\s*\{\{.*?\}\}\s*\))/g, "").trim();
+      if (cleanedBtn) {
+        result.buttonText = cleanedBtn;
+      }
     }
   }
 
@@ -300,6 +311,12 @@ export function extractVisualProps(code: string, language = "tsx"): UniversalVis
   } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
     const rustCount = code.match(/use_state\(\s*\|\|\s*(\d+)\s*\)/) || code.match(/create_signal\(\s*(\d+)\s*\)/);
     if (rustCount) result.initialCount = parseInt(rustCount[1], 10);
+  } else if (lang === "heex" || lang === "liveview" || lang === "elixir" || lang === "phoenix") {
+    const phoenixCount = code.match(/assign\(.*?:(?:count|actors|nodes|pulse),\s*(\d+)\)/) || code.match(/@(?:count|actors|nodes|pulse)\s*=\s*(\d+)/);
+    if (phoenixCount) result.initialCount = parseInt(phoenixCount[1], 10);
+  } else if (lang === "swift" || lang === "swiftui") {
+    const swiftCount = code.match(/@State\s+(?:private\s+)?var\s+(?:count|pulse|telemetryPulse|activeNodes|value)\s*(?::\s*Int\s*)?=\s*(\d+)/);
+    if (swiftCount) result.initialCount = parseInt(swiftCount[1], 10);
   } else {
     // React / TSX
     const reactState = code.match(/useState\(\s*(\d+)\s*\)/);
@@ -333,6 +350,11 @@ export function applyVisualProps(
     } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
       updated = updated.replace(/(<h[1-6][^>]*>\{\s*")[^"]+("\s*\}<\/h[1-6]>)/, `$1${props.title}$2`);
       updated = updated.replace(/(let\s+cluster\s*=\s*")[^"]+(";)/, `$1${props.title}$2`);
+    } else if (lang === "heex" || lang === "liveview" || lang === "elixir" || lang === "phoenix") {
+      updated = updated.replace(/(assign\(.*?:(?:title|cluster|name),\s*")[^"]+(")/, `$1${props.title}$2`);
+    } else if (lang === "swift" || lang === "swiftui") {
+      updated = updated.replace(/(Text\(\s*")[^"]+("\s*\)\s*\.font\(\.(?:largeTitle|title|title2|headline))/, `$1${props.title}$2`);
+      updated = updated.replace(/((?:let|var)\s+(?:title|name)\s*=\s*")[^"]+(")/, `$1${props.title}$2`);
     }
     const titleMatch = updated.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/);
     if (titleMatch && !titleMatch[1].includes("{{") && !titleMatch[1].includes("<%") && !titleMatch[1].includes("{")) {
@@ -462,6 +484,11 @@ export function applyVisualProps(
     } else if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos") {
       updated = updated.replace(/use_state\(\s*\|\|\s*\d+\s*\)/g, `use_state(|| ${props.initialCount})`);
       updated = updated.replace(/create_signal\(\s*\d+\s*\)/g, `create_signal(${props.initialCount})`);
+    } else if (lang === "heex" || lang === "liveview" || lang === "elixir" || lang === "phoenix") {
+      updated = updated.replace(/(assign\(.*?:(?:count|actors|nodes|pulse),\s*)\d+/g, `$1${props.initialCount}`);
+      updated = updated.replace(/(@(?:count|actors|nodes|pulse)\s*=\s*)\d+/g, `$1${props.initialCount}`);
+    } else if (lang === "swift" || lang === "swiftui") {
+      updated = updated.replace(/(@State\s+(?:private\s+)?var\s+(?:count|pulse|telemetryPulse|activeNodes|value)\s*(?::\s*Int\s*)?=\s*)\d+/g, `$1${props.initialCount}`);
     } else {
       updated = updated.replace(/useState\(\s*\d+\s*\)/g, `useState(${props.initialCount})`);
     }
