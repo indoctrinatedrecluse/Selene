@@ -25,7 +25,7 @@ import {
   HardDrive,
 } from "lucide-react";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
-import { SELENE_VERSION_DISPLAY } from "@/lib/version";
+import { SeleneVersionBadge } from "@/components/brand/SeleneVersionBadge";
 import { parseIpynbToMarkdown } from "@/lib/ipynb-bridge";
 import { GitSourceControlDrawer } from "@/components/git/GitSourceControlDrawer";
 import { bindLocalFolder, getBoundFolderInfo, BoundFolderInfo } from "@/lib/disk-sync";
@@ -259,9 +259,7 @@ export function WorkspaceSidebar({
           <span className="text-xs font-bold text-slate-100 uppercase tracking-wider select-none">
             Scriptorium
           </span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/10 text-sky-400 font-mono font-medium border border-sky-500/20">
-            {SELENE_VERSION_DISPLAY}
-          </span>
+          <SeleneVersionBadge className="text-[10px] px-1.5 py-0.2" />
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
           <button

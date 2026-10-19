@@ -57,6 +57,13 @@ function createMainWindow() {
   const splashPath = path.join(__dirname, "splash.html");
   if (fs.existsSync(splashPath)) {
     mainWindow.loadFile(splashPath);
+    mainWindow.webContents.once("did-finish-load", () => {
+      const ver = app.getVersion() || "0.4.0";
+      mainWindow.webContents.executeJavaScript(`
+        const span = document.querySelector('h1 span');
+        if (span) span.textContent = 'v${ver}';
+      `).catch(() => {});
+    });
   }
 
   checkServerReady(DEV_URL).then((ready) => {

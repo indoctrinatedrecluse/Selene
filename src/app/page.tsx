@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { Sparkles } from "lucide-react";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
-import { SELENE_VERSION_DISPLAY } from "@/lib/version";
+import { SeleneVersionBadge } from "@/components/brand/SeleneVersionBadge";
 
 const SeleneEditor = dynamic(
   () => import("@/components/editor/SeleneEditor").then((mod) => mod.SeleneEditor),
@@ -16,9 +16,7 @@ const SeleneEditor = dynamic(
           <div>
             <div className="flex items-center gap-2 font-bold text-white text-sm">
               <span>Awakening Selene Canvas</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/10 text-sky-400 font-mono font-medium border border-sky-500/20">
-                {SELENE_VERSION_DISPLAY}
-              </span>
+              <SeleneVersionBadge className="text-[10px] px-1.5 py-0.2" />
               <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
             </div>
             <div className="text-xs text-sky-400/90 font-serif italic">

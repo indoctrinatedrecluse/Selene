@@ -114,4 +114,49 @@ if (fs.existsSync(pkgLockPath)) {
   console.log(`  [OK] package-lock.json -> ${targetVersion}`);
 }
 
+// 8. Update .github/workflows/release.yml
+const releaseYmlPath = path.join(rootDir, '.github/workflows/release.yml');
+if (fs.existsSync(releaseYmlPath)) {
+  let yml = fs.readFileSync(releaseYmlPath, 'utf8');
+  yml = yml.replace(
+    /(description:\s*'Release version tag \(e\.g\. v)[^)]+(\)')/,
+    `$1${targetVersion}$2`
+  ).replace(
+    /(default:\s*'v)[^']+(\')/,
+    `$1${targetVersion}$2`
+  );
+  fs.writeFileSync(releaseYmlPath, yml, 'utf8');
+  console.log(`  [OK] .github/workflows/release.yml -> v${targetVersion}`);
+}
+
+// 9. Update README.md badge and instructions
+const readmePath = path.join(rootDir, 'README.md');
+if (fs.existsSync(readmePath)) {
+  let readme = fs.readFileSync(readmePath, 'utf8');
+  readme = readme.replace(
+    /Release-v[0-9.]+\(Titan_Edition\)/g,
+    `Release-v${targetVersion}_(Titan_Edition)`
+  ).replace(
+    /git tag -a v[0-9.]+ -m/g,
+    `git tag -a v${targetVersion} -m`
+  ).replace(
+    /git push origin v[0-9.]+/g,
+    `git push origin v${targetVersion}`
+  );
+  fs.writeFileSync(readmePath, readme, 'utf8');
+  console.log(`  [OK] README.md -> v${targetVersion}`);
+}
+
+// 10. Update electron/main.js fallback version
+const electronMainPath = path.join(rootDir, 'electron/main.js');
+if (fs.existsSync(electronMainPath)) {
+  let mainJs = fs.readFileSync(electronMainPath, 'utf8');
+  mainJs = mainJs.replace(
+    /app\.getVersion\(\) \|\| "[0-9.]+"/g,
+    `app.getVersion() || "${targetVersion}"`
+  );
+  fs.writeFileSync(electronMainPath, mainJs, 'utf8');
+  console.log(`  [OK] electron/main.js -> v${targetVersion}`);
+}
+
 console.log(`✨ All Selene version references synchronized to v${targetVersion} successfully.\n`);
