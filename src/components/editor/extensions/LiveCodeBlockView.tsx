@@ -18,6 +18,7 @@ import { DeclarativeChartRenderer } from "@/components/render-engine/Declarative
 import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRenderer";
 import { PhoenixLiveViewRenderer } from "@/components/render-engine/PhoenixLiveViewRenderer";
 import { SwiftUiRenderer } from "@/components/render-engine/SwiftUiRenderer";
+import { HermesRelayRenderer } from "@/components/render-engine/HermesRelayRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -46,6 +47,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isDuckDb = language === "duckdb" || language === "olap" || language === "parquet";
   const isPhoenixLiveView = language === "heex" || language === "liveview" || language === "elixir" || language === "phoenix";
   const isSwiftUi = language === "swift" || language === "swiftui";
+  const isHermesRelay = language === "http" || language === "rest" || language === "curl" || language === "graphql";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(rawCode);
@@ -272,6 +274,20 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's an HTTP / REST / cURL / GraphQL API block and live render is enabled, render Hermes Relay!
+  if (isHermesRelay && showLiveRender) {
+    return (
+      <NodeViewWrapper className="hermes-relay-block my-4">
+        <HermesRelayRenderer
+          initialCode={rawCode}
+          language={language}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // Standard high-performance code block
   return (
     <NodeViewWrapper className="relative my-4 rounded-xl border border-slate-800 bg-slate-950/90 overflow-hidden shadow-xl">
@@ -286,6 +302,10 @@ export function LiveCodeBlockView(props: NodeViewProps) {
           >
             <option value="typescript">typescript</option>
             <option value="javascript">javascript</option>
+            <option value="http">http (Hermes Relay)</option>
+            <option value="rest">rest (Hermes Relay)</option>
+            <option value="curl">curl (Hermes Relay)</option>
+            <option value="graphql">graphql (Hermes Relay)</option>
             <option value="chart">chart (declarative)</option>
             <option value="plot">plot (declarative)</option>
             <option value="duckdb">duckdb (live OLAP)</option>
@@ -325,7 +345,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isRustWasm || isChart || isDuckDb || isSql || isShader || isPhoenixLiveView || isSwiftUi) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isRustWasm || isChart || isDuckDb || isSql || isShader || isPhoenixLiveView || isSwiftUi || isHermesRelay) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"

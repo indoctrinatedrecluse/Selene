@@ -99,6 +99,11 @@ This directory contains curated, production-grade sample documents demonstrating
     - In-browser parser for `@State` reactive bindings, `VStack`/`HStack`/`ZStack` view hierarchies, SF Symbols, and Cupertino dark mode components.
     - Dual-runtime support (in-browser sandbox & local Swift server on port 8080).
 
+18. [`18_hermes_relay_api_and_graphql_showcase.md`](./18_hermes_relay_api_and_graphql_showcase.md)
+    - Hermes Relay: Interactive API, REST, cURL & GraphQL playground engine.
+    - Dynamic headers & query parameter editors, latency telemetry, JSON formatting, search filter, and cURL generation.
+    - Dual-runtime support (live browser Fetch & offline Olympus Gateway mock mode).
+
 ---
 
 ## 🚀 How to Open in Selene
