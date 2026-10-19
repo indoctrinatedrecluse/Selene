@@ -27,7 +27,8 @@ import {
   STARTER_TEMPLATES,
   getDocumentFolder,
 } from "@/lib/workspace-store";
-import { createCollabSession, CollabSession, CollabUser } from "@/lib/collaboration";
+import { createCollabSession, CollabSession, CollabUser, generateOrbitRoomKey } from "@/lib/collaboration";
+import { OrbitLinkModal } from "@/components/collaboration/OrbitLinkModal";
 import { ProjectServerRenderer } from "@/components/render-engine/ProjectServerRenderer";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 import {
@@ -87,7 +88,7 @@ import {
   Code2,
   CheckCircle2,
   Sparkles,
-  Users,
+  Radio,
   Maximize2,
   Minimize2,
   History,
@@ -233,10 +234,21 @@ export function SeleneEditor() {
     fetchLicense();
   }, []);
 
-  // Collaboration State
+  // Collaboration / Orbit Link State
   const [isCollabActive, setIsCollabActive] = useState(false);
   const [collabUser, setCollabUser] = useState<CollabUser | null>(null);
   const [peerCount, setPeerCount] = useState(1);
+  const [orbitRoomKey, setOrbitRoomKey] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("orbit") || (window.location.hash.startsWith("#orbit=") ? window.location.hash.slice(7) : "");
+  });
+  const [isOrbitModalOpen, setIsOrbitModalOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return Boolean(params.get("orbit") || window.location.hash.startsWith("#orbit="));
+  });
+  const [activePeers, setActivePeers] = useState<CollabUser[]>([]);
   const collabSessionRef = useRef<CollabSession | null>(null);
 
   const activeDoc =
@@ -282,6 +294,8 @@ export function SeleneEditor() {
     }
     syncFromDb();
   }, []);
+
+
 
   // Fetch revisions when active document changes
   const loadRevisions = useCallback(async (docId: string) => {
@@ -811,25 +825,47 @@ export function SeleneEditor() {
     [activeDocId, docTitle, editor, debounceDbSave, handleTitleChange]
   );
 
-  // Toggle Live Collaboration (Webrtc CRDT)
-  const toggleCollaboration = () => {
-    if (isCollabActive) {
-      collabSessionRef.current?.provider.destroy();
-      collabSessionRef.current = null;
-      setIsCollabActive(false);
-      setCollabUser(null);
-    } else {
-      const session = createCollabSession(activeDocId);
-      collabSessionRef.current = session;
-      setCollabUser(session.currentUser);
-      setIsCollabActive(true);
+  // 🪐 Orbit Link: Connect or Disconnect P2P WebRTC Session
+  const handleOrbitToggleConnect = useCallback(
+    (roomKey?: string, password?: string, user?: CollabUser) => {
+      if (isCollabActive) {
+        collabSessionRef.current?.provider.destroy();
+        collabSessionRef.current = null;
+        setIsCollabActive(false);
+        setCollabUser(null);
+        setActivePeers([]);
+      } else {
+        const chosenRoom = roomKey || orbitRoomKey || generateOrbitRoomKey();
+        setOrbitRoomKey(chosenRoom);
+        const session = createCollabSession(activeDocId, {
+          roomKey: chosenRoom,
+          password,
+          user: user || collabUser || undefined,
+        });
+        collabSessionRef.current = session;
+        setCollabUser(session.currentUser);
+        setIsCollabActive(true);
 
-      session.provider.awareness.on("change", () => {
-        const states = Array.from(session.provider.awareness.getStates().values());
-        setPeerCount(states.length);
-      });
+        session.provider.awareness.on("change", () => {
+          const states = Array.from(session.provider.awareness.getStates().values());
+          const users = states
+            .map((s) => (s as { user?: CollabUser }).user)
+            .filter((u): u is CollabUser => Boolean(u && u.name !== session.currentUser.name));
+          setActivePeers(users);
+          setPeerCount(states.length);
+        });
+      }
+    },
+    [isCollabActive, orbitRoomKey, activeDocId, collabUser]
+  );
+
+  const handleUpdateCollabUser = useCallback((newUser: CollabUser) => {
+    setCollabUser(newUser);
+    if (collabSessionRef.current) {
+      collabSessionRef.current.currentUser = newUser;
+      collabSessionRef.current.provider.awareness.setLocalStateField("user", newUser);
     }
-  };
+  }, []);
 
   const handleInsertLiveSandbox = useCallback(() => {
     if (!editor) return;
@@ -958,18 +994,18 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
 
           {/* Right Header Actions */}
           <div className="flex items-center gap-2.5">
-            {/* Live Multiplayer Collab Toggle */}
+            {/* 🪐 Orbit Link (P2P Collaboration) */}
             <button
-              onClick={toggleCollaboration}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              onClick={() => setIsOrbitModalOpen(true)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 isCollabActive
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                  : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20"
+                  : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-sky-300 border border-slate-700/60"
               }`}
-              title="Toggle WebRTC Real-Time Collaboration"
+              title="🪐 Orbit Link — Zero-Setup P2P Multiplayer Collaboration"
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>{isCollabActive ? `Live Collab (${peerCount})` : "Share Collab"}</span>
+              <Radio className={`w-3.5 h-3.5 ${isCollabActive ? "text-emerald-400 animate-pulse" : "text-sky-400"}`} />
+              <span>{isCollabActive ? `Orbit (${peerCount})` : "Orbit Link"}</span>
               {isCollabActive && collabUser && (
                 <span className="text-xs">{collabUser.avatar}</span>
               )}
@@ -1315,6 +1351,21 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         documentTitle={docTitle}
         currentContent={markdownContent}
         onRestoreSnapshot={handleRestoreChronosSnapshot}
+      />
+
+      {/* 🪐 Orbit Link (Zero-Setup P2P WebRTC Collaboration Modal) */}
+      <OrbitLinkModal
+        isOpen={isOrbitModalOpen}
+        onClose={() => setIsOrbitModalOpen(false)}
+        documentId={activeDocId}
+        documentTitle={docTitle}
+        isCollabActive={isCollabActive}
+        currentUser={collabUser}
+        peerCount={peerCount}
+        activePeers={activePeers}
+        currentRoomKey={orbitRoomKey}
+        onToggleConnect={handleOrbitToggleConnect}
+        onUpdateUser={handleUpdateCollabUser}
       />
 
       {/* Legacy Revision History Drawer Fallback */}

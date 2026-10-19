@@ -108,6 +108,10 @@ This directory contains curated, production-grade sample documents demonstrating
     - Chronos Timeline: Semantic document revision history & visual diff drawer.
     - Automated background checkpoints, milestone tagging, Myers-inspired visual diffing (unified & side-by-side), and time-warp restore with pre-rollback safety.
 
+20. [`20_orbit_link_p2p_collaboration_showcase.md`](./20_orbit_link_p2p_collaboration_showcase.md)
+    - Orbit Link: Zero-setup P2P WebRTC real-time multiplayer co-editing with CRDT synchrony.
+    - 12 Greek Pantheon celestial personas, ephemeral room keys, AES-GCM end-to-end symmetric encryption, and astral presence radar.
+
 ---
 
 ## 🚀 How to Open in Selene
