@@ -4,7 +4,7 @@ set -euo pipefail
 
 SERVICE_NAME="${1:-selene}"
 REGION="${2:-us-central1}"
-PROJECT_ID="${3:-$(gcloud config get-value project 2>/dev/null)}"
+PROJECT_ID="${3:-indoctrinated-licensor}"
 
 echo "=========================================================="
 echo "  🌙 Selene — Google Cloud Run Production Deployment      "

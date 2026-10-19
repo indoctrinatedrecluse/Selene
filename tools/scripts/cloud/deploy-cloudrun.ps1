@@ -22,7 +22,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$ProjectID,
+    [string]$ProjectID = "indoctrinated-licensor",
     [string]$Region = "us-central1",
     [string]$ServiceName = "selene",
     [string]$BackendSecret,
