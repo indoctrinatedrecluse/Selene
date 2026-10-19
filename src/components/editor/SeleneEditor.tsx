@@ -17,6 +17,8 @@ import {
   RevisionHistoryDrawer,
   RevisionItem,
 } from "./RevisionHistoryDrawer";
+import { ChronosTimelineDrawer } from "@/components/timeline/ChronosTimelineDrawer";
+import { saveChronosSnapshot } from "@/lib/chronos-store";
 import { SeleneAiCopilotModal } from "@/components/ai/SeleneAiCopilotModal";
 import {
   loadDocuments,
@@ -185,6 +187,7 @@ export function SeleneEditor() {
   const [isCopied, setIsCopied] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const [showRevisions, setShowRevisions] = useState(false);
+  const [isChronosOpen, setIsChronosOpen] = useState(false);
   const [revisions, setRevisions] = useState<RevisionItem[]>([]);
   const [isSavingDb, setIsSavingDb] = useState(false);
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
@@ -340,6 +343,9 @@ export function SeleneEditor() {
         // Trigger debounced cloud save
         debounceDbSave(activeDocId, docTitle, md);
 
+        // Trigger debounced Chronos historical checkpoint
+        debounceChronosSave(activeDocId, docTitle, md);
+
         // Trigger debounced AI ghostwriter
         if (isGhostwritingEnabled) {
           setGhostSuggestion(null);
@@ -394,6 +400,15 @@ export function SeleneEditor() {
     }, 800);
   }, []);
 
+  // Debounced Chronos checkpointing
+  const chronosTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceChronosSave = useCallback((id: string, title: string, content: string) => {
+    if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+    chronosTimeoutRef.current = setTimeout(() => {
+      saveChronosSnapshot(id, title, content);
+    }, 25000);
+  }, []);
+
   // Global Keyboard Shortcuts (Ctrl+Shift+A: Copilot, Alt+G: Ghostwriter, Tab: Accept Ghost)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -412,6 +427,9 @@ export function SeleneEditor() {
       } else if (e.altKey && (e.key === "W" || e.key === "w")) {
         e.preventDefault();
         setIsWhiteboardOpen((prev) => !prev);
+      } else if (e.altKey && (e.key === "H" || e.key === "h")) {
+        e.preventDefault();
+        setIsChronosOpen((prev) => !prev);
       } else if (e.altKey && (e.key === "D" || e.key === "d")) {
         e.preventDefault();
         setViewMode((prev) => (prev === "dual-doc" ? "wysiwyg" : "dual-doc"));
@@ -658,7 +676,13 @@ export function SeleneEditor() {
   const handleDesktopSave = useCallback(async () => {
     const cleanTitle = docTitle.replace(/[^\w\s-]/g, "").trim() || "document";
     await saveLocalDocument(markdownContent, `${cleanTitle}.md`);
-  }, [docTitle, markdownContent]);
+    saveChronosSnapshot(activeDocId, docTitle, markdownContent, {
+      tag: `Manual Save (${new Date().toLocaleTimeString()})`,
+      isManual: true,
+      isMilestone: true,
+      author: "Local Architect",
+    });
+  }, [docTitle, markdownContent, activeDocId]);
 
   // Desktop runtime detection & native menu/shortcut integration
   const [desktopRuntime] = useState<"tauri" | "electron" | "web">(() => {
@@ -739,17 +763,20 @@ export function SeleneEditor() {
   };
 
   // Handle title rename
-  const handleTitleChange = (newTitle: string) => {
-    setDocTitle(newTitle);
-    setDocuments((prev) => {
-      const updated = prev.map((d) =>
-        d.id === activeDocId ? { ...d, title: newTitle } : d
-      );
-      saveDocuments(updated);
-      return updated;
-    });
-    debounceDbSave(activeDocId, newTitle, markdownContent);
-  };
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      setDocTitle(newTitle);
+      setDocuments((prev) => {
+        const updated = prev.map((d) =>
+          d.id === activeDocId ? { ...d, title: newTitle } : d
+        );
+        saveDocuments(updated);
+        return updated;
+      });
+      debounceDbSave(activeDocId, newTitle, markdownContent);
+    },
+    [activeDocId, markdownContent, debounceDbSave]
+  );
 
   // Handle version restore
   const handleRestoreRevision = (rev: RevisionItem) => {
@@ -759,6 +786,30 @@ export function SeleneEditor() {
     }
     setShowRevisions(false);
   };
+
+  // ⏳ Chronos Time-Warp Restore
+  const handleRestoreChronosSnapshot = useCallback(
+    (restoredContent: string, restoredTitle?: string) => {
+      setMarkdownContent(restoredContent);
+      if (editor) {
+        editor.commands.setContent(restoredContent);
+      }
+      if (restoredTitle && restoredTitle !== docTitle) {
+        handleTitleChange(restoredTitle);
+      }
+      setDocuments((prev) => {
+        const updated = prev.map((d) =>
+          d.id === activeDocId
+            ? { ...d, content: restoredContent, title: restoredTitle || d.title, updatedAt: Date.now() }
+            : d
+        );
+        saveDocuments(updated);
+        return updated;
+      });
+      debounceDbSave(activeDocId, restoredTitle || docTitle, restoredContent);
+    },
+    [activeDocId, docTitle, editor, debounceDbSave, handleTitleChange]
+  );
 
   // Toggle Live Collaboration (Webrtc CRDT)
   const toggleCollaboration = () => {
@@ -961,16 +1012,14 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               <span>Paper Ingest</span>
             </button>
 
-            {/* Version History Toggle */}
+            {/* ⏳ Chronos Timeline Toggle */}
             <button
-              onClick={() => {
-                loadRevisions(activeDocId);
-                setShowRevisions(true);
-              }}
-              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60 transition-colors"
-              title="Version History"
+              onClick={() => setIsChronosOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 hover:text-white border border-violet-500/30 text-xs font-medium transition-all cursor-pointer shadow-sm"
+              title="⏳ Chronos Timeline — Semantic Revisions & Visual Diff (Alt+H)"
             >
-              <History className="w-3.5 h-3.5" />
+              <History className="w-3.5 h-3.5 text-violet-400" />
+              <span className="hidden sm:inline">Chronos</span>
             </button>
 
             {/* Lunar Ambiance & Lore Toggle */}
@@ -1258,7 +1307,17 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         </div>
       </div>
 
-      {/* Revision History Drawer with Visual Diff Inspector */}
+      {/* ⏳ Chronos Timeline & Semantic Visual Diff Drawer */}
+      <ChronosTimelineDrawer
+        isOpen={isChronosOpen}
+        onClose={() => setIsChronosOpen(false)}
+        documentId={activeDocId}
+        documentTitle={docTitle}
+        currentContent={markdownContent}
+        onRestoreSnapshot={handleRestoreChronosSnapshot}
+      />
+
+      {/* Legacy Revision History Drawer Fallback */}
       <RevisionHistoryDrawer
         isOpen={showRevisions}
         onClose={() => setShowRevisions(false)}

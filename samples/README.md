@@ -104,6 +104,10 @@ This directory contains curated, production-grade sample documents demonstrating
     - Dynamic headers & query parameter editors, latency telemetry, JSON formatting, search filter, and cURL generation.
     - Dual-runtime support (live browser Fetch & offline Olympus Gateway mock mode).
 
+19. [`19_chronos_timeline_revision_history_showcase.md`](./19_chronos_timeline_revision_history_showcase.md)
+    - Chronos Timeline: Semantic document revision history & visual diff drawer.
+    - Automated background checkpoints, milestone tagging, Myers-inspired visual diffing (unified & side-by-side), and time-warp restore with pre-rollback safety.
+
 ---
 
 ## 🚀 How to Open in Selene
