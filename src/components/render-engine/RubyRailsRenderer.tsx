@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Smartphone,
   Tablet,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { UniversalPropertyInspector } from "./UniversalPropertyInspector";
 import { applyVisualProps, UniversalVisualProps } from "@/lib/ast-transformer";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 export type RubyDevicePreset = "desktop" | "iphone" | "tablet";
 export type RubyViewMode = "split" | "canvas" | "code";
@@ -186,130 +187,276 @@ export const RUBY_RAILS_PRESETS: Record<string, { label: string; code: string }>
  * helpers (number_to_currency, pluralize, turbo_frame_tag),
  * and injects Tailwind CSS + Stimulus runtime.
  */
-function compileErbToHtml(template: string): string {
+// Helper to parse a Ruby literal (string, number, boolean, array, hash)
+function parseRubyLiteral(input: string): unknown {
+  const str = input.trim();
+  if (!str) return undefined;
+  if (str === "true") return true;
+  if (str === "false") return false;
+  if (str === "nil") return null;
+  if (/^-?\d+(\.\d+)?$/.test(str)) return Number(str);
+  if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+    return str.slice(1, -1);
+  }
+
+  // Handle arrays or hashes
+  if ((str.startsWith("[") && str.endsWith("]")) || (str.startsWith("{") && str.endsWith("}"))) {
+    try {
+      const jsonLike = str
+        .replace(/([a-zA-Z0-9_]+):/g, '"$1":')
+        .replace(/:([a-zA-Z0-9_]+)\s*=>/g, '"$1":')
+        .replace(/=>/g, ":")
+        .replace(/'/g, '"')
+        .replace(/,\s*([}\]])/g, "$1");
+      return JSON.parse(jsonLike);
+    } catch {
+      return str;
+    }
+  }
+
+  return str;
+}
+
+// Extract variable statements from a Ruby scriptlet block <% ... %>
+function extractRubyVariables(rubyCode: string, scope: Record<string, unknown>) {
+  const varRegex = /@([a-zA-Z0-9_]+)\s*=\s*/g;
+  let match: RegExpExecArray | null;
+  const matches: { name: string; startIndex: number; valueStart: number }[] = [];
+
+  while ((match = varRegex.exec(rubyCode)) !== null) {
+    matches.push({
+      name: match[1],
+      startIndex: match.index,
+      valueStart: match.index + match[0].length,
+    });
+  }
+
+  for (let i = 0; i < matches.length; i++) {
+    const current = matches[i];
+    const nextStart = i + 1 < matches.length ? matches[i + 1].startIndex : rubyCode.length;
+    const rawVal = rubyCode.slice(current.valueStart, nextStart).trim();
+    const cleanVal = rawVal.replace(/;$/, "").trim();
+    scope[current.name] = parseRubyLiteral(cleanVal);
+  }
+}
+
+// Resolves a Ruby expression against a variable scope
+function resolveRubyExpression(expr: string, scope: Record<string, unknown>): unknown {
+  const trimmed = expr.trim();
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (trimmed === "nil") return null;
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
+  }
+
+  // Check item[:prop] or item['prop'] or item.prop
+  const propMatch = trimmed.match(
+    /^([a-zA-Z0-9_]+)(?:\[:([a-zA-Z0-9_]+)\]|\[['"]([a-zA-Z0-9_]+)['"]\]|\.([a-zA-Z0-9_]+))$/
+  );
+  if (propMatch) {
+    const parent = scope[propMatch[1]];
+    const prop = propMatch[2] || propMatch[3] || propMatch[4];
+    if (parent && typeof parent === "object") {
+      return (parent as Record<string, unknown>)[prop];
+    }
+    return undefined;
+  }
+
+  // Check @var.count
+  const countMatch = trimmed.match(/^@([a-zA-Z0-9_]+)\.count$/);
+  if (countMatch) {
+    const val = scope[countMatch[1]];
+    return Array.isArray(val) ? val.length : 0;
+  }
+
+  // Check @var.upcase
+  const upcaseMatch = trimmed.match(/^@([a-zA-Z0-9_]+)\.upcase$/);
+  if (upcaseMatch) {
+    const val = scope[upcaseMatch[1]];
+    return typeof val === "string" ? val.toUpperCase() : String(val ?? "");
+  }
+
+  // Check @var
+  const varMatch = trimmed.match(/^@([a-zA-Z0-9_]+)$/);
+  if (varMatch) {
+    return scope[varMatch[1]];
+  }
+
+  return trimmed;
+}
+
+function evaluateErbCondition(condition: string, scope: Record<string, unknown>): boolean {
   try {
-    let source = template;
-    const rubyScope: Record<string, unknown> = {};
+    const cond = condition.trim();
+    const compMatch = cond.match(/^(.+?)\s*(===|==|!==|!=|>=|<=|>|<)\s*(.+)$/);
+    if (compMatch) {
+      const leftVal = resolveRubyExpression(compMatch[1].trim(), scope);
+      const op = compMatch[2];
+      const rightVal = resolveRubyExpression(compMatch[3].trim(), scope);
 
-    // 1. Strip ERB comments: <%# ... %>
-    source = source.replace(/<%#[\s\S]*?%>/g, "");
+      if (op === "===" || op === "==") return leftVal == rightVal;
+      if (op === "!==" || op === "!=") return leftVal != rightVal;
+      if (op === ">") return Number(leftVal) > Number(rightVal);
+      if (op === "<") return Number(leftVal) < Number(rightVal);
+      if (op === ">=") return Number(leftVal) >= Number(rightVal);
+      if (op === "<=") return Number(leftVal) <= Number(rightVal);
+    }
+    const val = resolveRubyExpression(cond, scope);
+    return Boolean(val);
+  } catch {
+    return false;
+  }
+}
 
-    // 2. Extract and evaluate variable declarations inside <% ... %>
-    // Supports @var = "value", @var = 123.45, @var = [ ... ]
-    source = source.replace(/<%\s*@([a-zA-Z0-9_]+)\s*=\s*([\s\S]*?)\s*%>/g, (_, varName, rawVal) => {
-      const trimmed = rawVal.trim();
-      try {
-        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-          // Normalize Ruby symbol hash { key: val } to JSON { "key": val }
-          const jsonLike = trimmed
-            .replace(/([a-zA-Z0-9_]+):/g, '"$1":')
-            .replace(/=>/g, ":")
-            .replace(/'/g, '"');
-          rubyScope[varName] = JSON.parse(jsonLike);
-        } else if (trimmed.startsWith('"') || trimmed.startsWith("'")) {
-          rubyScope[varName] = trimmed.slice(1, -1);
-        } else if (!isNaN(Number(trimmed))) {
-          rubyScope[varName] = Number(trimmed);
-        } else if (trimmed === "true") {
-          rubyScope[varName] = true;
-        } else if (trimmed === "false") {
-          rubyScope[varName] = false;
-        } else {
-          rubyScope[varName] = trimmed;
-        }
-      } catch {
-        rubyScope[varName] = trimmed;
+function renderErbConditionals(text: string, scope: Record<string, unknown>): string {
+  const ifRegex = /<%\s*if\s+([\s\S]*?)\s*%>([\s\S]*?)<%\s*end\s*%>/g;
+  return text.replace(ifRegex, (_, firstCond, body) => {
+    const chunks: { cond: string | null; content: string }[] = [];
+    const branchRegex = /<%\s*(elsif\s+[\s\S]*?|else)\s*%>/g;
+    let lastIndex = 0;
+    let currentCond: string | null = firstCond;
+    let match: RegExpExecArray | null;
+
+    while ((match = branchRegex.exec(body)) !== null) {
+      const branchContent = body.slice(lastIndex, match.index);
+      chunks.push({ cond: currentCond, content: branchContent });
+      lastIndex = match.index + match[0].length;
+      if (match[1].startsWith("elsif")) {
+        const cMatch = match[1].match(/elsif\s+([\s\S]*)/);
+        currentCond = cMatch ? cMatch[1] : "false";
+      } else {
+        currentCond = null;
       }
+    }
+    chunks.push({ cond: currentCond, content: body.slice(lastIndex) });
+
+    for (const chunk of chunks) {
+      if (chunk.cond === null) {
+        return chunk.content;
+      }
+      if (evaluateErbCondition(chunk.cond, scope)) {
+        return chunk.content;
+      }
+    }
+    return "";
+  });
+}
+
+/**
+ * Robust in-browser ERB compiler:
+ * Compiles Ruby instance variables, loops (<% @collection.each do |item| %>),
+ * multi-branch conditionals (<% if / elsif / else / end %>),
+ * helpers (number_to_currency, pluralize, turbo_frame_tag),
+ * and injects Tailwind CSS + Stimulus runtime.
+ */
+function compileErbToHtml(template: string): string {
+  let source = template;
+  const rubyScope: Record<string, unknown> = {};
+
+  // 1. Strip ERB comments: <%# ... %>
+  source = source.replace(/<%#[\s\S]*?%>/g, "");
+
+  // 2. Extract and evaluate variable declarations inside <% ... %> scriptlet blocks
+  source = source.replace(/<%([\s\S]*?)%>/g, (fullMatch, scriptlet) => {
+    // If it starts with = or #, skip
+    if (fullMatch.startsWith("<%=") || fullMatch.startsWith("<%#")) {
+      return fullMatch;
+    }
+    if (scriptlet.includes("@")) {
+      extractRubyVariables(scriptlet, rubyScope);
       return "";
-    });
+    }
+    return fullMatch;
+  });
 
-    // 3. Process turbo_frame_tag helper:
-    // <%= turbo_frame_tag "id" do %> ... <% end %>
-    source = source.replace(/<%=\s*turbo_frame_tag\s*["']([^"']+)["']\s+do\s*%>\s*([\s\S]*?)\s*<%\s*end\s*%>/g, (_, frameId, innerContent) => {
+  // 3. Process turbo_frame_tag helper:
+  // <%= turbo_frame_tag "id" do %> ... <% end %>
+  source = source.replace(
+    /<%=\s*turbo_frame_tag\s*["']([^"']+)["']\s+do\s*%>\s*([\s\S]*?)\s*<%\s*end\s*%>/g,
+    (_, frameId, innerContent) => {
       return `<turbo-frame id="${frameId}">${innerContent}</turbo-frame>`;
-    });
+    }
+  );
 
-    // 4. Process ERB loops:
-    // <% @collection.each do |item| %> ... <% end %>
-    source = source.replace(/<%\s*@([a-zA-Z0-9_]+)\.each\s+do\s+\|([a-zA-Z0-9_]+)\|\s*%>\s*([\s\S]*?)\s*<%\s*end\s*%>/g, (_, colName, itemName, loopBody) => {
+  // 4. Process ERB loops:
+  // <% @collection.each do |item| %> ... <% end %>
+  source = source.replace(
+    /<%\s*@([a-zA-Z0-9_]+)\.each\s+do\s+\|([a-zA-Z0-9_]+)\|\s*%>\s*([\s\S]*?)\s*<%\s*end\s*%>/g,
+    (_, colName, itemName, loopBody) => {
       const collection = rubyScope[colName];
       if (!Array.isArray(collection)) return "";
 
       return collection
         .map((item) => {
           let renderedItem = loopBody;
+          const itemScope: Record<string, unknown> = {
+            ...rubyScope,
+            [itemName]: item,
+          };
+
+          // Conditionals inside loop
+          renderedItem = renderErbConditionals(renderedItem, itemScope);
 
           // Replace item[:prop] or item['prop'] or item.prop
           renderedItem = renderedItem.replace(
             new RegExp(`<%=\\s*${itemName}(?:\\[:(?:[a-zA-Z0-9_]+)\\]|\\[['"](?:[a-zA-Z0-9_]+)['"]\\]|\\.(?:[a-zA-Z0-9_]+))\\s*%>`, "g"),
             (match: string) => {
               const propMatch = match.match(/\[:([a-zA-Z0-9_]+)\]|\[['"]([a-zA-Z0-9_]+)['"]\]|\.([a-zA-Z0-9_]+)/);
-              const prop = propMatch ? (propMatch[1] || propMatch[2] || propMatch[3]) : "";
-              return item[prop] !== undefined ? String(item[prop]) : "";
-            }
-          );
-
-          // Replace conditionals inside loop:
-          // <% if dep[:status] == "deployed" %> ... <% elsif ... %> ... <% else %> ... <% end %>
-          renderedItem = renderedItem.replace(
-            new RegExp(`<%\\s*if\\s+${itemName}\\[:([a-zA-Z0-9_]+)\\]\\s*==\\s*['"]([^'"]+)['"]\\s*%>\([\\s\\S]*?\)<\%\\s*elsif\\s+${itemName}\\[:([a-zA-Z0-9_]+)\\]\\s*==\\s*['"]([^'"]+)['"]\\s*%>\([\\s\\S]*?\)<\%\\s*else\\s*%>\([\\s\\S]*?\)<\%\\s*end\\s*%>`, "g"),
-            (_: string, prop1: string, val1: string, ifContent: string, prop2: string, val2: string, elsifContent: string, elseContent: string) => {
-              if (item[prop1] === val1) return ifContent;
-              if (item[prop2] === val2) return elsifContent;
-              return elseContent;
-            }
-          );
-
-          renderedItem = renderedItem.replace(
-            new RegExp(`<%\\s*if\\s+${itemName}\\[:([a-zA-Z0-9_]+)\\]\\s*==\\s*['"]([^'"]+)['"]\\s*%>\([\\s\\S]*?\)<\%\\s*else\\s*%>\([\\s\\S]*?\)<\%\\s*end\\s*%>`, "g"),
-            (_: string, prop: string, val: string, ifContent: string, elseContent: string) => {
-              return item[prop] === val ? ifContent : elseContent;
+              const prop = propMatch ? propMatch[1] || propMatch[2] || propMatch[3] : "";
+              return (item as Record<string, unknown>)[prop] !== undefined
+                ? String((item as Record<string, unknown>)[prop])
+                : "";
             }
           );
 
           return renderedItem;
         })
         .join("");
-    });
+    }
+  );
 
-    // 5. Process helper: number_to_currency(@mrr)
-    source = source.replace(/<%=\s*number_to_currency\(\s*@([a-zA-Z0-9_]+)\s*\)\s*%>/g, (_, vName) => {
-      const val = Number(rubyScope[vName]) || 0;
-      return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val);
-    });
+  // 5. Process outer conditionals
+  source = renderErbConditionals(source, rubyScope);
 
-    // 6. Process helper: pluralize(@services.count, "Worker Node")
-    source = source.replace(/<%=\s*pluralize\(\s*@([a-zA-Z0-9_]+)\.count\s*,\s*["']([^"']+)["']\s*\)\s*%>/g, (_, vName, word) => {
+  // 6. Process helper: number_to_currency(@mrr)
+  source = source.replace(/<%=\s*number_to_currency\(\s*@([a-zA-Z0-9_]+)\s*\)\s*%>/g, (_, vName) => {
+    const val = Number(rubyScope[vName]) || 0;
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val);
+  });
+
+  // 7. Process helper: pluralize(@services.count, "Worker Node")
+  source = source.replace(
+    /<%=\s*pluralize\(\s*@([a-zA-Z0-9_]+)\.count\s*,\s*["']([^"']+)["']\s*\)\s*%>/g,
+    (_, vName, word) => {
       const col = rubyScope[vName];
       const count = Array.isArray(col) ? col.length : 0;
       return `${count} ${count === 1 ? word : word + "s"}`;
-    });
+    }
+  );
 
-    // 7. Process count expression: <%= @services.count %> or <%= @deployments.count %>
-    source = source.replace(/<%=\s*@([a-zA-Z0-9_]+)\.count\s*%>/g, (_, vName) => {
-      const col = rubyScope[vName];
-      return Array.isArray(col) ? String(col.length) : "0";
-    });
+  // 8. Process count expression: <%= @services.count %> or <%= @deployments.count %>
+  source = source.replace(/<%=\s*@([a-zA-Z0-9_]+)\.count\s*%>/g, (_, vName) => {
+    const col = rubyScope[vName];
+    return Array.isArray(col) ? String(col.length) : "0";
+  });
 
-    // 8. Process string transforms: <%= @status.upcase %>
-    source = source.replace(/<%=\s*@([a-zA-Z0-9_]+)\.upcase\s*%>/g, (_, vName) => {
-      const val = rubyScope[vName];
-      return typeof val === "string" ? val.toUpperCase() : String(val || "");
-    });
+  // 9. Process string transforms: <%= @status.upcase %>
+  source = source.replace(/<%=\s*@([a-zA-Z0-9_]+)\.upcase\s*%>/g, (_, vName) => {
+    const val = rubyScope[vName];
+    return typeof val === "string" ? val.toUpperCase() : String(val || "");
+  });
 
-    // 9. Process standard interpolation: <%= @var %> or <%== @var %>
-    source = source.replace(/<%={1,2}\s*@([a-zA-Z0-9_]+)\s*%>/g, (_, vName) => {
-      return rubyScope[vName] !== undefined ? String(rubyScope[vName]) : "";
-    });
+  // 10. Process standard interpolation: <%= @var %> or <%== @var %>
+  source = source.replace(/<%={1,2}\s*@([a-zA-Z0-9_]+)\s*%>/g, (_, vName) => {
+    return rubyScope[vName] !== undefined ? String(rubyScope[vName]) : "";
+  });
 
-    // 10. Clean up any remaining non-evaluated ERB tags
-    source = source.replace(/<%[\s\S]*?%>/g, "");
+  // 11. Clean up any remaining non-evaluated ERB tags
+  source = source.replace(/<%[\s\S]*?%>/g, "");
 
-    return source.trim();
-  } catch (err) {
-    console.error("ERB compilation error:", err);
-    return `<div class="p-4 bg-rose-950/40 text-rose-300 rounded-lg">ERB Compile Error: ${String(err)}</div>`;
-  }
+  return source.trim();
 }
 
 export function RubyRailsRenderer({
@@ -367,8 +514,22 @@ export function RubyRailsRenderer({
     };
   }, [engineMode, localServerPort]);
 
-  // Render iframe content when code or mode changes
-  const updateIframeContent = useCallback(() => {
+  // Derive compilation result synchronously to avoid cascading render effects
+  const { compiledBody, compileError } = useMemo(() => {
+    if (engineMode === "puma-server") {
+      return { compiledBody: null, compileError: null };
+    }
+    try {
+      const body = compileErbToHtml(code);
+      return { compiledBody: body, compileError: null };
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { compiledBody: null, compileError: errMsg };
+    }
+  }, [code, engineMode]);
+
+  // Synchronize compiled markup or error document to iframe DOM
+  useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
@@ -377,7 +538,43 @@ export function RubyRailsRenderer({
       return;
     }
 
-    const compiledBody = compileErbToHtml(code);
+    if (compileError) {
+      const safeErr = compileError.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] || c);
+      const errorHtml = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background-color: #070B14;
+      color: #F8FAFC;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="p-6 max-w-md w-full bg-rose-950/40 border border-rose-500/30 rounded-2xl shadow-2xl text-center space-y-3">
+    <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto text-lg font-bold">
+      ⚠️
+    </div>
+    <h3 class="text-rose-300 font-bold text-sm font-sans">Rails ERB Compilation Error</h3>
+    <pre class="p-3 bg-slate-950/80 rounded-xl border border-rose-900/40 text-rose-300 text-xs font-mono text-left whitespace-pre-wrap overflow-x-auto">${safeErr}</pre>
+  </div>
+</body>
+</html>`;
+      iframe.srcdoc = errorHtml;
+      return;
+    }
+
     const fullHtml = `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -405,7 +602,7 @@ export function RubyRailsRenderer({
   </style>
 </head>
 <body>
-  ${compiledBody}
+  ${compiledBody || ""}
 
   <script>
     // Lightweight Stimulus Runtime for Rails Interactive Sim
@@ -433,11 +630,7 @@ export function RubyRailsRenderer({
 </html>`;
 
     iframe.srcdoc = fullHtml;
-  }, [code, engineMode, localServerPort]);
-
-  useEffect(() => {
-    updateIframeContent();
-  }, [updateIframeContent]);
+  }, [compiledBody, compileError, engineMode, localServerPort]);
 
   const handleCodeEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = e.target.value;
@@ -453,8 +646,19 @@ export function RubyRailsRenderer({
 
   const handleReload = () => {
     setIsRefreshing(true);
-    updateIframeContent();
-    setTimeout(() => setIsRefreshing(false), 500);
+    const iframe = iframeRef.current;
+    if (iframe) {
+      if (engineMode === "puma-server") {
+        iframe.src = `http://localhost:${localServerPort}`;
+      } else {
+        const currentDoc = iframe.srcdoc;
+        iframe.srcdoc = "";
+        setTimeout(() => {
+          iframe.srcdoc = currentDoc;
+        }, 50);
+      }
+    }
+    setTimeout(() => setIsRefreshing(false), 400);
   };
 
   const handleSelectPreset = (key: string) => {
@@ -652,7 +856,20 @@ export function RubyRailsRenderer({
 
         {/* Live Canvas Preview Pane (Split or Canvas View) */}
         {(viewMode === "split" || viewMode === "canvas") && (
-          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto`}>
+          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto relative`}>
+            {compileError && (
+              <div className="absolute inset-x-4 top-4 z-20">
+                <SandboxAutoFixLens
+                  code={code}
+                  language="erb"
+                  errorMessage={compileError}
+                  onApplyFix={(fixedCode) => {
+                    setCode(fixedCode);
+                    if (onCodeChange) onCodeChange(fixedCode);
+                  }}
+                />
+              </div>
+            )}
             <div className={`${deviceWidthMap[device]} h-full min-h-[380px] rounded-xl overflow-hidden border border-slate-800/80 shadow-2xl bg-[#070b14] flex flex-col transition-all duration-300`}>
               <iframe
                 ref={iframeRef}

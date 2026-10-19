@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Smartphone,
   Tablet,
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { UniversalPropertyInspector } from "./UniversalPropertyInspector";
 import { applyVisualProps, UniversalVisualProps } from "@/lib/ast-transformer";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 export type RustDevicePreset = "desktop" | "iphone" | "tablet";
 export type RustViewMode = "split" | "canvas" | "code";
@@ -131,46 +132,48 @@ pub fn LeptosCard() -> impl IntoView {
  * injects Tailwind CSS, and wires WebAssembly state handlers.
  */
 function compileRustWasmToHtml(code: string): string {
-  try {
-    const source = code;
-
-    // 1. Extract initial numeric count from use_state(|| X) or create_signal(X)
-    let initialCount = 42;
-    const useStateMatch = source.match(/use_state\(\s*\|\|\s*(\d+)\s*\)/);
-    if (useStateMatch) {
-      initialCount = parseInt(useStateMatch[1], 10);
-    } else {
-      const signalMatch = source.match(/create_signal\(\s*(\d+)\s*\)/);
-      if (signalMatch) initialCount = parseInt(signalMatch[1], 10);
-    }
-
-    // 2. Extract RSX macro content: html! { ... } or view! { ... }
-    const macroMatch = source.match(/(?:html|view)!\s*\{([\s\S]*)\}/);
-    let rsx = macroMatch ? macroMatch[1] : source;
-
-    // 3. Convert Rust string literals inside JSX: { "text" } -> text
-    rsx = rsx.replace(/\{\s*"([^"]*)"\s*\}/g, "$1");
-
-    // 4. Convert format! expressions: { format!("...", ...) }
-    rsx = rsx.replace(/\{\s*format!\s*\("([^"]*)",?\s*([^)]*)\)\s*\}/g, "$1");
-
-    // 5. Convert Rust variable interpolations: { *count }, { count }, { memory_alloc }
-    rsx = rsx.replace(/\{\s*\*?count\s*\}/g, `<span id="rust-counter-val">${initialCount}</span>`);
-    rsx = rsx.replace(/\{\s*\*?([a-zA-Z0-9_]+)\s*\}/g, (_match, varName) => {
-      // Look for let varName = "value";
-      const letMatch = source.match(new RegExp(`let\\s+${varName}\\s*=\\s*"([^"]+)";`));
-      if (letMatch) return letMatch[1];
-      return varName;
-    });
-
-    // 6. Clean up Rust attributes: {onclick} -> id="rust-counter-btn"
-    rsx = rsx.replace(/\{onclick\}/g, 'id="rust-counter-btn"');
-    rsx = rsx.replace(/on:click=move\s*\|_[^}]*}/g, 'id="rust-counter-btn"');
-
-    return rsx.trim();
-  } catch (err) {
-    return `<div class="p-4 bg-red-950/60 border border-red-500 rounded-xl text-red-200 text-xs">Rust Compilation Error: ${String(err)}</div>`;
+  const source = code.trim();
+  if (!source) {
+    throw new Error("Rust WASM code cannot be empty.");
   }
+
+  // 1. Extract initial numeric count from use_state(|| X) or create_signal(X)
+  let initialCount = 42;
+  const useStateMatch = source.match(/use_state\(\s*\|\|\s*(\d+)\s*\)/);
+  if (useStateMatch) {
+    initialCount = parseInt(useStateMatch[1], 10);
+  } else {
+    const signalMatch = source.match(/create_signal\(\s*(\d+)\s*\)/);
+    if (signalMatch) initialCount = parseInt(signalMatch[1], 10);
+  }
+
+  // 2. Extract RSX macro content: html! { ... } or view! { ... }
+  const macroMatch = source.match(/(?:html|view)!\s*\{([\s\S]*)\}/);
+  if (!macroMatch && !source.includes("<")) {
+    throw new Error("Expected Rust RSX macro `html! { ... }` or `view! { ... }` or component markup.");
+  }
+  let rsx = macroMatch ? macroMatch[1] : source;
+
+  // 3. Convert Rust string literals inside JSX: { "text" } -> text
+  rsx = rsx.replace(/\{\s*"([^"]*)"\s*\}/g, "$1");
+
+  // 4. Convert format! expressions: { format!("...", ...) }
+  rsx = rsx.replace(/\{\s*format!\s*\("([^"]*)",?\s*([^)]*)\)\s*\}/g, "$1");
+
+  // 5. Convert Rust variable interpolations: { *count }, { count }, { memory_alloc }
+  rsx = rsx.replace(/\{\s*\*?count\s*\}/g, `<span id="rust-counter-val">${initialCount}</span>`);
+  rsx = rsx.replace(/\{\s*\*?([a-zA-Z0-9_]+)\s*\}/g, (_match, varName) => {
+    // Look for let varName = "value";
+    const letMatch = source.match(new RegExp(`let\\s+${varName}\\s*=\\s*"([^"]+)";`));
+    if (letMatch) return letMatch[1];
+    return varName;
+  });
+
+  // 6. Clean up Rust attributes: {onclick} -> id="rust-counter-btn"
+  rsx = rsx.replace(/\{onclick\}/g, 'id="rust-counter-btn"');
+  rsx = rsx.replace(/on:click=move\s*\|_[^}]*}/g, 'id="rust-counter-btn"');
+
+  return rsx.trim();
 }
 
 export function RustWasmRenderer({
@@ -214,7 +217,22 @@ export function RustWasmRenderer({
     };
   }, [engineMode, localServerPort]);
 
-  const updateIframeContent = useCallback(() => {
+  // Derive compilation result synchronously to avoid cascading render effects
+  const { compiledBody, compileError } = useMemo(() => {
+    if (engineMode === "trunk-server") {
+      return { compiledBody: null, compileError: null };
+    }
+    try {
+      const body = compileRustWasmToHtml(code);
+      return { compiledBody: body, compileError: null };
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { compiledBody: null, compileError: errMsg };
+    }
+  }, [code, engineMode]);
+
+  // Synchronize compiled markup or error document to iframe DOM
+  useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
@@ -223,7 +241,42 @@ export function RustWasmRenderer({
       return;
     }
 
-    const compiledHtml = compileRustWasmToHtml(code);
+    if (compileError) {
+      const safeErr = compileError.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] || c);
+      const errorHtml = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background-color: #070B14;
+      color: #F8FAFC;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="p-6 max-w-md w-full bg-amber-950/40 border border-amber-500/30 rounded-2xl shadow-2xl text-center space-y-3">
+    <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto text-lg font-bold">
+      ⚠️
+    </div>
+    <h3 class="text-amber-300 font-bold text-sm font-sans">Rust WebAssembly Compilation Error</h3>
+    <pre class="p-3 bg-slate-950/80 rounded-xl border border-amber-900/40 text-amber-300 text-xs font-mono text-left whitespace-pre-wrap overflow-x-auto">${safeErr}</pre>
+  </div>
+</body>
+</html>`;
+      iframe.srcdoc = errorHtml;
+      return;
+    }
 
     const fullHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -247,7 +300,7 @@ export function RustWasmRenderer({
 </head>
 <body>
   <div id="rust-app" class="w-full flex justify-center">
-    ${compiledHtml}
+    ${compiledBody || ""}
   </div>
 
   <script>
@@ -271,11 +324,7 @@ export function RustWasmRenderer({
 </html>`;
 
     iframe.srcdoc = fullHtml;
-  }, [code, engineMode, localServerPort]);
-
-  useEffect(() => {
-    updateIframeContent();
-  }, [updateIframeContent]);
+  }, [compiledBody, compileError, engineMode, localServerPort]);
 
   const handleCodeEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = e.target.value;
@@ -291,8 +340,19 @@ export function RustWasmRenderer({
 
   const handleReload = () => {
     setIsRefreshing(true);
-    updateIframeContent();
-    setTimeout(() => setIsRefreshing(false), 500);
+    const iframe = iframeRef.current;
+    if (iframe) {
+      if (engineMode === "trunk-server") {
+        iframe.src = `http://localhost:${localServerPort}`;
+      } else {
+        const currentDoc = iframe.srcdoc;
+        iframe.srcdoc = "";
+        setTimeout(() => {
+          iframe.srcdoc = currentDoc;
+        }, 50);
+      }
+    }
+    setTimeout(() => setIsRefreshing(false), 400);
   };
 
   const handleSelectPreset = (key: string) => {
@@ -496,7 +556,20 @@ export function RustWasmRenderer({
 
         {/* Live Canvas Preview Pane */}
         {(viewMode === "split" || viewMode === "canvas") && (
-          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#080d1a]/50 overflow-auto`}>
+          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#080d1a]/50 overflow-auto relative`}>
+            {compileError && (
+              <div className="absolute inset-x-4 top-4 z-20">
+                <SandboxAutoFixLens
+                  code={code}
+                  language="rust"
+                  errorMessage={compileError}
+                  onApplyFix={(fixedCode) => {
+                    setCode(fixedCode);
+                    if (onCodeChange) onCodeChange(fixedCode);
+                  }}
+                />
+              </div>
+            )}
             <div className={`transition-all duration-300 ${deviceWidthMap[device]} flex justify-center`}>
               <iframe
                 ref={iframeRef}

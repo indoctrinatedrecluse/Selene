@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Smartphone,
   Tablet,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { UniversalPropertyInspector } from "./UniversalPropertyInspector";
 import { applyVisualProps, UniversalVisualProps } from "@/lib/ast-transformer";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 export type GoDevicePreset = "desktop" | "iphone" | "tablet";
 export type GoViewMode = "split" | "canvas" | "code";
@@ -178,86 +179,189 @@ export const GO_TEMPLATE_PRESETS: Record<string, { label: string; code: string }
   },
 };
 
-/**
- * Lightweight in-browser Go template compiler:
- * Compiles Go comments, {{ .Field }}, {{ range .Collection }}, {{ if eq .Field "val" }},
- * and injects Tailwind CSS runtime.
- */
-function compileGoTemplateToHtml(template: string): string {
-  try {
-    let source = template;
-    let goContext: Record<string, unknown> = {};
+// Resolves a Go template expression (e.g. .Field, $item.Field, len .Collection, upper .Field)
+function resolveGoExpression(expr: string, context: Record<string, unknown>): unknown {
+  const trimmed = expr.trim();
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (trimmed === "nil") return null;
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
+  }
 
-    // 1. Extract JSON context comment if present: {{/* Context: { ... } */}}
-    const contextMatch = source.match(/{{\/\*\s*Context:\s*([\s\S]*?)\*\/\}}/);
-    if (contextMatch && contextMatch[1]) {
-      try {
-        goContext = JSON.parse(contextMatch[1]);
-      } catch {
-        goContext = {};
+  // Helper functions: len, upper, lower
+  const fnMatch = trimmed.match(/^(len|upper|lower)\s+(.+)$/);
+  if (fnMatch) {
+    const fn = fnMatch[1];
+    const argVal = resolveGoExpression(fnMatch[2], context);
+    if (fn === "len") {
+      if (Array.isArray(argVal)) return argVal.length;
+      if (typeof argVal === "string") return argVal.length;
+      if (argVal && typeof argVal === "object") return Object.keys(argVal).length;
+      return 0;
+    }
+    if (fn === "upper") {
+      return typeof argVal === "string" ? argVal.toUpperCase() : String(argVal ?? "");
+    }
+    if (fn === "lower") {
+      return typeof argVal === "string" ? argVal.toLowerCase() : String(argVal ?? "");
+    }
+  }
+
+  // Field access: .Field or $var.Field
+  const fieldMatch = trimmed.match(/^(?:\$([a-zA-Z0-9_]+)\.|\.)([a-zA-Z0-9_]+)$/);
+  if (fieldMatch) {
+    const varName = fieldMatch[1];
+    const fieldName = fieldMatch[2];
+    const targetObj = varName ? (context[varName] as Record<string, unknown>) : context;
+    if (targetObj && typeof targetObj === "object") {
+      // Look up exact match, lowercase, or capitalized
+      const keys = Object.keys(targetObj);
+      const matchedKey = keys.find((k) => k.toLowerCase() === fieldName.toLowerCase());
+      if (matchedKey !== undefined) {
+        return targetObj[matchedKey];
       }
     }
-
-    // Strip comments: {{/* ... */}}
-    source = source.replace(/{{\/\*[\s\S]*?\*\/\}}/g, "");
-
-    // 2. Process range loops: {{ range .Collection }} ... {{ end }}
-    source = source.replace(
-      /{{\s*range\s+(?:\$[a-zA-Z0-9_]+\s*,\s*\$[a-zA-Z0-9_]+\s*:=\s*)?\.([a-zA-Z0-9_]+)\s*}}([\s\S]*?){{\s*end\s*}}/g,
-      (_: string, colName: string, loopBody: string) => {
-        const collection = goContext[colName];
-        if (!Array.isArray(collection)) return "";
-
-        return collection
-          .map((item: Record<string, unknown>) => {
-            let rendered = loopBody;
-
-            // Replace {{ .Field }}
-            rendered = rendered.replace(
-              /{{\s*\.([a-zA-Z0-9_]+)\s*}}/g,
-              (__: string, field: string) => (item[field] !== undefined ? String(item[field]) : "")
-            );
-
-            // Replace conditionals inside loop:
-            // {{ if eq .Status "ready" }} ... {{ else }} ... {{ end }}
-            rendered = rendered.replace(
-              /{{\s*if\s+eq\s+\.([a-zA-Z0-9_]+)\s+["']([^"']+)["']\s*}}([\s\S]*?)(?:{{\s*else\s*}}([\s\S]*?))?{{\s*end\s*}}/g,
-              (__: string, field: string, expected: string, ifBranch: string, elseBranch: string) => {
-                return item[field] === expected ? ifBranch : (elseBranch || "");
-              }
-            );
-
-            return rendered;
-          })
-          .join("");
-      }
-    );
-
-    // 3. Process helpers: {{ len .Collection }}
-    source = source.replace(/{{\s*len\s+\.([a-zA-Z0-9_]+)\s*}}/g, (_: string, colName: string) => {
-      const col = goContext[colName];
-      return Array.isArray(col) ? String(col.length) : "0";
-    });
-
-    // 4. Process string helpers: {{ upper .Field }}
-    source = source.replace(/{{\s*upper\s+\.([a-zA-Z0-9_]+)\s*}}/g, (_: string, field: string) => {
-      const val = goContext[field];
-      return typeof val === "string" ? val.toUpperCase() : String(val || "");
-    });
-
-    // 5. Process top-level field interpolation: {{ .Field }}
-    source = source.replace(/{{\s*\.([a-zA-Z0-9_]+)\s*}}/g, (_: string, field: string) => {
-      return goContext[field] !== undefined ? String(goContext[field]) : "";
-    });
-
-    // 6. Clean up remaining unresolved Go template tags
-    source = source.replace(/{{[\s\S]*?}}/g, "");
-
-    return source.trim();
-  } catch (err) {
-    console.error("Go template compilation error:", err);
-    return `<div class="p-4 bg-cyan-950/40 text-cyan-300 rounded-lg">Go Template Compile Error: ${String(err)}</div>`;
+    return undefined;
   }
+
+  // Direct variable access: $var or var
+  const cleanVar = trimmed.replace(/^\$/, "");
+  if (context[cleanVar] !== undefined) {
+    return context[cleanVar];
+  }
+
+  return trimmed;
+}
+
+function evaluateGoCondition(condition: string, context: Record<string, unknown>): boolean {
+  try {
+    const cond = condition.trim();
+    // Go template syntax: if eq .Status "ready" or if ne .Status "ready" or if gt .Count 5
+    const compMatch = cond.match(/^(eq|ne|gt|lt|ge|le)\s+(\S+)\s+(.+)$/);
+    if (compMatch) {
+      const op = compMatch[1];
+      const leftVal = resolveGoExpression(compMatch[2], context);
+      const rightVal = resolveGoExpression(compMatch[3], context);
+
+      if (op === "eq") return leftVal == rightVal;
+      if (op === "ne") return leftVal != rightVal;
+      if (op === "gt") return Number(leftVal) > Number(rightVal);
+      if (op === "lt") return Number(leftVal) < Number(rightVal);
+      if (op === "ge") return Number(leftVal) >= Number(rightVal);
+      if (op === "le") return Number(leftVal) <= Number(rightVal);
+    }
+    const val = resolveGoExpression(cond, context);
+    return Boolean(val);
+  } catch {
+    return false;
+  }
+}
+
+function renderGoConditionals(text: string, context: Record<string, unknown>): string {
+  // Matches {{ if ... }} ... {{ end }}
+  const ifRegex = /{{\s*if\s+([\s\S]*?)\s*}}([\s\S]*?){{\s*end\s*}}/g;
+  return text.replace(ifRegex, (_, firstCond, body) => {
+    const chunks: { cond: string | null; content: string }[] = [];
+    const branchRegex = /{{\s*(else\s+if\s+[\s\S]*?|else)\s*}}/g;
+    let lastIndex = 0;
+    let currentCond: string | null = firstCond;
+    let match: RegExpExecArray | null;
+
+    while ((match = branchRegex.exec(body)) !== null) {
+      const branchContent = body.slice(lastIndex, match.index);
+      chunks.push({ cond: currentCond, content: branchContent });
+      lastIndex = match.index + match[0].length;
+      if (match[1].startsWith("else if")) {
+        const cMatch = match[1].match(/else\s+if\s+([\s\S]*)/);
+        currentCond = cMatch ? cMatch[1] : "false";
+      } else {
+        currentCond = null;
+      }
+    }
+    chunks.push({ cond: currentCond, content: body.slice(lastIndex) });
+
+    for (const chunk of chunks) {
+      if (chunk.cond === null) {
+        return chunk.content;
+      }
+      if (evaluateGoCondition(chunk.cond, context)) {
+        return chunk.content;
+      }
+    }
+    return "";
+  });
+}
+
+/**
+ * Robust in-browser Go template compiler:
+ * Compiles comments, {{ .Field }}, {{ range .Collection }}, multi-branch {{ if / else if / else }},
+ * pipeline functions (len, upper, lower), and injects Tailwind CSS runtime.
+ */
+function compileGoTemplateToHtml(template: string): string {
+  let source = template;
+  let goContext: Record<string, unknown> = {};
+
+  // 1. Extract JSON context comment if present: {{/* Context: { ... } */}}
+  const contextMatch = source.match(/{{\/\*\s*[Cc]ontext:\s*([\s\S]*?)\*\/\}}/);
+  if (contextMatch && contextMatch[1]) {
+    try {
+      goContext = JSON.parse(contextMatch[1]);
+    } catch {
+      goContext = {};
+    }
+  }
+
+  // 2. Strip comments: {{/* ... */}}
+  source = source.replace(/{{\/\*[\s\S]*?\*\/\}}/g, "");
+
+  // 3. Process range loops: {{ range .Collection }} or {{ range $item := .Collection }}
+  source = source.replace(
+    /{{\s*range\s+(?:(?:\$[a-zA-Z0-9_]+\s*,\s*)?\$([a-zA-Z0-9_]+)\s*:=\s*)?\.([a-zA-Z0-9_]+)\s*}}([\s\S]*?){{\s*end\s*}}/g,
+    (_: string, itemVar: string | undefined, colName: string, loopBody: string) => {
+      // Find collection matching exact or lowercase
+      const colKey = Object.keys(goContext).find((k) => k.toLowerCase() === colName.toLowerCase());
+      const collection = colKey ? goContext[colKey] : undefined;
+      if (!Array.isArray(collection)) return "";
+
+      return collection
+        .map((item: Record<string, unknown>) => {
+          let rendered = loopBody;
+          const itemScope: Record<string, unknown> = {
+            ...goContext,
+            ...item,
+            ...(itemVar ? { [itemVar]: item } : {}),
+          };
+
+          // Conditionals inside loop
+          rendered = renderGoConditionals(rendered, itemScope);
+
+          // Interpolation inside loop: {{ .Field }} or {{ $item.Field }} or {{ upper .Field }}
+          rendered = rendered.replace(/{{\s*([^}]+?)\s*}}/g, (__, expr) => {
+            const val = resolveGoExpression(expr, itemScope);
+            return val !== undefined ? String(val) : "";
+          });
+
+          return rendered;
+        })
+        .join("");
+    }
+  );
+
+  // 4. Process outer conditionals
+  source = renderGoConditionals(source, goContext);
+
+  // 5. Process top-level interpolation: {{ .Field }}, {{ upper .Field }}, {{ len .Collection }}
+  source = source.replace(/{{\s*([^}]+?)\s*}}/g, (_: string, expr: string) => {
+    const val = resolveGoExpression(expr, goContext);
+    return val !== undefined ? String(val) : "";
+  });
+
+  // 6. Clean up remaining unresolved Go template tags
+  source = source.replace(/{{[\s\S]*?}}/g, "");
+
+  return source.trim();
 }
 
 export function GoTemplateRenderer({
@@ -315,8 +419,22 @@ export function GoTemplateRenderer({
     };
   }, [engineMode, localServerPort]);
 
-  // Render iframe content when code or mode changes
-  const updateIframeContent = useCallback(() => {
+  // Derive compilation result synchronously to avoid cascading render effects
+  const { compiledBody, compileError } = useMemo(() => {
+    if (engineMode === "go-server") {
+      return { compiledBody: null, compileError: null };
+    }
+    try {
+      const body = compileGoTemplateToHtml(code);
+      return { compiledBody: body, compileError: null };
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { compiledBody: null, compileError: errMsg };
+    }
+  }, [code, engineMode]);
+
+  // Synchronize compiled markup or error document to iframe DOM
+  useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
@@ -325,7 +443,43 @@ export function GoTemplateRenderer({
       return;
     }
 
-    const compiledBody = compileGoTemplateToHtml(code);
+    if (compileError) {
+      const safeErr = compileError.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] || c);
+      const errorHtml = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background-color: #070B14;
+      color: #F8FAFC;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="p-6 max-w-md w-full bg-cyan-950/40 border border-cyan-500/30 rounded-2xl shadow-2xl text-center space-y-3">
+    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center mx-auto text-lg font-bold">
+      ⚠️
+    </div>
+    <h3 class="text-cyan-300 font-bold text-sm font-sans">Go Template Compilation Error</h3>
+    <pre class="p-3 bg-slate-950/80 rounded-xl border border-cyan-900/40 text-cyan-300 text-xs font-mono text-left whitespace-pre-wrap overflow-x-auto">${safeErr}</pre>
+  </div>
+</body>
+</html>`;
+      iframe.srcdoc = errorHtml;
+      return;
+    }
+
     const fullHtml = `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -349,7 +503,7 @@ export function GoTemplateRenderer({
   </style>
 </head>
 <body>
-  ${compiledBody}
+  ${compiledBody || ""}
 
   <script>
     document.addEventListener("click", function(e) {
@@ -377,11 +531,7 @@ export function GoTemplateRenderer({
 </html>`;
 
     iframe.srcdoc = fullHtml;
-  }, [code, engineMode, localServerPort]);
-
-  useEffect(() => {
-    updateIframeContent();
-  }, [updateIframeContent]);
+  }, [compiledBody, compileError, engineMode, localServerPort]);
 
   const handleCodeEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = e.target.value;
@@ -397,8 +547,19 @@ export function GoTemplateRenderer({
 
   const handleReload = () => {
     setIsRefreshing(true);
-    updateIframeContent();
-    setTimeout(() => setIsRefreshing(false), 500);
+    const iframe = iframeRef.current;
+    if (iframe) {
+      if (engineMode === "go-server") {
+        iframe.src = `http://localhost:${localServerPort}`;
+      } else {
+        const currentDoc = iframe.srcdoc;
+        iframe.srcdoc = "";
+        setTimeout(() => {
+          iframe.srcdoc = currentDoc;
+        }, 50);
+      }
+    }
+    setTimeout(() => setIsRefreshing(false), 400);
   };
 
   const handleSelectPreset = (key: string) => {
@@ -596,7 +757,20 @@ export function GoTemplateRenderer({
 
         {/* Live Canvas Preview Pane */}
         {(viewMode === "split" || viewMode === "canvas") && (
-          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto`}>
+          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto relative`}>
+            {compileError && (
+              <div className="absolute inset-x-4 top-4 z-20">
+                <SandboxAutoFixLens
+                  code={code}
+                  language="go"
+                  errorMessage={compileError}
+                  onApplyFix={(fixedCode) => {
+                    setCode(fixedCode);
+                    if (onCodeChange) onCodeChange(fixedCode);
+                  }}
+                />
+              </div>
+            )}
             <div className={`${deviceWidthMap[device]} h-full min-h-[380px] rounded-xl overflow-hidden border border-slate-800/80 shadow-2xl bg-[#070b14] flex flex-col transition-all duration-300`}>
               <iframe
                 ref={iframeRef}

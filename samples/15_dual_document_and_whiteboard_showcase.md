@@ -17,7 +17,7 @@ Below is the primary implementation code block running in the active editor pane
 ```tsx
 import React, { useState } from "react";
 
-export function DualPaneTelemetryWidget() {
+export default function DualPaneTelemetryWidget() {
   const [activeChannel, setActiveChannel] = useState("alpha");
   const [channels] = useState([
     { id: "alpha", name: "Alpha Telemetry", frequency: "2.4 GHz", status: "locked" },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Smartphone,
   Tablet,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { UniversalPropertyInspector } from "./UniversalPropertyInspector";
 import { applyVisualProps, UniversalVisualProps } from "@/lib/ast-transformer";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 export type PhpDevicePreset = "desktop" | "iphone" | "tablet";
 export type PhpViewMode = "split" | "canvas" | "code";
@@ -178,108 +179,347 @@ export const PHP_LARAVEL_PRESETS: Record<string, { label: string; code: string }
   },
 };
 
-/**
- * Lightweight in-browser Blade compiler:
- * Compiles @php, {{ }}, {!! !!}, @if, @foreach, and injects Tailwind CSS + Alpine.js.
- */
-function compileBladeToHtml(template: string): string {
-  try {
-    let source = template;
-    const phpScope: Record<string, unknown> = {};
+// Helper to split top-level strings by delimiter respecting quotes and brackets
+function splitTopLevel(str: string, delimiter: string): string[] {
+  const results: string[] = [];
+  let current = "";
+  let depth = 0;
+  let inQuote: string | null = null;
+  let i = 0;
+  while (i < str.length) {
+    const ch = str[i];
+    if (inQuote) {
+      if (ch === "\\" && i + 1 < str.length) {
+        current += ch + str[i + 1];
+        i += 2;
+        continue;
+      }
+      if (ch === inQuote) {
+        inQuote = null;
+      }
+      current += ch;
+      i++;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      inQuote = ch;
+      current += ch;
+      i++;
+      continue;
+    }
+    if (ch === "[" || ch === "{" || ch === "(") {
+      depth++;
+      current += ch;
+      i++;
+      continue;
+    }
+    if (ch === "]" || ch === "}" || ch === ")") {
+      depth--;
+      current += ch;
+      i++;
+      continue;
+    }
+    if (depth === 0 && str.startsWith(delimiter, i)) {
+      results.push(current.trim());
+      current = "";
+      i += delimiter.length;
+      continue;
+    }
+    current += ch;
+    i++;
+  }
+  if (current.trim()) {
+    results.push(current.trim());
+  }
+  return results;
+}
 
-    // 1. Extract and evaluate @php ... @endphp blocks safely
-    source = source.replace(/@php([\s\S]*?)@endphp/g, (_, phpCode) => {
-      // Parse variable declarations like: $var = "value"; or $var = [...];
-      const varMatches = phpCode.matchAll(/\$([a-zA-Z0-9_]+)\s*=\s*([^;]+);/g);
-      for (const m of varMatches) {
-        const varName = m[1];
-        const rawVal = m[2].trim();
+// Parses PHP literals: strings, numbers, booleans, sequential arrays, and associative arrays
+function parsePhpLiteral(input: string): unknown {
+  const str = input.trim();
+  if (!str) return undefined;
+  if (str === "true") return true;
+  if (str === "false") return false;
+  if (str === "null") return null;
+  if (/^-?\d+(\.\d+)?$/.test(str)) return Number(str);
+  if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+    return str.slice(1, -1);
+  }
+  if (str.startsWith("[") && str.endsWith("]")) {
+    const inner = str.slice(1, -1).trim();
+    if (!inner) return [];
 
-        try {
-          // Normalize PHP array syntax ['a' => 1] to JSON-compatible {"a": 1}
-          if (rawVal.startsWith("[") && rawVal.endsWith("]")) {
-            let jsonLike = rawVal
-              .replace(/=>/g, ":")
-              .replace(/'/g, '"')
-              .replace(/\[/g, "{")
-              .replace(/\]/g, "}");
-            // Handle lists vs associative arrays
-            if (!rawVal.includes("=>")) {
-              jsonLike = rawVal.replace(/'/g, '"');
-            }
-            phpScope[varName] = JSON.parse(jsonLike);
-          } else if (rawVal.startsWith('"') || rawVal.startsWith("'")) {
-            phpScope[varName] = rawVal.slice(1, -1);
-          } else if (!isNaN(Number(rawVal))) {
-            phpScope[varName] = Number(rawVal);
-          } else if (rawVal === "true") {
-            phpScope[varName] = true;
-          } else if (rawVal === "false") {
-            phpScope[varName] = false;
-          }
-        } catch {
-          // Fallback literal
-          phpScope[varName] = rawVal.replace(/['"]/g, "");
+    const items = splitTopLevel(inner, ",");
+    const isAssoc = items.some((item) => splitTopLevel(item, "=>").length === 2);
+
+    if (isAssoc) {
+      const obj: Record<string, unknown> = {};
+      for (const item of items) {
+        const parts = splitTopLevel(item, "=>");
+        if (parts.length === 2) {
+          const rawKey = parsePhpLiteral(parts[0]);
+          const key = String(rawKey);
+          const val = parsePhpLiteral(parts[1]);
+          obj[key] = val;
         }
       }
-      return "";
-    });
+      return obj;
+    } else {
+      return items.map((item) => parsePhpLiteral(item));
+    }
+  }
+  return str;
+}
 
-    // 2. Process Blade loops: @foreach ($collection as $item) ... @endforeach
-    source = source.replace(/@foreach\s*\(\s*\$([a-zA-Z0-9_]+)\s+as\s+\$([a-zA-Z0-9_]+)\s*\)([\s\S]*?)@endforeach/g, (_, colName, itemName, loopBody) => {
+// Resolves a PHP expression against a variable scope
+function resolvePhpExpression(expr: string, scope: Record<string, unknown>): unknown {
+  const trimmed = expr.trim();
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (trimmed === "null") return null;
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
+  }
+
+  // Check $item['prop'] or $item["prop"]
+  const bracketMatch =
+    trimmed.match(/^\$([a-zA-Z0-9_]+)\['([a-zA-Z0-9_]+)'\]$/) ||
+    trimmed.match(/^\$([a-zA-Z0-9_]+)\["([a-zA-Z0-9_]+)"\]$/);
+  if (bracketMatch) {
+    const parent = scope[bracketMatch[1]];
+    if (parent && typeof parent === "object") {
+      return (parent as Record<string, unknown>)[bracketMatch[2]];
+    }
+    return undefined;
+  }
+
+  // Check $item.prop
+  const dotMatch = trimmed.match(/^\$([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$/);
+  if (dotMatch) {
+    const parent = scope[dotMatch[1]];
+    if (parent && typeof parent === "object") {
+      return (parent as Record<string, unknown>)[dotMatch[2]];
+    }
+    return undefined;
+  }
+
+  // Check count($var)
+  const countMatch = trimmed.match(/^count\(\$([a-zA-Z0-9_]+)\)$/);
+  if (countMatch) {
+    const val = scope[countMatch[1]];
+    return Array.isArray(val) ? val.length : 0;
+  }
+
+  // Check strtoupper(...)
+  const upperMatch = trimmed.match(/^strtoupper\((.+)\)$/);
+  if (upperMatch) {
+    const val = resolvePhpExpression(upperMatch[1], scope);
+    return typeof val === "string" ? val.toUpperCase() : String(val ?? "");
+  }
+
+  // Check strtolower(...)
+  const lowerMatch = trimmed.match(/^strtolower\((.+)\)$/);
+  if (lowerMatch) {
+    const val = resolvePhpExpression(lowerMatch[1], scope);
+    return typeof val === "string" ? val.toLowerCase() : String(val ?? "");
+  }
+
+  // Check $var
+  const varMatch = trimmed.match(/^\$([a-zA-Z0-9_]+)$/);
+  if (varMatch) {
+    return scope[varMatch[1]];
+  }
+
+  return trimmed;
+}
+
+// Evaluates a condition like: $user['status'] === 'online' or count($services) > 0
+function evaluateBladeCondition(condition: string, scope: Record<string, unknown>): boolean {
+  try {
+    const cond = condition.trim();
+    const compMatch = cond.match(/^(.+?)\s*(===|==|!==|!=|>=|<=|>|<)\s*(.+)$/);
+    if (compMatch) {
+      const leftVal = resolvePhpExpression(compMatch[1].trim(), scope);
+      const op = compMatch[2];
+      const rightVal = resolvePhpExpression(compMatch[3].trim(), scope);
+
+      if (op === "===") return leftVal === rightVal;
+      if (op === "==") return leftVal == rightVal;
+      if (op === "!==") return leftVal !== rightVal;
+      if (op === "!=") return leftVal != rightVal;
+      if (op === ">") return Number(leftVal) > Number(rightVal);
+      if (op === "<") return Number(leftVal) < Number(rightVal);
+      if (op === ">=") return Number(leftVal) >= Number(rightVal);
+      if (op === "<=") return Number(leftVal) <= Number(rightVal);
+    }
+    const val = resolvePhpExpression(cond, scope);
+    return Boolean(val);
+  } catch {
+    return false;
+  }
+}
+
+// Evaluates @if (...) ... @elseif (...) ... @else ... @endif blocks
+function renderBladeConditionals(text: string, scope: Record<string, unknown>): string {
+  const ifRegex = /@if\s*\(([\s\S]*?)\)([\s\S]*?)@endif/g;
+  return text.replace(ifRegex, (_, firstCond, body) => {
+    const chunks: { cond: string | null; content: string }[] = [];
+    const branchRegex = /@(elseif\s*\([\s\S]*?\)|else)/g;
+    let lastIndex = 0;
+    let currentCond: string | null = firstCond;
+    let match: RegExpExecArray | null;
+
+    while ((match = branchRegex.exec(body)) !== null) {
+      const branchContent = body.slice(lastIndex, match.index);
+      chunks.push({ cond: currentCond, content: branchContent });
+      lastIndex = match.index + match[0].length;
+      if (match[1].startsWith("elseif")) {
+        const cMatch = match[1].match(/elseif\s*\(([\s\S]*?)\)/);
+        currentCond = cMatch ? cMatch[1] : "false";
+      } else {
+        currentCond = null;
+      }
+    }
+    chunks.push({ cond: currentCond, content: body.slice(lastIndex) });
+
+    for (const chunk of chunks) {
+      if (chunk.cond === null) {
+        return chunk.content;
+      }
+      if (evaluateBladeCondition(chunk.cond, scope)) {
+        return chunk.content;
+      }
+    }
+    return "";
+  });
+}
+
+/**
+ * Robust in-browser Blade compiler:
+ * Compiles @php variable scopes, nested associative arrays, @foreach,
+ * multi-branch @if/@elseif/@else, ternaries, and standard interpolation.
+ */
+function compileBladeToHtml(template: string): string {
+  let source = template;
+  const phpScope: Record<string, unknown> = {};
+
+  // 1. Strip Blade comments: {{-- comment --}}
+  source = source.replace(/{{--[\s\S]*?--}}/g, "");
+
+  // 2. Extract and evaluate @php ... @endphp blocks safely
+  source = source.replace(/@php([\s\S]*?)@endphp/g, (_, phpCode) => {
+    const statements = splitTopLevel(phpCode, ";");
+    for (const stmt of statements) {
+      const eqIdx = stmt.indexOf("=");
+      if (eqIdx !== -1) {
+        const left = stmt.slice(0, eqIdx).trim();
+        const right = stmt.slice(eqIdx + 1).trim();
+        const varNameMatch = left.match(/^\$([a-zA-Z0-9_]+)$/);
+        if (varNameMatch) {
+          const varName = varNameMatch[1];
+          try {
+            phpScope[varName] = parsePhpLiteral(right);
+          } catch {
+            phpScope[varName] = right.replace(/['"]/g, "");
+          }
+        }
+      }
+    }
+    return "";
+  });
+
+  // 3. Process Blade loops: @foreach ($collection as $item) ... @endforeach
+  source = source.replace(
+    /@foreach\s*\(\s*\$([a-zA-Z0-9_]+)\s+as\s+\$([a-zA-Z0-9_]+)\s*\)([\s\S]*?)@endforeach/g,
+    (_, colName, itemName, loopBody) => {
       const collection = phpScope[colName];
       if (!Array.isArray(collection)) return "";
 
       return collection
         .map((item) => {
           let renderedItem = loopBody;
-          // Replace $item['prop']
+          const itemScope: Record<string, unknown> = {
+            ...phpScope,
+            [itemName]: item,
+          };
+
+          // A. Process ternary expressions inside interpolated tags: {{ cond ? val1 : val2 }}
+          renderedItem = renderedItem.replace(/{{\s*([^}]+?\?[^}]+?:[^}]+?)\s*}}/g, (_: string, ternaryExpr: string) => {
+            const parts = ternaryExpr.match(/^(.+?)\?(.+?):(.+)$/);
+            if (parts) {
+              const isTrue = evaluateBladeCondition(parts[1], itemScope);
+              const resultExpr = isTrue ? parts[2].trim() : parts[3].trim();
+              const resolved = resolvePhpExpression(resultExpr, itemScope);
+              return resolved !== undefined ? String(resolved) : "";
+            }
+            return "";
+          });
+
+          // B. Process conditionals inside loop: @if ... @elseif ... @else ... @endif
+          renderedItem = renderBladeConditionals(renderedItem, itemScope);
+
+          // C. Replace $item['prop'] or $item["prop"] or $item.prop
           renderedItem = renderedItem.replace(
-            new RegExp(`{{\\s*\\$${itemName}\\['([a-zA-Z0-9_]+)'\\]\\s*}}`, "g"),
-            (__: string, prop: string) => item[prop] ?? ""
-          );
-          // Replace conditional expressions in @if
-          renderedItem = renderedItem.replace(
-            new RegExp(`@if\\s*\\(\\s*\\$${itemName}\\['([a-zA-Z0-9_]+)'\\]\\s*===\\s*['"]([^'"]+)['"]\\s*\\)([\\s\\S]*?)(?:@elseif|@else|@endif)`, "g"),
-            (__: string, prop: string, targetVal: string, innerContent: string) => {
-              return item[prop] === targetVal ? innerContent : "";
+            new RegExp(`{{\\s*\\$${itemName}(?:\\[['"]([a-zA-Z0-9_]+)['"]\\]|\\.([a-zA-Z0-9_]+))\\s*}}`, "g"),
+            (_: string, prop1: string, prop2: string) => {
+              const prop = prop1 || prop2;
+              return (item as Record<string, unknown>)[prop] !== undefined
+                ? String((item as Record<string, unknown>)[prop])
+                : "";
             }
           );
+
+          // D. Unescaped raw interpolation {!! $item['prop'] !!}
+          renderedItem = renderedItem.replace(
+            new RegExp(`{!!\\s*\\$${itemName}(?:\\[['"]([a-zA-Z0-9_]+)['"]\\]|\\.([a-zA-Z0-9_]+))\\s*!!}`, "g"),
+            (_: string, prop1: string, prop2: string) => {
+              const prop = prop1 || prop2;
+              return (item as Record<string, unknown>)[prop] !== undefined
+                ? String((item as Record<string, unknown>)[prop])
+                : "";
+            }
+          );
+
           return renderedItem;
         })
         .join("");
-    });
+    }
+  );
 
-    // 3. Process Blade conditionals: @if ... @else ... @endif
-    source = source.replace(/@if\s*\((.*?)\)([\s\S]*?)(?:@else([\s\S]*?))?@endif/g, (_, cond, ifBranch, elseBranch) => {
-      return ifBranch || elseBranch || "";
-    });
+  // 4. Process outer Blade conditionals: @if ... @elseif ... @else ... @endif
+  source = renderBladeConditionals(source, phpScope);
 
-    // 4. Process Blade expressions: {{ count($var) }}
-    source = source.replace(/{{\s*count\(\$([a-zA-Z0-9_]+)\)\s*}}/g, (_, vName) => {
-      const val = phpScope[vName];
-      return Array.isArray(val) ? String(val.length) : "0";
-    });
+  // 5. Process top-level expressions:
+  // count($var)
+  source = source.replace(/{{\s*count\(\$([a-zA-Z0-9_]+)\)\s*}}/g, (_, vName) => {
+    const val = phpScope[vName];
+    return Array.isArray(val) ? String(val.length) : "0";
+  });
 
-    // 5. Process Blade string transformations: {{ strtoupper($var) }}
-    source = source.replace(/{{\s*strtoupper\(\$([a-zA-Z0-9_]+)\)\s*}}/g, (_, vName) => {
-      const val = phpScope[vName];
-      return typeof val === "string" ? val.toUpperCase() : String(val || "");
-    });
+  // strtoupper($var)
+  source = source.replace(/{{\s*strtoupper\(\$([a-zA-Z0-9_]+)\)\s*}}/g, (_, vName) => {
+    const val = phpScope[vName];
+    return typeof val === "string" ? val.toUpperCase() : String(val ?? "");
+  });
 
-    // 6. Process standard interpolated expressions: {{ $var }}
-    source = source.replace(/{{\s*\$([a-zA-Z0-9_]+)\s*}}/g, (_, vName) => {
-      return phpScope[vName] !== undefined ? String(phpScope[vName]) : "";
-    });
+  // strtolower($var)
+  source = source.replace(/{{\s*strtolower\(\$([a-zA-Z0-9_]+)\)\s*}}/g, (_, vName) => {
+    const val = phpScope[vName];
+    return typeof val === "string" ? val.toLowerCase() : String(val ?? "");
+  });
 
-    // 7. Strip Blade comments: {{-- comment --}}
-    source = source.replace(/{{--[\s\S]*?--}}/g, "");
+  // Standard interpolated expressions: {{ $var }}
+  source = source.replace(/{{\s*\$([a-zA-Z0-9_]+)\s*}}/g, (_, vName) => {
+    return phpScope[vName] !== undefined ? String(phpScope[vName]) : "";
+  });
 
-    return source.trim();
-  } catch (err) {
-    console.error("Blade compilation error:", err);
-    return `<div class="p-4 bg-red-950/40 text-red-300 rounded-lg">Blade Compile Error: ${String(err)}</div>`;
-  }
+  // Raw interpolated expressions: {!! $var !!}
+  source = source.replace(/{!!\s*\$([a-zA-Z0-9_]+)\s*!!}/g, (_, vName) => {
+    return phpScope[vName] !== undefined ? String(phpScope[vName]) : "";
+  });
+
+  return source.trim();
 }
 
 export function PhpLaravelRenderer({
@@ -337,8 +577,22 @@ export function PhpLaravelRenderer({
     };
   }, [engineMode, localServerPort]);
 
-  // Render iframe content when code or mode changes
-  const updateIframeContent = useCallback(() => {
+  // Derive compilation result synchronously to avoid cascading render effects
+  const { compiledBody, compileError } = useMemo(() => {
+    if (engineMode === "artisan-server") {
+      return { compiledBody: null, compileError: null };
+    }
+    try {
+      const body = compileBladeToHtml(code);
+      return { compiledBody: body, compileError: null };
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { compiledBody: null, compileError: errMsg };
+    }
+  }, [code, engineMode]);
+
+  // Synchronize compiled markup or error document to iframe DOM
+  useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
@@ -347,7 +601,43 @@ export function PhpLaravelRenderer({
       return;
     }
 
-    const compiledBody = compileBladeToHtml(code);
+    if (compileError) {
+      const safeErr = compileError.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] || c);
+      const errorHtml = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background-color: #070B14;
+      color: #F8FAFC;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="p-6 max-w-md w-full bg-rose-950/40 border border-rose-500/30 rounded-2xl shadow-2xl text-center space-y-3">
+    <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto text-lg font-bold">
+      ⚠️
+    </div>
+    <h3 class="text-rose-300 font-bold text-sm font-sans">Blade Compilation Error</h3>
+    <pre class="p-3 bg-slate-950/80 rounded-xl border border-rose-900/40 text-rose-300 text-xs font-mono text-left whitespace-pre-wrap overflow-x-auto">${safeErr}</pre>
+  </div>
+</body>
+</html>`;
+      iframe.srcdoc = errorHtml;
+      return;
+    }
+
     const fullHtml = `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -372,16 +662,12 @@ export function PhpLaravelRenderer({
   </style>
 </head>
 <body>
-  ${compiledBody}
+  ${compiledBody || ""}
 </body>
 </html>`;
 
     iframe.srcdoc = fullHtml;
-  }, [code, engineMode, localServerPort]);
-
-  useEffect(() => {
-    updateIframeContent();
-  }, [updateIframeContent]);
+  }, [compiledBody, compileError, engineMode, localServerPort]);
 
   const handleCodeEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = e.target.value;
@@ -397,8 +683,19 @@ export function PhpLaravelRenderer({
 
   const handleReload = () => {
     setIsRefreshing(true);
-    updateIframeContent();
-    setTimeout(() => setIsRefreshing(false), 500);
+    const iframe = iframeRef.current;
+    if (iframe) {
+      if (engineMode === "artisan-server") {
+        iframe.src = `http://localhost:${localServerPort}`;
+      } else {
+        const currentDoc = iframe.srcdoc;
+        iframe.srcdoc = "";
+        setTimeout(() => {
+          iframe.srcdoc = currentDoc;
+        }, 50);
+      }
+    }
+    setTimeout(() => setIsRefreshing(false), 400);
   };
 
   const handleSelectPreset = (key: string) => {
@@ -596,7 +893,20 @@ export function PhpLaravelRenderer({
 
         {/* Live Canvas Preview Pane (Split or Canvas View) */}
         {(viewMode === "split" || viewMode === "canvas") && (
-          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto`}>
+          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto relative`}>
+            {compileError && (
+              <div className="absolute inset-x-4 top-4 z-20">
+                <SandboxAutoFixLens
+                  code={code}
+                  language="blade"
+                  errorMessage={compileError}
+                  onApplyFix={(fixedCode) => {
+                    setCode(fixedCode);
+                    if (onCodeChange) onCodeChange(fixedCode);
+                  }}
+                />
+              </div>
+            )}
             <div className={`${deviceWidthMap[device]} h-full min-h-[380px] rounded-xl overflow-hidden border border-slate-800/80 shadow-2xl bg-[#070b14] flex flex-col transition-all duration-300`}>
               <iframe
                 ref={iframeRef}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Smartphone,
   Tablet,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { UniversalPropertyInspector } from "./UniversalPropertyInspector";
 import { applyVisualProps, UniversalVisualProps } from "@/lib/ast-transformer";
+import { SandboxAutoFixLens } from "@/components/ai/SandboxAutoFixLens";
 
 export type DjangoDevicePreset = "desktop" | "iphone" | "tablet";
 export type DjangoViewMode = "split" | "canvas" | "code";
@@ -176,91 +177,207 @@ export const DJANGO_JINJA_PRESETS: Record<string, { label: string; code: string 
   },
 };
 
+// Resolves a Jinja expression against a variable context
+function resolveJinjaExpression(expr: string, context: Record<string, unknown>): unknown {
+  const trimmed = expr.trim();
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (trimmed === "null" || trimmed === "none") return null;
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
+  }
+
+  // Handle filter pipes: expr|filter
+  if (trimmed.includes("|")) {
+    const pipeIdx = trimmed.indexOf("|");
+    const baseExpr = trimmed.slice(0, pipeIdx).trim();
+    const filter = trimmed.slice(pipeIdx + 1).trim();
+    const baseVal = resolveJinjaExpression(baseExpr, context);
+
+    if (filter === "upper") {
+      return typeof baseVal === "string" ? baseVal.toUpperCase() : String(baseVal ?? "");
+    }
+    if (filter === "lower") {
+      return typeof baseVal === "string" ? baseVal.toLowerCase() : String(baseVal ?? "");
+    }
+    if (filter === "title") {
+      return typeof baseVal === "string" ? baseVal.replace(/\b\w/g, (c) => c.toUpperCase()) : String(baseVal ?? "");
+    }
+    if (filter === "length") {
+      if (Array.isArray(baseVal)) return baseVal.length;
+      if (typeof baseVal === "string") return baseVal.length;
+      if (baseVal && typeof baseVal === "object") return Object.keys(baseVal).length;
+      return 0;
+    }
+    return baseVal;
+  }
+
+  // Handle dot access: item.field
+  const dotMatch = trimmed.match(/^([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)$/);
+  if (dotMatch) {
+    const parent = context[dotMatch[1]];
+    if (parent && typeof parent === "object") {
+      return (parent as Record<string, unknown>)[dotMatch[2]];
+    }
+    return undefined;
+  }
+
+  // Handle bracket access: item['field'] or item["field"]
+  const bracketMatch =
+    trimmed.match(/^([a-zA-Z0-9_]+)\['([a-zA-Z0-9_]+)'\]$/) ||
+    trimmed.match(/^([a-zA-Z0-9_]+)\["([a-zA-Z0-9_]+)"\]$/);
+  if (bracketMatch) {
+    const parent = context[bracketMatch[1]];
+    if (parent && typeof parent === "object") {
+      return (parent as Record<string, unknown>)[bracketMatch[2]];
+    }
+    return undefined;
+  }
+
+  // Top-level variable
+  if (context[trimmed] !== undefined) {
+    return context[trimmed];
+  }
+
+  return trimmed;
+}
+
+function evaluateJinjaCondition(condition: string, context: Record<string, unknown>): boolean {
+  try {
+    const cond = condition.trim();
+    const compMatch = cond.match(/^(.+?)\s*(===|==|!==|!=|>=|<=|>|<)\s*(.+)$/);
+    if (compMatch) {
+      const leftVal = resolveJinjaExpression(compMatch[1].trim(), context);
+      const op = compMatch[2];
+      const rightVal = resolveJinjaExpression(compMatch[3].trim(), context);
+
+      if (op === "===" || op === "==") return leftVal == rightVal;
+      if (op === "!==" || op === "!=") return leftVal != rightVal;
+      if (op === ">") return Number(leftVal) > Number(rightVal);
+      if (op === "<") return Number(leftVal) < Number(rightVal);
+      if (op === ">=") return Number(leftVal) >= Number(rightVal);
+      if (op === "<=") return Number(leftVal) <= Number(rightVal);
+    }
+    const val = resolveJinjaExpression(cond, context);
+    return Boolean(val);
+  } catch {
+    return false;
+  }
+}
+
+function renderJinjaConditionals(text: string, context: Record<string, unknown>): string {
+  const ifRegex = /{%\s*if\s+([\s\S]*?)\s*%}([\s\S]*?){%\s*endif\s*%}/g;
+  return text.replace(ifRegex, (_, firstCond, body) => {
+    const chunks: { cond: string | null; content: string }[] = [];
+    const branchRegex = /{%\s*(elif\s+[\s\S]*?|else)\s*%}/g;
+    let lastIndex = 0;
+    let currentCond: string | null = firstCond;
+    let match: RegExpExecArray | null;
+
+    while ((match = branchRegex.exec(body)) !== null) {
+      const branchContent = body.slice(lastIndex, match.index);
+      chunks.push({ cond: currentCond, content: branchContent });
+      lastIndex = match.index + match[0].length;
+      if (match[1].startsWith("elif")) {
+        const cMatch = match[1].match(/elif\s+([\s\S]*)/);
+        currentCond = cMatch ? cMatch[1] : "false";
+      } else {
+        currentCond = null;
+      }
+    }
+    chunks.push({ cond: currentCond, content: body.slice(lastIndex) });
+
+    for (const chunk of chunks) {
+      if (chunk.cond === null) {
+        return chunk.content;
+      }
+      if (evaluateJinjaCondition(chunk.cond, context)) {
+        return chunk.content;
+      }
+    }
+    return "";
+  });
+}
+
 /**
- * Lightweight in-browser Jinja2 / Django Template compiler:
- * Compiles {# ... #}, {{ variable }}, {{ variable|upper }}, {{ variable|length }},
- * {% for item in items %}, {% if item.status == 'val' %},
+ * Robust in-browser Jinja2 / Django Template compiler:
+ * Compiles {# ... #}, {% set var = ... %}, {{ variable|filter }},
+ * {% for item in items %}, multi-branch {% if / elif / else %},
  * and injects Tailwind CSS runtime.
  */
 function compileJinjaToHtml(template: string): string {
-  try {
-    let source = template;
-    let jinjaContext: Record<string, unknown> = {};
+  let source = template;
+  let jinjaContext: Record<string, unknown> = {};
 
-    // 1. Extract JSON context comment if present: {# Context: { ... } #}
-    const contextMatch = source.match(/{#\s*Context:\s*([\s\S]*?)#}/);
-    if (contextMatch && contextMatch[1]) {
-      try {
-        jinjaContext = JSON.parse(contextMatch[1]);
-      } catch {
-        jinjaContext = {};
-      }
+  // 1. Extract JSON context comment if present: {# Context: { ... } #}
+  const contextMatch = source.match(/{#\s*[Cc]ontext:\s*([\s\S]*?)#}/);
+  if (contextMatch && contextMatch[1]) {
+    try {
+      jinjaContext = JSON.parse(contextMatch[1]);
+    } catch {
+      jinjaContext = {};
     }
-
-    // Strip comments: {# ... #}
-    source = source.replace(/{#[\s\S]*?#}/g, "");
-
-    // 2. Process for loops: {% for item in items %} ... {% endfor %}
-    source = source.replace(
-      /{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)\s*%}([\s\S]*?){%\s*endfor\s*%}/g,
-      (_: string, itemName: string, colName: string, loopBody: string) => {
-        const collection = jinjaContext[colName];
-        if (!Array.isArray(collection)) return "";
-
-        return collection
-          .map((item: Record<string, unknown>) => {
-            let rendered = loopBody;
-
-            // Replace {{ item.property }} or {{ item['property'] }}
-            rendered = rendered.replace(
-              new RegExp(`{{\\s*${itemName}\\.([a-zA-Z0-9_]+)\\s*}}`, "g"),
-              (__: string, field: string) => (item[field] !== undefined ? String(item[field]) : "")
-            );
-
-            // Replace conditionals inside loop:
-            // {% if item.status == "processed" %} ... {% else %} ... {% endif %}
-            rendered = rendered.replace(
-              new RegExp(
-                `{%\s*if\s+${itemName}\\.([a-zA-Z0-9_]+)\s*==\s*["']([^"']+)["']\s*%}([\\s\\S]*?)(?:{%\s*else\s*%}([\\s\\S]*?))?{%\s*endif\s*%}`,
-                "g"
-              ),
-              (__: string, field: string, expected: string, ifBranch: string, elseBranch: string) => {
-                return item[field] === expected ? ifBranch : (elseBranch || "");
-              }
-            );
-
-            return rendered;
-          })
-          .join("");
-      }
-    );
-
-    // 3. Process filter: {{ collection|length }}
-    source = source.replace(/{{\s*([a-zA-Z0-9_]+)\|length\s*}}/g, (_: string, colName: string) => {
-      const col = jinjaContext[colName];
-      return Array.isArray(col) ? String(col.length) : "0";
-    });
-
-    // 4. Process filter: {{ variable|upper }}
-    source = source.replace(/{{\s*([a-zA-Z0-9_]+)\|upper\s*}}/g, (_: string, field: string) => {
-      const val = jinjaContext[field];
-      return typeof val === "string" ? val.toUpperCase() : String(val || "");
-    });
-
-    // 5. Process top-level variable interpolation: {{ variable }}
-    source = source.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_: string, field: string) => {
-      return jinjaContext[field] !== undefined ? String(jinjaContext[field]) : "";
-    });
-
-    // 6. Clean up remaining unresolved Jinja tags
-    source = source.replace(/{%.*?%}/g, "");
-    source = source.replace(/{{.*?}}/g, "");
-
-    return source.trim();
-  } catch (err) {
-    console.error("Jinja/Django template compilation error:", err);
-    return `<div class="p-4 bg-emerald-950/40 text-emerald-300 rounded-lg">Django/Jinja Template Compile Error: ${String(err)}</div>`;
   }
+
+  // 2. Extract {% set var = value %} statements
+  source = source.replace(/{%\s*set\s+([a-zA-Z0-9_]+)\s*=\s*([^%]+)%}/g, (_, varName, rawVal) => {
+    const trimmed = rawVal.trim();
+    try {
+      jinjaContext[varName] = JSON.parse(trimmed.replace(/'/g, '"'));
+    } catch {
+      jinjaContext[varName] = trimmed.replace(/^['"]|['"]$/g, "");
+    }
+    return "";
+  });
+
+  // 3. Strip comments: {# ... #}
+  source = source.replace(/{#[\s\S]*?#}/g, "");
+
+  // 4. Process for loops: {% for item in items %} ... {% endfor %}
+  source = source.replace(
+    /{%\s*for\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_]+)\s*%}([\s\S]*?){%\s*endfor\s*%}/g,
+    (_: string, itemName: string, colName: string, loopBody: string) => {
+      const collection = jinjaContext[colName];
+      if (!Array.isArray(collection)) return "";
+
+      return collection
+        .map((item: Record<string, unknown>) => {
+          let rendered = loopBody;
+          const itemContext: Record<string, unknown> = {
+            ...jinjaContext,
+            [itemName]: item,
+          };
+
+          // Conditionals inside loop: {% if ... %} ... {% elif ... %} ... {% else %} ... {% endif %}
+          rendered = renderJinjaConditionals(rendered, itemContext);
+
+          // Interpolated variables {{ item.property }} or {{ item['property'] }}
+          rendered = rendered.replace(/{{\s*([^}]+?)\s*}}/g, (__, expr) => {
+            const val = resolveJinjaExpression(expr, itemContext);
+            return val !== undefined ? String(val) : "";
+          });
+
+          return rendered;
+        })
+        .join("");
+    }
+  );
+
+  // 5. Process outer conditionals
+  source = renderJinjaConditionals(source, jinjaContext);
+
+  // 6. Process top-level variable interpolation: {{ variable }} or {{ variable|filter }}
+  source = source.replace(/{{\s*([^}]+?)\s*}}/g, (_: string, expr: string) => {
+    const val = resolveJinjaExpression(expr, jinjaContext);
+    return val !== undefined ? String(val) : "";
+  });
+
+  // 7. Clean up remaining unresolved Jinja tags
+  source = source.replace(/{%.*?%}/g, "");
+  source = source.replace(/{{.*?}}/g, "");
+
+  return source.trim();
 }
 
 export function DjangoJinjaRenderer({
@@ -318,8 +435,22 @@ export function DjangoJinjaRenderer({
     };
   }, [engineMode, localServerPort]);
 
-  // Render iframe content when code or mode changes
-  const updateIframeContent = useCallback(() => {
+  // Derive compilation result synchronously to avoid cascading render effects
+  const { compiledBody, compileError } = useMemo(() => {
+    if (engineMode === "django-server") {
+      return { compiledBody: null, compileError: null };
+    }
+    try {
+      const body = compileJinjaToHtml(code);
+      return { compiledBody: body, compileError: null };
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { compiledBody: null, compileError: errMsg };
+    }
+  }, [code, engineMode]);
+
+  // Synchronize compiled markup or error document to iframe DOM
+  useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
@@ -328,7 +459,43 @@ export function DjangoJinjaRenderer({
       return;
     }
 
-    const compiledBody = compileJinjaToHtml(code);
+    if (compileError) {
+      const safeErr = compileError.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] || c);
+      const errorHtml = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background-color: #070B14;
+      color: #F8FAFC;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="p-6 max-w-md w-full bg-emerald-950/40 border border-emerald-500/30 rounded-2xl shadow-2xl text-center space-y-3">
+    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto text-lg font-bold">
+      ⚠️
+    </div>
+    <h3 class="text-emerald-300 font-bold text-sm font-sans">Django/Jinja2 Compilation Error</h3>
+    <pre class="p-3 bg-slate-950/80 rounded-xl border border-emerald-900/40 text-emerald-300 text-xs font-mono text-left whitespace-pre-wrap overflow-x-auto">${safeErr}</pre>
+  </div>
+</body>
+</html>`;
+      iframe.srcdoc = errorHtml;
+      return;
+    }
+
     const fullHtml = `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -352,7 +519,7 @@ export function DjangoJinjaRenderer({
   </style>
 </head>
 <body>
-  ${compiledBody}
+  ${compiledBody || ""}
 
   <script>
     document.addEventListener("click", function(e) {
@@ -377,11 +544,7 @@ export function DjangoJinjaRenderer({
 </html>`;
 
     iframe.srcdoc = fullHtml;
-  }, [code, engineMode, localServerPort]);
-
-  useEffect(() => {
-    updateIframeContent();
-  }, [updateIframeContent]);
+  }, [compiledBody, compileError, engineMode, localServerPort]);
 
   const handleCodeEdit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = e.target.value;
@@ -397,8 +560,19 @@ export function DjangoJinjaRenderer({
 
   const handleReload = () => {
     setIsRefreshing(true);
-    updateIframeContent();
-    setTimeout(() => setIsRefreshing(false), 500);
+    const iframe = iframeRef.current;
+    if (iframe) {
+      if (engineMode === "django-server") {
+        iframe.src = `http://localhost:${localServerPort}`;
+      } else {
+        const currentDoc = iframe.srcdoc;
+        iframe.srcdoc = "";
+        setTimeout(() => {
+          iframe.srcdoc = currentDoc;
+        }, 50);
+      }
+    }
+    setTimeout(() => setIsRefreshing(false), 400);
   };
 
   const handleSelectPreset = (key: string) => {
@@ -596,7 +770,20 @@ export function DjangoJinjaRenderer({
 
         {/* Live Canvas Preview Pane */}
         {(viewMode === "split" || viewMode === "canvas") && (
-          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto`}>
+          <div className={`${viewMode === "split" ? "w-1/2" : "w-full"} flex flex-col items-center justify-center p-4 bg-[#03060c] overflow-auto relative`}>
+            {compileError && (
+              <div className="absolute inset-x-4 top-4 z-20">
+                <SandboxAutoFixLens
+                  code={code}
+                  language="django"
+                  errorMessage={compileError}
+                  onApplyFix={(fixedCode) => {
+                    setCode(fixedCode);
+                    if (onCodeChange) onCodeChange(fixedCode);
+                  }}
+                />
+              </div>
+            )}
             <div className={`${deviceWidthMap[device]} h-full min-h-[380px] rounded-xl overflow-hidden border border-slate-800/80 shadow-2xl bg-[#070b14] flex flex-col transition-all duration-300`}>
               <iframe
                 ref={iframeRef}

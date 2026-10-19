@@ -25,8 +25,10 @@ flowchart TD
 Interactive components run natively on your presentation slides
 
 ```tsx
-export function PresentationWidget() {
-  const [votes, setVotes] = React.useState(12);
+import React, { useState } from "react";
+
+export default function PresentationWidget() {
+  const [votes, setVotes] = useState(12);
   return (
     <div className="p-6 bg-slate-900 rounded-2xl border border-sky-500/40 text-white max-w-md mx-auto space-y-3">
       <h3 className="text-base font-bold text-sky-400">Live Running Component on Slide</h3>

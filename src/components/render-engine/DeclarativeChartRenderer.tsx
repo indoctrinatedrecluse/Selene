@@ -23,8 +23,10 @@ export interface ChartSpecification {
   description?: string;
   xKey?: string;
   yKey?: string | string[];
+  yKeys?: string | string[];
   colors?: string[];
   data?: ChartDataPoint[];
+  stacked?: boolean;
   options?: {
     stacked?: boolean;
     showGrid?: boolean;
@@ -94,11 +96,12 @@ export function DeclarativeChartRenderer({
   const colors = spec?.colors && spec.colors.length > 0 ? spec.colors : DEFAULT_COLORS;
 
   // Determine series / yKeys
+  const rawYKey = spec?.yKey ?? spec?.yKeys;
   let yKeys: string[] = [];
-  if (Array.isArray(spec?.yKey)) {
-    yKeys = spec.yKey;
-  } else if (typeof spec?.yKey === "string") {
-    yKeys = [spec.yKey];
+  if (Array.isArray(rawYKey)) {
+    yKeys = rawYKey;
+  } else if (typeof rawYKey === "string") {
+    yKeys = [rawYKey];
   } else if (data[0]) {
     yKeys = Object.keys(data[0]).filter((k) => k !== xKey && typeof data[0][k] === "number");
     if (yKeys.length === 0 && Object.keys(data[0]).length > 1) {
