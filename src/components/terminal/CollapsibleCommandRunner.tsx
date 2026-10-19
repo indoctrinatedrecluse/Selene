@@ -38,7 +38,7 @@ export function CollapsibleCommandRunner({
     {
       id: "init-1",
       type: "system",
-      text: "⚡ Selene Integrated Shell & Command Runner [v0.3.0]",
+      text: `⚡ Selene Integrated Shell & Command Runner [v${APP_VERSION}]`,
       timestamp: new Date().toLocaleTimeString(),
     },
     {

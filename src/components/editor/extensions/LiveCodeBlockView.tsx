@@ -290,7 +290,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isChart || isDuckDb || isSql || isShader) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isRustWasm || isChart || isDuckDb || isSql || isShader) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"

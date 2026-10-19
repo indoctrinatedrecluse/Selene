@@ -20,6 +20,10 @@ import {
   Smartphone,
   Presentation,
   Terminal,
+  Database,
+  BarChart2,
+  Code2,
+  Cpu,
 } from "lucide-react";
 
 export interface CommandItem {
@@ -148,6 +152,159 @@ export const SLASH_COMMANDS: CommandItem[] = [
         .deleteRange(range)
         .insertContent(
           `\`\`\`python\nimport numpy as np\nimport matplotlib.pyplot as plt\n\n# Lunar Orbital Mechanics Simulation\ntheta = np.linspace(0, 2 * np.pi, 500)\nr_moon = 8.0\nt = np.linspace(0, 10, 500)\nx = 4 * np.cos(t) + 3.5 * np.cos(3 * t)\ny = 2.5 * np.sin(t) - 2.0 * np.sin(2 * t)\n\nfig, ax = plt.subplots(figsize=(6, 4))\nax.scatter([0], [0], color='#38bdf8', s=300, label='Earth')\nax.scatter([r_moon * np.cos(1.2)], [r_moon * np.sin(1.2)], color='#fbbf24', s=150, label='Moon (Selene)')\nax.plot(x, y, color='#a855f7', linewidth=2, label='Transfer Orbit')\nax.plot(r_moon * np.cos(theta), r_moon * np.sin(theta), '--', color='#475569', alpha=0.5)\nax.set_title("Selene Trans-Lunar Injection", fontsize=11, fontweight='bold')\nax.legend(loc='upper right', fontsize=8)\nax.grid(True, linestyle=':', alpha=0.3)\nplt.tight_layout()\nplt.show()\n\nprint("✓ Orbital delta-V computation complete.")\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Laravel Blade Sandbox",
+    description: "PHP 8.3 & Laravel 11 Blade directives with Alpine.js & Tailwind",
+    category: "Live Sandboxes",
+    badge: "PHP",
+    icon: Code2,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`blade\n@php\n  $service = "Selene Blade Gateway";\n  $status = "nominal";\n@endphp\n\n<div x-data="{ count: 42 }" class="p-5 bg-slate-900 rounded-xl border border-red-500/30 text-white space-y-3">\n  <div class="flex items-center justify-between">\n    <h4 class="font-bold text-red-400">{{ $service }}</h4>\n    <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">{{ strtoupper($status) }}</span>\n  </div>\n  <button @click="count++" class="px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-xs font-semibold">\n    ⚡ Increment: <span x-text="count"></span>\n  </button>\n</div>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Ruby on Rails Sandbox",
+    description: "Ruby 3.3 & Rails 8 ERB scriptlet engine with Turbo Frames",
+    category: "Live Sandboxes",
+    badge: "Rails",
+    icon: Flame,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`erb\n<%\n  @title = "Lunar Telemetry Node"\n  @metric = 94.2\n%>\n\n<div class="p-5 bg-slate-900 rounded-xl border border-rose-500/30 text-white space-y-2">\n  <h4 class="font-bold text-rose-400"><%= @title %></h4>\n  <p class="text-xs text-slate-300">Throughput: <%= number_to_percentage(@metric, precision: 1) %></p>\n</div>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Go Template Sandbox",
+    description: "Go 1.23 html/template & Hugo pipeline filter engine",
+    category: "Live Sandboxes",
+    badge: "Go",
+    icon: Cpu,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`go\n{{/* Context: { "Cluster": "Alpha-Centauri", "Health": "healthy" } */}}\n\n<div class="p-5 bg-slate-900 rounded-xl border border-cyan-500/30 text-white space-y-2">\n  <h4 class="font-bold text-cyan-400">{{ .Cluster }}</h4>\n  <span class="text-xs font-mono text-emerald-400">{{ upper .Health }}</span>\n</div>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Django / Jinja Sandbox",
+    description: "Python 3.12 Django & Jinja2 template tags & filters",
+    category: "Live Sandboxes",
+    badge: "Django",
+    icon: Terminal,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`django\n{# Context: { "service": "Authentication Core", "status": "active" } #}\n\n<div class="p-5 bg-slate-900 rounded-xl border border-emerald-500/30 text-white space-y-2">\n  <h4 class="font-bold text-emerald-400">{{ service }}</h4>\n  <span class="text-xs font-mono text-emerald-300">{{ status|upper }}</span>\n</div>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Rust WASM Sandbox",
+    description: "Rust WebAssembly (Yew & Leptos) reactive component",
+    category: "Live Sandboxes",
+    badge: "Rust",
+    icon: Cpu,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`rust\nuse yew::prelude::*;\n\n#[function_component(App)]\npub fn app() -> Html {\n    html! {\n        <div class="p-5 bg-slate-900 rounded-xl border border-amber-500/30 text-white space-y-2">\n            <h4 class="font-bold text-amber-400">{ "Rust WebAssembly Kernel" }</h4>\n            <p class="text-xs text-slate-400">{ "Zero GC Overhead • Memory Safe" }</p>\n        </div>\n    }\n}\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live SQL Data Studio",
+    description: "In-browser relational query engine with live grid filtering",
+    category: "Live Sandboxes",
+    badge: "SQL",
+    icon: Database,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`sql\nSELECT \n  id, \n  name, \n  target_celestial_body, \n  budget_millions_usd, \n  status \nFROM celestial_missions \nWHERE status = 'active'\nORDER BY budget_millions_usd DESC;\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live DuckDB Analytical Studio",
+    description: "Sub-10ms in-browser columnar vector processing (OLAP)",
+    category: "Live Sandboxes",
+    badge: "DuckDB",
+    icon: Database,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`duckdb\nSELECT \n  region,\n  COUNT(*) AS total_requests,\n  ROUND(AVG(latency_ms), 2) AS avg_latency_ms,\n  ROUND(AVG(cpu_pct), 1) AS avg_cpu_pct\nFROM telemetry_logs\nGROUP BY region\nORDER BY avg_latency_ms ASC;\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live Declarative Chart",
+    description: "Pure SVG multi-series visualization (bar, line, area, donut)",
+    category: "Vector & Math",
+    badge: "Chart",
+    icon: BarChart2,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`chart\n{\n  "type": "area",\n  "title": "Mission Telemetry Throughput",\n  "xKey": "quarter",\n  "yKey": ["telemetry", "uplink"],\n  "colors": ["#38bdf8", "#818cf8"],\n  "data": [\n    { "quarter": "Q1", "telemetry": 140, "uplink": 90 },\n    { "quarter": "Q2", "telemetry": 260, "uplink": 150 },\n    { "quarter": "Q3", "telemetry": 420, "uplink": 230 },\n    { "quarter": "Q4", "telemetry": 680, "uplink": 380 }\n  ]\n}\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Live WebGL Shader Canvas",
+    description: "Hardware-accelerated GLSL fragment shader with uniforms",
+    category: "Live Sandboxes",
+    badge: "GLSL",
+    icon: Sparkles,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`glsl\nprecision mediump float;\nuniform vec2 u_resolution;\nuniform float u_time;\n\nvoid main() {\n  vec2 uv = gl_FragCoord.xy / u_resolution.xy;\n  vec3 col = 0.5 + 0.5 * cos(u_time + uv.xyx + vec3(0, 2, 4));\n  gl_FragColor = vec4(col, 1.0);\n}\n\`\`\`\n`
         )
         .run();
     },

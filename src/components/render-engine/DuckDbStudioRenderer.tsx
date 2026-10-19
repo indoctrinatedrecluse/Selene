@@ -235,22 +235,22 @@ LIMIT 50;`
           for (const spec of aggSpecs) {
             const { expr, alias } = spec;
 
-            if (/COUNT\(\*\)/i.test(expr)) {
+            if (/COUNT\(\s*(\*|[a-zA-Z0-9_]+)\s*\)/i.test(expr)) {
               aggregatedRow[alias] = rowsInGroup.length;
-            } else if (/AVG\(([a-zA-Z0-9_]+)\)/i.test(expr)) {
-              const col = expr.match(/AVG\(([a-zA-Z0-9_]+)\)/i)![1];
+            } else if (/AVG\(\s*([a-zA-Z0-9_]+)\s*\)/i.test(expr)) {
+              const col = expr.match(/AVG\(\s*([a-zA-Z0-9_]+)\s*\)/i)![1];
               const sum = rowsInGroup.reduce((acc, r) => acc + (Number(r[col]) || 0), 0);
-              const avg = sum / rowsInGroup.length;
+              const avg = rowsInGroup.length > 0 ? sum / rowsInGroup.length : 0;
               aggregatedRow[alias] = Number(avg.toFixed(2));
-            } else if (/SUM\(([a-zA-Z0-9_]+)\)/i.test(expr)) {
-              const col = expr.match(/SUM\(([a-zA-Z0-9_]+)\)/i)![1];
+            } else if (/SUM\(\s*([a-zA-Z0-9_]+)\s*\)/i.test(expr)) {
+              const col = expr.match(/SUM\(\s*([a-zA-Z0-9_]+)\s*\)/i)![1];
               aggregatedRow[alias] = rowsInGroup.reduce((acc, r) => acc + (Number(r[col]) || 0), 0);
-            } else if (/MAX\(([a-zA-Z0-9_]+)\)/i.test(expr)) {
-              const col = expr.match(/MAX\(([a-zA-Z0-9_]+)\)/i)![1];
-              aggregatedRow[alias] = Math.max(...rowsInGroup.map((r) => Number(r[col]) || 0));
-            } else if (/MIN\(([a-zA-Z0-9_]+)\)/i.test(expr)) {
-              const col = expr.match(/MIN\(([a-zA-Z0-9_]+)\)/i)![1];
-              aggregatedRow[alias] = Math.min(...rowsInGroup.map((r) => Number(r[col]) || 0));
+            } else if (/MAX\(\s*([a-zA-Z0-9_]+)\s*\)/i.test(expr)) {
+              const col = expr.match(/MAX\(\s*([a-zA-Z0-9_]+)\s*\)/i)![1];
+              aggregatedRow[alias] = rowsInGroup.length > 0 ? Math.max(...rowsInGroup.map((r) => Number(r[col]) || 0)) : 0;
+            } else if (/MIN\(\s*([a-zA-Z0-9_]+)\s*\)/i.test(expr)) {
+              const col = expr.match(/MIN\(\s*([a-zA-Z0-9_]+)\s*\)/i)![1];
+              aggregatedRow[alias] = rowsInGroup.length > 0 ? Math.min(...rowsInGroup.map((r) => Number(r[col]) || 0)) : 0;
             } else if (groupCols.includes(expr)) {
               aggregatedRow[alias] = rowsInGroup[0][expr];
             } else {

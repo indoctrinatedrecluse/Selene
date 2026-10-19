@@ -47,7 +47,13 @@ export async function GET(
         .update(providedPassword)
         .digest("hex");
 
-      if (providedHash !== doc.passwordHash) {
+      const hashBuffer = Buffer.from(providedHash);
+      const expectedBuffer = Buffer.from(doc.passwordHash);
+      const isMatch =
+        hashBuffer.length === expectedBuffer.length &&
+        crypto.timingSafeEqual(hashBuffer, expectedBuffer);
+
+      if (!isMatch) {
         return NextResponse.json(
           {
             isPasswordProtected: true,

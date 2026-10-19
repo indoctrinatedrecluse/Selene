@@ -18,7 +18,10 @@ export type EngineType =
   | "angular-live"
   | "flutter-web"
   | "vector-canvas"
-  | "wasm-runtime";
+  | "wasm-runtime"
+  | "data-studio"
+  | "shader-canvas"
+  | "backend-template";
 
 export type SupportedStack =
   | "react-tailwind"
@@ -33,7 +36,16 @@ export type SupportedStack =
   | "mermaid-diagram"
   | "latex-math"
   | "python-wasm"
-  | "html-vanilla";
+  | "html-vanilla"
+  | "php-blade"
+  | "ruby-erb"
+  | "go-template"
+  | "django-jinja"
+  | "rust-wasm"
+  | "sql-studio"
+  | "duckdb-olap"
+  | "declarative-chart"
+  | "glsl-shader";
 
 export type CssStandard = "tailwind" | "scoped-css" | "css-modules" | "bootstrap" | "vanilla";
 
@@ -227,6 +239,141 @@ export function dispatchEngine(context: EngineDispatchContext): EngineDispatchRe
       supportsTweakProps: true,
       resolvedRoute,
       description: "DOM rendering with Tailwind Play CDN pre-injected in isolated iframe context.",
+    };
+  }
+
+  // 7. Declarative Vector Charts & Visualizations
+  if (lang === "chart" || lang === "plot") {
+    return {
+      engineType: "vector-canvas",
+      stack: "declarative-chart",
+      cssStandard: "vanilla",
+      title: "Declarative Vector Chart Engine",
+      template: "chart",
+      suggestedPort: 0,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Pure SVG multi-series visualization engine for bar, line, area, scatter, donut, and heatmap graphics.",
+    };
+  }
+
+  // 8. Analytical DuckDB & Columnar OLAP Studio
+  if (lang === "duckdb" || lang === "olap" || lang === "parquet" || ext === "duckdb") {
+    return {
+      engineType: "data-studio",
+      stack: "duckdb-olap",
+      cssStandard: "vanilla",
+      title: "DuckDB Analytical OLAP Studio",
+      template: "duckdb",
+      suggestedPort: 0,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Sub-10ms in-browser columnar vector processing with interactive dataset switching and CSV exports.",
+    };
+  }
+
+  // 9. Relational SQL & LibSQL Studio
+  if (lang === "sql" || lang === "sqlite" || lang === "libsql" || ext === "sql") {
+    return {
+      engineType: "data-studio",
+      stack: "sql-studio",
+      cssStandard: "vanilla",
+      title: "SQL & LibSQL Data Studio",
+      template: "sql",
+      suggestedPort: 0,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Client-side relational query engine with real-time grid filtering, column sorting, and CSV export.",
+    };
+  }
+
+  // 10. WebGL / GLSL Fragment Shader Canvas
+  if (lang === "glsl" || lang === "wgsl" || lang === "shader") {
+    return {
+      engineType: "shader-canvas",
+      stack: "glsl-shader",
+      cssStandard: "vanilla",
+      title: "WebGL Fragment Shader Canvas",
+      template: "glsl",
+      suggestedPort: 0,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Hardware-accelerated WebGL canvas with interactive uniforms, pause/play, time scrub, and FPS telemetry.",
+    };
+  }
+
+  // 11. Rust WebAssembly (Yew / Leptos)
+  if (lang === "rust" || lang === "rs" || lang === "yew" || lang === "leptos" || ext === "rs") {
+    return {
+      engineType: "wasm-runtime",
+      stack: "rust-wasm",
+      cssStandard: "tailwind",
+      title: "Rust WebAssembly Engine",
+      template: "rust",
+      suggestedPort: 8080,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Rust WebAssembly component runner with zero GC overhead, fine-grained reactivity, and local trunk bridge.",
+    };
+  }
+
+  // 12. PHP & Laravel Blade Engine
+  if (lang === "php" || lang === "laravel" || lang === "blade" || ext === "blade.php" || ext === "php") {
+    return {
+      engineType: "backend-template",
+      stack: "php-blade",
+      cssStandard: "tailwind",
+      title: "Laravel Blade Engine",
+      template: "blade",
+      suggestedPort: 8000,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Laravel 11 Blade template engine with Alpine.js 3.x reactivity, Tailwind styling, and artisan bridge.",
+    };
+  }
+
+  // 13. Ruby on Rails ERB Engine
+  if (lang === "ruby" || lang === "rails" || lang === "erb" || ext === "erb" || ext === "rb") {
+    return {
+      engineType: "backend-template",
+      stack: "ruby-erb",
+      cssStandard: "tailwind",
+      title: "Ruby on Rails ERB Engine",
+      template: "erb",
+      suggestedPort: 3000,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Rails 8 ERB scriptlet engine with Hotwire Turbo Frame simulation, Rails helpers, and puma bridge.",
+    };
+  }
+
+  // 14. Go html/template & Hugo Engine
+  if (lang === "go" || lang === "golang" || lang === "gotemplate" || lang === "hugo" || ext === "go") {
+    return {
+      engineType: "backend-template",
+      stack: "go-template",
+      cssStandard: "tailwind",
+      title: "Go Template & Hugo Engine",
+      template: "go",
+      suggestedPort: 8080,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Go 1.23 html/template engine with pipeline filters, context variable interpolation, and Hugo simulation.",
+    };
+  }
+
+  // 15. Python Django / Jinja2 Engine
+  if (lang === "django" || lang === "jinja" || lang === "jinja2") {
+    return {
+      engineType: "backend-template",
+      stack: "django-jinja",
+      cssStandard: "tailwind",
+      title: "Django & Jinja2 Template Engine",
+      template: "django",
+      suggestedPort: 8000,
+      supportsTweakProps: false,
+      resolvedRoute,
+      description: "Django DTL & Jinja2 template engine with template filters, control tags, and manage.py runserver bridge.",
     };
   }
 

@@ -73,6 +73,22 @@ This directory contains curated, production-grade sample documents demonstrating
     - Live animation controls, pause/play, time reset, and live FPS counter.
     - Preloaded with cosmic nebula, raymarched sphere, and cyber grid presets.
 
+13. [`13_declarative_vector_charts_showcase.md`](./13_declarative_vector_charts_showcase.md)
+    - Pure SVG multi-series visualization engine (bar, line, area, scatter, donut, pie, and heatmap).
+    - Declarative JSON specifications with interactive tooltips, custom color palettes, and cubic-bezier curves.
+    - Publication-ready SVG and CSV data exports directly from the chart header.
+
+14. [`14_duckdb_analytical_olap_showcase.md`](./14_duckdb_analytical_olap_showcase.md)
+    - Sub-10ms in-browser columnar vector processing and analytical SQL engine (DuckDB OLAP).
+    - Preloaded with `telemetry_logs`, `fintech_orders`, and `ecommerce_sales` high-density datasets.
+    - Complex analytical SQL queries: `AVG`, `MAX`, `MIN`, `COUNT(*)`, `GROUP BY`, `ORDER BY`, `LIMIT`.
+    - Real-time column sorting, search filtering, pagination, and CSV data exports.
+
+15. [`15_dual_document_and_whiteboard_showcase.md`](./15_dual_document_and_whiteboard_showcase.md)
+    - Side-by-side Dual Document canvas with vertical and horizontal split views.
+    - Synchronized scroll locking across parallel documents for seamless side-by-side reading and editing.
+    - Freeform Whiteboard drawing overlay with pen, highlighter, shapes, arrow annotations, and PNG export.
+
 ---
 
 ## 🚀 How to Open in Selene

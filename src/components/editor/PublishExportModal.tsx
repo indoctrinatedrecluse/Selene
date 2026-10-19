@@ -78,6 +78,7 @@ export function PublishExportModal({
     expiresAt: number | null;
     isPasswordProtected: boolean;
   } | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
   const [qrSvg, setQrSvg] = useState<string | null>(null);
 
   // Embed options
@@ -154,6 +155,7 @@ export function PublishExportModal({
 
   const handleCreateCloudShare = async () => {
     try {
+      setShareError(null);
       setIsPublishingShare(true);
       const res = await fetch("/api/share", {
         method: "POST",
@@ -177,7 +179,7 @@ export function PublishExportModal({
       setQrSvg(svg);
     } catch (err) {
       console.error(err);
-      alert("Failed to publish document to Selene Cloud.");
+      setShareError(err instanceof Error ? err.message : "Failed to publish document to Selene Cloud.");
     } finally {
       setIsPublishingShare(false);
     }
@@ -593,6 +595,19 @@ export function PublishExportModal({
                       </select>
                     </div>
                   </div>
+
+                  {shareError && (
+                    <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+                      <span>{shareError}</span>
+                      <button
+                        type="button"
+                        onClick={() => setShareError(null)}
+                        className="text-rose-400 hover:text-rose-200 text-xs ml-2 cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
 
                   <button
                     type="button"

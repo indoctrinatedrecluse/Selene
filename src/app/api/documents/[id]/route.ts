@@ -106,6 +106,7 @@ export async function DELETE(req: Request, { params }: Params) {
     await initDb();
     const { id } = await params;
 
+    await db.delete(documentRevisions).where(eq(documentRevisions.documentId, id));
     await db.delete(documents).where(eq(documents.id, id));
 
     return NextResponse.json({ success: true });

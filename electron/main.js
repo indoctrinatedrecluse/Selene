@@ -65,6 +65,22 @@ function createMainWindow() {
     }
   });
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Open external web links securely in user's default browser
+    if (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("mailto:")) {
+      shell.openExternal(url);
+    }
+    return { action: "deny" };
+  });
+
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    // Prevent navigating away from internal localhost dev server or local splash
+    if (url !== DEV_URL && !url.startsWith(DEV_URL) && !url.startsWith("file://")) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
+
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
