@@ -279,11 +279,16 @@ export function PublishExportModal({
               <FileDown className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">
-                Publish & Sharing Ecosystem
-              </h2>
-              <p className="text-xs text-sky-400 font-mono">
-                {documentTitle}
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white tracking-tight">
+                  {"Hermes' Wings"}
+                </h2>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">
+                  Publishing & Transmutation Sanctuary
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-serif italic mt-0.5">
+                Transmuting &ldquo;{documentTitle}&rdquo; into immortal technical formats across the cosmos
               </p>
             </div>
           </div>
@@ -306,7 +311,7 @@ export function PublishExportModal({
             }`}
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>PDF Print</span>
+            <span>📜 Papyrus (PDF)</span>
           </button>
 
           <button
@@ -318,7 +323,7 @@ export function PublishExportModal({
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>Standalone HTML</span>
+            <span>🌐 Olympian HTML</span>
           </button>
 
           <button
@@ -330,7 +335,7 @@ export function PublishExportModal({
             }`}
           >
             <Share2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Cloud Share & Gist</span>
+            <span>⚡ Caduceus Share</span>
           </button>
 
           <button
@@ -342,7 +347,7 @@ export function PublishExportModal({
             }`}
           >
             <Code2 className="w-3.5 h-3.5" />
-            <span>Public Embed</span>
+            <span>🔮 Delphic Embed</span>
           </button>
 
           <button
@@ -354,7 +359,7 @@ export function PublishExportModal({
             }`}
           >
             <BookOpen className="w-3.5 h-3.5 text-rose-400" />
-            <span>LaTeX (.tex)</span>
+            <span>📐 Pythagorean LaTeX</span>
           </button>
 
           <button
@@ -366,19 +371,19 @@ export function PublishExportModal({
             }`}
           >
             <Layers className="w-3.5 h-3.5 text-emerald-400" />
-            <span>SSG (Astro/Hugo)</span>
+            <span>🏛️ Agora SSG</span>
           </button>
 
           <button
             onClick={() => setActiveTab("slides")}
             className={`flex items-center gap-1.5 py-3 border-b-2 font-medium transition-all ${
               activeTab === "slides"
-                ? "border-sky-400 text-sky-400 font-semibold"
+                ? "border-purple-400 text-purple-400 font-semibold"
                 : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             <Presentation className="w-3.5 h-3.5" />
-            <span>Slide Deck ({slidesCount})</span>
+            <span>🎭 Amphitheater Slides ({slidesCount})</span>
           </button>
 
           <button
@@ -390,7 +395,7 @@ export function PublishExportModal({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Jupyter (.ipynb)</span>
+            <span>🐍 Promethean Notebook</span>
           </button>
 
           <button
@@ -402,7 +407,7 @@ export function PublishExportModal({
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Markdown</span>
+            <span>{"✒️ Calliope's Quill"}</span>
           </button>
         </div>
 

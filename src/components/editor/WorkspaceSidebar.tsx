@@ -257,7 +257,7 @@ export function WorkspaceSidebar({
         <div className="flex items-center gap-2 shrink-0">
           <SeleneTitanLogo size="xs" glow={false} className="shrink-0" />
           <span className="text-xs font-bold text-slate-100 uppercase tracking-wider select-none">
-            Explorer
+            Scriptorium
           </span>
           <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/10 text-sky-400 font-mono font-medium border border-sky-500/20">
             {SELENE_VERSION_DISPLAY}
@@ -465,11 +465,15 @@ export function WorkspaceSidebar({
                     )}
                   </span>
                   <span className="text-xs font-semibold text-slate-100 group-hover:text-white truncate">
-                    {folderName}/
+                    {folderName === "samples"
+                      ? "Pan-Hellenic Showcases"
+                      : folderName === "documents"
+                      ? "Sacred Scrolls"
+                      : `${folderName}/`}
                   </span>
                   {isSamplesFolder && (
                     <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 font-medium shrink-0">
-                      Showcase
+                      Olympus
                     </span>
                   )}
                 </div>
@@ -624,23 +628,23 @@ export function WorkspaceSidebar({
       </>
       )}
 
-      {/* Explorer Footer Bar */}
+      {/* Scriptorium Footer Bar */}
       <div className="h-9 min-h-[2.25rem] px-3 border-t border-slate-800 text-[10px] text-slate-300 flex items-center justify-between bg-[#090e1d] shrink-0">
         <button
           onClick={onOpenRevisions}
           className="flex items-center gap-1.5 text-slate-300 hover:text-sky-300 transition-colors cursor-pointer"
-          title="Open Revisions Drawer"
+          title="Open Chronos Archive Revisions Drawer"
         >
-          <History className="w-3.5 h-3.5 text-sky-400" />
-          <span>History</span>
+          <History className="w-3.5 h-3.5 text-violet-400" />
+          <span>Chronos Archive</span>
         </button>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-emerald-400 flex items-center gap-1">
+          <span className="font-mono text-emerald-400 flex items-center gap-1" title="Mnemosyne Memory Archive: Local SQLite / LibSQL">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>SQLite</span>
+            <span>Mnemosyne</span>
           </span>
           <span className="text-slate-600">|</span>
-          <span className="text-slate-300">{documents.length} files</span>
+          <span className="text-slate-300">{documents.length} scrolls</span>
         </div>
       </div>
     </aside>

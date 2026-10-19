@@ -35,6 +35,7 @@ import {
   SeleneLunarBackground,
   LunarBackgroundMode,
 } from "@/components/brand/SeleneLunarBackground";
+import { SeleneLunarPhaseWidget } from "@/components/brand/SeleneLunarPhaseWidget";
 import { SELENE_VERSION_DISPLAY } from "@/lib/version";
 
 const THEME_CONFIG: Record<
@@ -950,6 +951,10 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                   <Sparkles className="w-2.5 h-2.5 text-amber-400" />
                   <span>Titan Lore</span>
                 </button>
+                {/* Astronomical Lunar Phase Indicator */}
+                <div className="hidden lg:inline-block">
+                  <SeleneLunarPhaseWidget onOpenLore={handleOpenLore} />
+                </div>
                 {/* Quick 1-Click Theme Switcher */}
                 <button
                   onClick={handleCycleTheme}
@@ -1028,24 +1033,24 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               </span>
             </button>
 
-            {/* Selene AI Canvas Copilot Button */}
+            {/* Delphic Oracle AI Copilot Button */}
             <button
               onClick={() => setIsAiCopilotOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-500/20 to-indigo-500/20 hover:from-sky-500/30 hover:to-indigo-500/30 text-sky-300 border border-sky-500/40 text-xs font-semibold transition-all shadow-sm cursor-pointer"
-              title="Selene AI Canvas Copilot (Ctrl+Shift+A)"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-500/20 via-indigo-500/20 to-purple-500/20 hover:from-sky-500/30 hover:to-purple-500/30 text-sky-200 border border-sky-500/40 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              title="The Delphic Oracle — Celestial Sibyl for Code & Architecture Divination (Ctrl+Shift+A)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
-              <span>AI Copilot</span>
+              <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+              <span>Delphic Oracle</span>
             </button>
 
-            {/* Paper-to-Canvas Multimodal Ingestion */}
+            {/* Hermes' Transmutation: Papyrus to Canvas */}
             <button
               onClick={() => setIsPaperToCanvasOpen(true)}
               className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-all shadow-sm cursor-pointer"
-              title="Paper-to-Canvas: Ingest PDF, Screenshot, or Hand-drawn Math"
+              title="Hermes' Transmutation: Ingest PDF, Handwritten Math, or Whiteboard to Living Canvas"
             >
               <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Paper Ingest</span>
+              <span>Transmute</span>
             </button>
 
             {/* ⏳ Chronos Timeline Toggle */}
@@ -1489,7 +1494,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
       {/* Bottom Status Footer */}
       {!isZenMode && (
         <footer className={`relative z-10 flex items-center justify-between px-6 py-2 ${currentTheme.footerBg} backdrop-blur-md text-xs text-slate-400 shrink-0 transition-colors duration-500`}>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => handleOpenLore("myth")}
               className="flex items-center gap-1.5 text-sky-400 hover:text-sky-300 font-medium transition-colors cursor-pointer"
@@ -1499,31 +1504,31 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               <span>Selene Titan of the Moon</span>
             </button>
             <span>•</span>
+            <SeleneLunarPhaseWidget variant="compact" onOpenLore={handleOpenLore} />
+            <span>•</span>
             <button
               type="button"
               onClick={() => setIsTerminalOpen((prev) => !prev)}
               className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors ${
                 isTerminalOpen
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
               }`}
-              title="Toggle Shell Tray & Command Runner (Ctrl+`)"
+              title="Toggle Hephaestus's Subterranean Forge (Ctrl+`)"
             >
-              <TerminalIcon className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Shell Tray</span>
+              <TerminalIcon className="w-3.5 h-3.5 text-amber-400" />
+              <span>Forge of Hephaestus</span>
               <kbd className="hidden sm:inline-block text-[10px] bg-slate-800 text-slate-400 px-1 rounded border border-slate-700">^`</kbd>
             </button>
             <span>•</span>
-            <span>Polymorphic Engine Active</span>
+            <span className="hidden md:inline text-sky-400/90 font-mono">Polymorphic Engine</span>
             <span>•</span>
-            <span>Zero CSS Bleed Isolation</span>
-            <span>•</span>
-            <span className="text-emerald-400 font-mono">Drizzle ORM + LibSQL</span>
+            <span className="hidden lg:inline text-emerald-400 font-mono">Mnemosyne Synced</span>
           </div>
           <div className="flex items-center gap-4">
-            <span>{markdownContent.split(/\s+/).filter(Boolean).length} words</span>
+            <span className="text-slate-300 font-mono">{markdownContent.split(/\s+/).filter(Boolean).length} words</span>
             <span>•</span>
-            <span>{markdownContent.length} characters</span>
+            <span className="text-slate-300 font-mono">{markdownContent.length} chars</span>
           </div>
         </footer>
       )}

@@ -16,6 +16,18 @@ import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRendere
 import { PythonNotebookRenderer } from "@/components/render-engine/PythonNotebookRenderer";
 import { MermaidRenderer } from "@/components/render-engine/MermaidRenderer";
 import { MathRenderer } from "@/components/render-engine/MathRenderer";
+import { PhoenixLiveViewRenderer } from "@/components/render-engine/PhoenixLiveViewRenderer";
+import { SwiftUiRenderer } from "@/components/render-engine/SwiftUiRenderer";
+import { HermesRelayRenderer } from "@/components/render-engine/HermesRelayRenderer";
+import { PhpLaravelRenderer } from "@/components/render-engine/PhpLaravelRenderer";
+import { RubyRailsRenderer } from "@/components/render-engine/RubyRailsRenderer";
+import { GoTemplateRenderer } from "@/components/render-engine/GoTemplateRenderer";
+import { DjangoJinjaRenderer } from "@/components/render-engine/DjangoJinjaRenderer";
+import { RustWasmRenderer } from "@/components/render-engine/RustWasmRenderer";
+import { SqlDataStudioRenderer } from "@/components/render-engine/SqlDataStudioRenderer";
+import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRenderer";
+import { DeclarativeChartRenderer } from "@/components/render-engine/DeclarativeChartRenderer";
+import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRenderer";
 
 export interface SlideData {
   id: string;
@@ -84,7 +96,7 @@ export function parseMarkdownToSlides(markdown: string, docTitle: string): Slide
         mermaid = code;
       } else if (lang === "math" || lang === "latex") {
         math = code;
-      } else if (["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "flutter", "dart"].includes(lang)) {
+      } else if (lang) {
         codeBlock = { lang, code };
       }
     }
@@ -193,24 +205,12 @@ export function SlideDeckViewer({
     return `${mins.toString().padStart(2, "0")}:${remainder.toString().padStart(2, "0")}`;
   };
 
-  const isLiveWeb =
-    currentSlide.codeBlock &&
-    ["tsx", "jsx", "react", "vue", "svelte", "angular", "html"].includes(
-      currentSlide.codeBlock.lang
-    );
-  const isFlutter =
-    currentSlide.codeBlock &&
-    ["flutter", "dart"].includes(currentSlide.codeBlock.lang);
-  const isPython =
-    currentSlide.codeBlock &&
-    ["python", "py", "notebook"].includes(currentSlide.codeBlock.lang);
-
   return (
     <div className="fixed inset-0 z-50 bg-[#070A14] text-slate-100 flex flex-col overflow-hidden animate-in fade-in duration-200">
       {/* Top Slide Progress Bar */}
       <div className="h-1 bg-slate-900 w-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-sky-400 via-indigo-500 to-emerald-400 transition-all duration-300"
+          className="h-full bg-gradient-to-r from-sky-400 via-indigo-500 to-purple-400 transition-all duration-300"
           style={{
             width: `${((currentSlideIndex + 1) / slides.length) * 100}%`,
           }}
@@ -220,16 +220,21 @@ export function SlideDeckViewer({
       {/* Presenter Top Bar */}
       <header className="flex items-center justify-between px-6 py-3 bg-slate-950/80 border-b border-slate-800/80 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center justify-center font-bold text-sm">
-            🌙
+          <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center font-bold text-sm">
+            🎭
           </div>
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-sky-400">
-              Selene Deck
-            </span>
-            <span className="text-xs text-slate-400 font-mono ml-2">
-              Slide {currentSlideIndex + 1} of {slides.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
+                The Dionysian Amphitheater
+              </span>
+              <span className="text-[10px] font-serif italic text-slate-400 font-normal">
+                (Selene Presentation Deck)
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-400 font-mono">
+              Stanza {currentSlideIndex + 1} of {slides.length} • {documentTitle}
+            </div>
           </div>
         </div>
 
@@ -328,33 +333,43 @@ export function SlideDeckViewer({
             )}
 
             {/* Live Interactive Code Block if on this slide */}
-            {isLiveWeb && currentSlide.codeBlock && (
+            {currentSlide.codeBlock && (
               <div className="w-full my-4 shadow-2xl rounded-xl overflow-hidden border border-slate-800">
-                <LiveSandboxRenderer
-                  initialCode={currentSlide.codeBlock.code}
-                  language={currentSlide.codeBlock.lang}
-                  className="!my-0"
-                />
-              </div>
-            )}
-
-            {/* Live Flutter Widget if on this slide */}
-            {isFlutter && currentSlide.codeBlock && (
-              <div className="w-full my-4 shadow-2xl rounded-xl overflow-hidden border border-slate-800">
-                <FlutterWebRenderer
-                  initialCode={currentSlide.codeBlock.code}
-                  className="!my-0"
-                />
-              </div>
-            )}
-
-            {/* Live Python WASM Notebook if on this slide */}
-            {isPython && currentSlide.codeBlock && (
-              <div className="w-full my-4 shadow-2xl rounded-xl overflow-hidden border border-slate-800">
-                <PythonNotebookRenderer
-                  initialCode={currentSlide.codeBlock.code}
-                  className="!my-0"
-                />
+                {["heex", "liveview"].includes(currentSlide.codeBlock.lang) ? (
+                  <PhoenixLiveViewRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["swift", "swiftui"].includes(currentSlide.codeBlock.lang) ? (
+                  <SwiftUiRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["http", "rest", "curl", "graphql"].includes(currentSlide.codeBlock.lang) ? (
+                  <HermesRelayRenderer initialCode={currentSlide.codeBlock.code} language={currentSlide.codeBlock.lang} className="!my-0" />
+                ) : ["flutter", "dart"].includes(currentSlide.codeBlock.lang) ? (
+                  <FlutterWebRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["python", "py", "notebook"].includes(currentSlide.codeBlock.lang) ? (
+                  <PythonNotebookRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["php", "blade"].includes(currentSlide.codeBlock.lang) ? (
+                  <PhpLaravelRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["ruby", "erb", "rails"].includes(currentSlide.codeBlock.lang) ? (
+                  <RubyRailsRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["go", "hugo"].includes(currentSlide.codeBlock.lang) ? (
+                  <GoTemplateRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["django", "jinja", "jinja2"].includes(currentSlide.codeBlock.lang) ? (
+                  <DjangoJinjaRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["rust", "yew", "leptos"].includes(currentSlide.codeBlock.lang) ? (
+                  <RustWasmRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["sql", "sqlite", "libsql"].includes(currentSlide.codeBlock.lang) ? (
+                  <SqlDataStudioRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["duckdb"].includes(currentSlide.codeBlock.lang) ? (
+                  <DuckDbStudioRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["chart"].includes(currentSlide.codeBlock.lang) ? (
+                  <DeclarativeChartRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["glsl", "shader"].includes(currentSlide.codeBlock.lang) ? (
+                  <ShaderCanvasRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : (
+                  <LiveSandboxRenderer
+                    initialCode={currentSlide.codeBlock.code}
+                    language={currentSlide.codeBlock.lang}
+                    className="!my-0"
+                  />
+                )}
               </div>
             )}
 

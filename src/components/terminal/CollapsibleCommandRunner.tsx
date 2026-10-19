@@ -38,13 +38,13 @@ export function CollapsibleCommandRunner({
     {
       id: "init-1",
       type: "system",
-      text: `⚡ Selene Integrated Shell & Command Runner [v${APP_VERSION}]`,
+      text: `🔥 Hephaestus's Subterranean Forge [v${APP_VERSION}] — Stoking the celestial fires of Olympus for local compilation & telemetry.`,
       timestamp: new Date().toLocaleTimeString(),
     },
     {
       id: "init-2",
       type: "system",
-      text: "Type any shell command or click preset tasks below. Press Ctrl+` to toggle.",
+      text: "Inscribe any shell command or invoke Olympian preset tasks below. Press Ctrl+` to toggle.",
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
@@ -132,9 +132,12 @@ export function CollapsibleCommandRunner({
       {/* Terminal Title Bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-[#0a1024]">
         <div className="flex items-center gap-2.5">
-          <TerminalIcon className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">
-            Terminal / Command Runner
+          <TerminalIcon className="w-4 h-4 text-amber-400" />
+          <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+            <span>Forge of Hephaestus</span>
+            <span className="text-[10px] font-serif italic text-amber-400/80 font-normal lowercase">
+              (subterranean shell)
+            </span>
           </span>
           <span
             className={`w-2 h-2 rounded-full ${
@@ -167,16 +170,26 @@ export function CollapsibleCommandRunner({
             <button
               onClick={() => executeCommand("npm test")}
               disabled={isExecuting}
-              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:text-white transition-colors"
+              className="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/30 text-amber-300 hover:text-white transition-colors"
+              title="Stoke the Forge: Execute project tests and static lint"
             >
-              npm test
+              🔨 Stoke Forge (test)
             </button>
             <button
               onClick={() => executeCommand("git status")}
               disabled={isExecuting}
-              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:text-white transition-colors"
+              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Consult Git Augury: Check branch status"
             >
-              git status
+              📜 Git Augury
+            </button>
+            <button
+              onClick={() => executeCommand("python --version")}
+              disabled={isExecuting}
+              className="hidden md:inline px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-sky-300 transition-colors"
+              title="Pythian WASM runtime version check"
+            >
+              🐍 Pythian Probe
             </button>
           </div>
 
@@ -230,7 +243,11 @@ export function CollapsibleCommandRunner({
 
       {/* Input Prompt Bar */}
       <div className="flex items-center gap-2 px-3 py-2 border-t border-slate-800/80 bg-[#090e1f]">
-        <span className="text-emerald-400 font-mono text-xs font-bold select-none">$</span>
+        <span className="text-amber-400 font-mono text-xs font-bold select-none flex items-center gap-1">
+          <span className="text-sky-400">selene@olympus</span>
+          <span className="text-slate-500">:</span>
+          <span className="text-emerald-400">~$</span>
+        </span>
         <input
           type="text"
           value={commandInput}

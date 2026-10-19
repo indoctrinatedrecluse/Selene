@@ -27,26 +27,26 @@ export type IngestionMode =
 const INGESTION_MODES: { id: IngestionMode; label: string; icon: string; desc: string }[] = [
   {
     id: "academic_paper",
-    label: "Academic Paper / PDF",
-    icon: "📄",
-    desc: "Extracts sections, equations (KaTeX), citations, and diagrams.",
+    label: "Alexandrian Papyrus / PDF",
+    icon: "📜",
+    desc: "Transmutes academic sections, equations (KaTeX), citations, and diagrams.",
   },
   {
     id: "architecture_diagram",
-    label: "Whiteboard / Architecture",
+    label: "Daedalus's Blueprint",
     icon: "🏛️",
-    desc: "Transcribes sketch images into live Mermaid.js SVG diagrams.",
+    desc: "Transcribes sketch images into live responsive Mermaid.js SVG diagrams.",
   },
   {
     id: "math_formula",
-    label: "Handwritten Math",
+    label: "Archimedean Lemma",
     icon: "📐",
-    desc: "Converts photographed formulas into publication-grade LaTeX.",
+    desc: "Converts photographed handwritten formulas into publication-grade LaTeX.",
   },
   {
     id: "general_document",
-    label: "General Technical Doc",
-    icon: "📝",
+    label: "Olympian Scroll",
+    icon: "🏺",
     desc: "Preserves headings, lists, tables, callouts, and code listings.",
   },
 ];
@@ -160,13 +160,13 @@ export function PaperToCanvasModal({
             </span>
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <span>Paper-to-Canvas Multimodal Ingestion</span>
-                <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-mono">
-                  Vision + KaTeX + Mermaid
+                <span>{"Hermes' Transmutation"}</span>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[10px] font-mono">
+                  Papyrus to Living Canvas
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
-                Upload or paste research papers, architecture diagrams, or handwritten math formulas.
+              <p className="text-xs text-slate-400 font-serif italic">
+                Alchemical transcription from mortal paper, handwritten proofs & whiteboard sketches into living executable AST.
               </p>
             </div>
           </div>

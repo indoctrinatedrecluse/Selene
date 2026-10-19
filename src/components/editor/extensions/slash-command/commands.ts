@@ -24,23 +24,29 @@ import {
   BarChart2,
   Code2,
   Cpu,
+  Send,
+  Wind,
 } from "lucide-react";
 
 export interface CommandItem {
   title: string;
   description: string;
-  category: "Live Sandboxes" | "Vector & Math" | "Typography" | "Admonitions";
+  category:
+    | "Hephaestus's Living Sandboxes"
+    | "Daedalus & Archimedes (Vector & Math)"
+    | "Calliope's Sacred Typography"
+    | "Delphic Oracles & Admonitions";
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
   command: (params: { editor: Editor; range: Range }) => void;
 }
 
 export const SLASH_COMMANDS: CommandItem[] = [
-  // --- Live Sandboxes ---
+  // --- Hephaestus's Living Sandboxes ---
   {
-    title: "Live React Sandbox",
-    description: "Interactive React + Tailwind component with live HMR",
-    category: "Live Sandboxes",
+    title: "Forge of Hephaestus (React + Tailwind)",
+    description: "Interactive React 19 + Tailwind component with live HMR & zero CSS bleed",
+    category: "Hephaestus's Living Sandboxes",
     badge: "TSX",
     icon: Sparkles,
     command: ({ editor, range }) => {
@@ -49,15 +55,66 @@ export const SLASH_COMMANDS: CommandItem[] = [
         .focus()
         .deleteRange(range)
         .insertContent(
-          `\`\`\`tsx\nexport function Widget() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div className="p-4 bg-slate-900 rounded-xl border border-sky-500/30 text-white space-y-2">\n      <h4 className="font-semibold text-sky-400">Interactive Component</h4>\n      <button\n        onClick={() => setCount(c => c + 1)}\n        className="px-3 py-1 bg-sky-500 text-xs rounded-lg font-medium hover:bg-sky-400 transition-colors"\n      >\n        Count: {count}\n      </button>\n    </div>\n  );\n}\n\`\`\`\n`
+          `\`\`\`tsx\nexport function Widget() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div className="p-4 bg-slate-900 rounded-xl border border-sky-500/30 text-white space-y-2">\n      <h4 className="font-semibold text-sky-400">Interactive Component</h4>\n      <button\n        onClick={() => setCount(c => c + 1)}\n        className="px-3 py-1 bg-sky-500 text-xs rounded-lg font-medium hover:bg-sky-400 transition-colors cursor-pointer"\n      >\n        Count: {count}\n      </button>\n    </div>\n  );\n}\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Phoenix of Olympus (Elixir LiveView HEEx)",
+    description: "BEAM assigns (@cluster), Phoenix Core Components & phx-click reactivity",
+    category: "Hephaestus's Living Sandboxes",
+    badge: "HEEx",
+    icon: Flame,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`heex\n<div class="p-5 bg-[#090d1d] rounded-2xl border border-purple-500/40 text-slate-100 space-y-4">\n  <div class="flex items-center justify-between">\n    <h3 class="text-sm font-bold text-purple-300">🔥 Phoenix of Olympus Node</h3>\n    <.badge variant="phoenix">BEAM Nominal</.badge>\n  </div>\n  <p class="text-xs text-slate-300">Cluster: <%= @cluster %> • Active Workers: <%= @active_workers %></p>\n  <button phx-click="rebalance" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-xs font-semibold text-white shadow-md cursor-pointer">\n    Rebalance Workers\n  </button>\n</div>\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Zephyr Swift Canvas (Apple SwiftUI)",
+    description: "Multiplatform SwiftUI views with @State, SF symbols & Cupertino styling",
+    category: "Hephaestus's Living Sandboxes",
+    badge: "SwiftUI",
+    icon: Wind,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`swiftui\nstruct CelestialDashboardView: View {\n    @State private var telemetryActive = true\n    @State private var orbitalVelocity = 7.68\n\n    var body: some View {\n        VStack(alignment: .leading, spacing: 14) {\n            HStack {\n                Image(systemName: "moon.stars.fill")\n                    .foregroundStyle(.cyan)\n                Text("Zephyr Orbital Station")\n                    .font(.headline)\n                    .fontWeight(.bold)\n                Spacer()\n                Toggle("Telemetry", isOn: $telemetryActive)\n                    .labelsHidden()\n            }\n            Text("Velocity: \\(String(format: "%.2f", orbitalVelocity)) km/s")\n                .font(.subheadline)\n                .foregroundStyle(.secondary)\n        }\n        .padding(16)\n        .background(Color(white: 0.1))\n        .cornerRadius(16)\n    }\n}\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+  {
+    title: "Hermes Relay (API & GraphQL Client)",
+    description: "Interactive HTTP, REST, cURL & GraphQL playground with latency telemetry",
+    category: "Hephaestus's Living Sandboxes",
+    badge: "HTTP",
+    icon: Send,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`http\nPOST https://api.olympus.celestial/v1/telemetry\nContent-Type: application/json\nAuthorization: Bearer selene_lunar_key_99\n\n{\n  "station": "Selene-Alpha",\n  "status": "operational",\n  "coordinates": { "lat": 24.1, "lng": 89.4 }\n}\n\`\`\`\n`
         )
         .run();
     },
   },
   {
     title: "Live Vue 3 Sandbox",
-    description: "Single File Component with isolated preview",
-    category: "Live Sandboxes",
+    description: "Single File Component with isolated preview and Composition API",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Vue",
     icon: Flame,
     command: ({ editor, range }) => {
@@ -66,7 +123,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
         .focus()
         .deleteRange(range)
         .insertContent(
-          `\`\`\`vue\n<template>\n  <div class="p-4 bg-slate-900 rounded-xl border border-emerald-500/30 text-white">\n    <h3 class="text-emerald-400 font-bold">Vue 3 Live Preview</h3>\n    <p class="text-sm text-slate-300">Count: {{ count }}</p>\n    <button @click="count++" class="mt-2 px-3 py-1 bg-emerald-600 rounded text-xs font-semibold">\n      Increment\n    </button>\n  </div>\n</template>\n\n<script setup>\nimport { ref } from 'vue';\nconst count = ref(0);\n</script>\n\`\`\`\n`
+          `\`\`\`vue\n<template>\n  <div class="p-4 bg-slate-900 rounded-xl border border-emerald-500/30 text-white">\n    <h3 class="text-emerald-400 font-bold">Vue 3 Live Preview</h3>\n    <p class="text-sm text-slate-300">Count: {{ count }}</p>\n    <button @click="count++" class="mt-2 px-3 py-1 bg-emerald-600 rounded text-xs font-semibold cursor-pointer">\n      Increment\n    </button>\n  </div>\n</template>\n\n<script setup>\nimport { ref } from 'vue';\nconst count = ref(0);\n</script>\n\`\`\`\n`
         )
         .run();
     },
@@ -74,7 +131,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Svelte Sandbox",
     description: "Compile-time reactive Svelte component with scoped CSS",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Svelte",
     icon: Zap,
     command: ({ editor, range }) => {
@@ -91,7 +148,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Angular Sandbox",
     description: "Angular Ivy component with two-way binding & scoped styles",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Angular",
     icon: Shield,
     command: ({ editor, range }) => {
@@ -108,7 +165,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Flutter Web Sandbox",
     description: "Material 3 / Cupertino widget running via CanvasKit WASM",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Flutter",
     icon: Smartphone,
     command: ({ editor, range }) => {
@@ -125,7 +182,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Vanilla HTML/CSS",
     description: "Raw HTML & Tailwind markup with instant preview",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "HTML",
     icon: LayoutTemplate,
     command: ({ editor, range }) => {
@@ -140,9 +197,9 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
   {
-    title: "Live Python WASM Cell",
+    title: "Pythian Python WASM Cell",
     description: "Interactive Python notebook with NumPy & Matplotlib in WebAssembly",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Python",
     icon: Terminal,
     command: ({ editor, range }) => {
@@ -159,7 +216,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Laravel Blade Sandbox",
     description: "PHP 8.3 & Laravel 11 Blade directives with Alpine.js & Tailwind",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "PHP",
     icon: Code2,
     command: ({ editor, range }) => {
@@ -168,7 +225,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
         .focus()
         .deleteRange(range)
         .insertContent(
-          `\`\`\`blade\n@php\n  $service = "Selene Blade Gateway";\n  $status = "nominal";\n@endphp\n\n<div x-data="{ count: 42 }" class="p-5 bg-slate-900 rounded-xl border border-red-500/30 text-white space-y-3">\n  <div class="flex items-center justify-between">\n    <h4 class="font-bold text-red-400">{{ $service }}</h4>\n    <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">{{ strtoupper($status) }}</span>\n  </div>\n  <button @click="count++" class="px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-xs font-semibold">\n    ⚡ Increment: <span x-text="count"></span>\n  </button>\n</div>\n\`\`\`\n`
+          `\`\`\`blade\n@php\n  $service = "Selene Blade Gateway";\n  $status = "nominal";\n@endphp\n\n<div x-data="{ count: 42 }" class="p-5 bg-slate-900 rounded-xl border border-red-500/30 text-white space-y-3">\n  <div class="flex items-center justify-between">\n    <h4 class="font-bold text-red-400">{{ $service }}</h4>\n    <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">{{ strtoupper($status) }}</span>\n  </div>\n  <button @click="count++" class="px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-xs font-semibold cursor-pointer">\n    ⚡ Increment: <span x-text="count"></span>\n  </button>\n</div>\n\`\`\`\n`
         )
         .run();
     },
@@ -176,7 +233,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Ruby on Rails Sandbox",
     description: "Ruby 3.3 & Rails 8 ERB scriptlet engine with Turbo Frames",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Rails",
     icon: Flame,
     command: ({ editor, range }) => {
@@ -193,7 +250,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Go Template Sandbox",
     description: "Go 1.23 html/template & Hugo pipeline filter engine",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Go",
     icon: Cpu,
     command: ({ editor, range }) => {
@@ -210,7 +267,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Django / Jinja Sandbox",
     description: "Python 3.12 Django & Jinja2 template tags & filters",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Django",
     icon: Terminal,
     command: ({ editor, range }) => {
@@ -227,7 +284,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Live Rust WASM Sandbox",
     description: "Rust WebAssembly (Yew & Leptos) reactive component",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "Rust",
     icon: Cpu,
     command: ({ editor, range }) => {
@@ -242,9 +299,9 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
   {
-    title: "Live SQL Data Studio",
+    title: "Relational Agora (SQL Data Studio)",
     description: "In-browser relational query engine with live grid filtering",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "SQL",
     icon: Database,
     command: ({ editor, range }) => {
@@ -259,9 +316,9 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
   {
-    title: "Live DuckDB Analytical Studio",
+    title: "Columnar Agora (DuckDB Analytical OLAP)",
     description: "Sub-10ms in-browser columnar vector processing (OLAP)",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "DuckDB",
     icon: Database,
     command: ({ editor, range }) => {
@@ -276,26 +333,9 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
   {
-    title: "Live Declarative Chart",
-    description: "Pure SVG multi-series visualization (bar, line, area, donut)",
-    category: "Vector & Math",
-    badge: "Chart",
-    icon: BarChart2,
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertContent(
-          `\`\`\`chart\n{\n  "type": "area",\n  "title": "Mission Telemetry Throughput",\n  "xKey": "quarter",\n  "yKey": ["telemetry", "uplink"],\n  "colors": ["#38bdf8", "#818cf8"],\n  "data": [\n    { "quarter": "Q1", "telemetry": 140, "uplink": 90 },\n    { "quarter": "Q2", "telemetry": 260, "uplink": 150 },\n    { "quarter": "Q3", "telemetry": 420, "uplink": 230 },\n    { "quarter": "Q4", "telemetry": 680, "uplink": 380 }\n  ]\n}\n\`\`\`\n`
-        )
-        .run();
-    },
-  },
-  {
-    title: "Live WebGL Shader Canvas",
+    title: "Iris's Prismatic Shaders (GLSL WebGL)",
     description: "Hardware-accelerated GLSL fragment shader with uniforms",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     badge: "GLSL",
     icon: Sparkles,
     command: ({ editor, range }) => {
@@ -312,7 +352,7 @@ export const SLASH_COMMANDS: CommandItem[] = [
   {
     title: "Standard Code Block",
     description: "Syntax highlighted source code snippet",
-    category: "Live Sandboxes",
+    category: "Hephaestus's Living Sandboxes",
     icon: SquareCode,
     command: ({ editor, range }) => {
       editor
@@ -324,11 +364,11 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
 
-  // --- Vector & Math ---
+  // --- Daedalus & Archimedes (Vector & Math) ---
   {
-    title: "Mermaid Diagram",
+    title: "Daedalus's Blueprint (Mermaid Diagram)",
     description: "Flowcharts, sequence charts, and architectural diagrams",
-    category: "Vector & Math",
+    category: "Daedalus & Archimedes (Vector & Math)",
     badge: "SVG",
     icon: GitGraph,
     command: ({ editor, range }) => {
@@ -343,9 +383,9 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
   {
-    title: "LaTeX Math Formula",
+    title: "Archimedes' Lemma (LaTeX KaTeX Formula)",
     description: "Sub-millisecond mathematical typesetting with KaTeX",
-    category: "Vector & Math",
+    category: "Daedalus & Archimedes (Vector & Math)",
     badge: "TeX",
     icon: Sigma,
     command: ({ editor, range }) => {
@@ -359,13 +399,30 @@ export const SLASH_COMMANDS: CommandItem[] = [
         .run();
     },
   },
-
-  // --- Admonitions ---
   {
-    title: "Note Callout",
-    description: "Highlighted informational note box",
-    category: "Admonitions",
-    badge: "Blue",
+    title: "Declarative Vector Chart",
+    description: "Pure SVG multi-series visualization (bar, line, area, donut)",
+    category: "Daedalus & Archimedes (Vector & Math)",
+    badge: "Chart",
+    icon: BarChart2,
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent(
+          `\`\`\`chart\n{\n  "type": "area",\n  "title": "Mission Telemetry Throughput",\n  "xKey": "quarter",\n  "yKey": ["telemetry", "uplink"],\n  "colors": ["#38bdf8", "#818cf8"],\n  "data": [\n    { "quarter": "Q1", "telemetry": 140, "uplink": 90 },\n    { "quarter": "Q2", "telemetry": 260, "uplink": 150 },\n    { "quarter": "Q3", "telemetry": 420, "uplink": 230 },\n    { "quarter": "Q4", "telemetry": 680, "uplink": 380 }\n  ]\n}\n\`\`\`\n`
+        )
+        .run();
+    },
+  },
+
+  // --- Delphic Oracles & Admonitions ---
+  {
+    title: "Apollo's Note Callout",
+    description: "Highlighted informational celestial note box",
+    category: "Delphic Oracles & Admonitions",
+    badge: "Cyan",
     icon: AlertCircle,
     command: ({ editor, range }) => {
       editor
@@ -378,10 +435,10 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
   {
-    title: "Tip Callout",
-    description: "Best practice or performance recommendation",
-    category: "Admonitions",
-    badge: "Green",
+    title: "Athena's Tip Callout",
+    description: "Divine architectural wisdom and performance recommendation",
+    category: "Delphic Oracles & Admonitions",
+    badge: "Emerald",
     icon: AlertCircle,
     command: ({ editor, range }) => {
       editor
@@ -394,9 +451,9 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
   {
-    title: "Warning Callout",
-    description: "Cautionary advice or breaking changes",
-    category: "Admonitions",
+    title: "Nemesis Warning Callout",
+    description: "Cautionary advice, security hazards, or breaking changes",
+    category: "Delphic Oracles & Admonitions",
     badge: "Amber",
     icon: AlertCircle,
     command: ({ editor, range }) => {
@@ -410,83 +467,83 @@ export const SLASH_COMMANDS: CommandItem[] = [
     },
   },
 
-  // --- Typography ---
+  // --- Calliope's Sacred Typography ---
   {
-    title: "Heading 1",
+    title: "Major Epithet (Heading 1)",
     description: "Large top-level document heading",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: Heading1,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHeading({ level: 1 }).run();
     },
   },
   {
-    title: "Heading 2",
+    title: "Section Inscription (Heading 2)",
     description: "Medium section heading",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: Heading2,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHeading({ level: 2 }).run();
     },
   },
   {
-    title: "Heading 3",
+    title: "Sub-section Inscription (Heading 3)",
     description: "Sub-section heading",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: Heading3,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHeading({ level: 3 }).run();
     },
   },
   {
-    title: "Task Checklist",
+    title: "Olympian Task Checklist",
     description: "Interactive actionable to-do list",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: CheckSquare,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleTaskList().run();
     },
   },
   {
-    title: "Bullet List",
+    title: "Sacred Bullet List",
     description: "Unordered bulleted points",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: List,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleBulletList().run();
     },
   },
   {
-    title: "Numbered List",
+    title: "Ordered Sequence",
     description: "Sequential numbered points",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: ListOrdered,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleOrderedList().run();
     },
   },
   {
-    title: "Blockquote",
+    title: "Pythian Inscription (Blockquote)",
     description: "Quoted passage or callout citation",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: Quote,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleBlockquote().run();
     },
   },
   {
-    title: "Divider",
+    title: "Horizon Divider",
     description: "Visual horizontal line separator",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     icon: Minus,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
     },
   },
   {
-    title: "Slide Break (Deck Mode)",
+    title: "Dionysian Amphitheater (Slide Break)",
     description: "Inserts a slide break partition for interactive presentation mode",
-    category: "Typography",
+    category: "Calliope's Sacred Typography",
     badge: "Slides",
     icon: Presentation,
     command: ({ editor, range }) => {

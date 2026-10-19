@@ -25,7 +25,10 @@ interface SeleneAiCopilotModalProps {
 export type CopilotCategory = "ui" | "diagram" | "math" | "freeform";
 
 const UI_STACK_OPTIONS = [
-  { id: "tsx", label: "React TSX" },
+  { id: "tsx", label: "React 19 TSX" },
+  { id: "heex", label: "🔥 Phoenix LiveView" },
+  { id: "swift", label: "💨 Apple SwiftUI" },
+  { id: "http", label: "⚡ Hermes Relay (API)" },
   { id: "vue", label: "Vue 3 SFC" },
   { id: "svelte", label: "Svelte 5" },
   { id: "angular", label: "Angular Ivy" },
@@ -48,17 +51,18 @@ const DIAGRAM_OPTIONS = [
 
 const PROMPT_SUGGESTIONS: Record<CopilotCategory, string[]> = {
   ui: [
-    "Mission telemetry card with glowing status and interactive counter",
-    "Cyberpunk user profile with avatar and metric badges",
-    "Real-time database replication status table",
+    "🔥 Phoenix of Olympus: Real-time BEAM cluster monitor with phx-click rebalance",
+    "💨 Zephyr Swift: Multiplatform dark glass telemetry card with @State toggles",
+    "⚡ Hermes Relay: Authenticated API endpoint with JSON payload & latency stats",
+    "🏛️ Hephaestus's Forge: React 19 + Tailwind lunar rover telemetry counter",
   ],
   diagram: [
-    "Distributed microservices architecture with Redis and LibSQL",
-    "OAuth2 PKCE authorization sequence flow",
-    "Satellite constellation mesh network topology",
+    "Daedalus Blueprint: Distributed microservices mesh with Redis and LibSQL",
+    "Hermes Relay: OAuth2 PKCE authorization handshake sequence diagram",
+    "Selene Orbit: Satellite constellation P2P WebRTC mesh topology",
   ],
   math: [
-    "Keplerian orbital velocity and vis-viva equation",
+    "Archimedes Lemma: Keplerian orbital velocity and vis-viva equation",
     "Tsiolkovsky rocket equation with mass ratio logarithm",
     "Schrödinger wave equation in 3D Cartesian coordinates",
   ],
@@ -154,7 +158,10 @@ export function SeleneAiCopilotModal({
             </div>
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <span>Selene AI Canvas Copilot</span>
+                <span>The Delphic Oracle</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                  Celestial Sibyl
+                </span>
                 {vaultKeyConfigured ? (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     Vault Connected
@@ -169,7 +176,9 @@ export function SeleneAiCopilotModal({
                   </button>
                 )}
               </h3>
-              <p className="text-[11px] text-slate-400">Generate diagrams, formulas, and multi-stack UI snippets</p>
+              <p className="text-[11px] text-slate-400 font-serif italic">
+                Consult the sacred tripod of Olympus for code divination, architectural schemas & multi-stack UI
+              </p>
             </div>
           </div>
           <button
@@ -299,17 +308,17 @@ export function SeleneAiCopilotModal({
                 type="button"
                 onClick={handleGenerate}
                 disabled={isGenerating || !prompt.trim()}
-                className="absolute right-3 bottom-3 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
+                className="absolute right-3 bottom-3 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:to-purple-500 text-white font-semibold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
               >
-                {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                <span>{isGenerating ? "Generating..." : "Generate"}</span>
+                {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
+                <span>{isGenerating ? "Divining..." : "Seek Prophecy"}</span>
               </button>
             </div>
           </div>
 
           {/* Quick suggestions */}
           <div>
-            <span className="text-[10px] font-mono text-slate-500 block mb-1">Quick ideas:</span>
+            <span className="text-[10px] font-mono text-slate-500 block mb-1">Pythian Invocations:</span>
             <div className="flex flex-wrap gap-1.5">
               {PROMPT_SUGGESTIONS[category].map((s, idx) => (
                 <button
@@ -328,25 +337,26 @@ export function SeleneAiCopilotModal({
           {generatedOutput && (
             <div className="space-y-2 pt-2 border-t border-slate-800">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
-                  Generated Snippet Preview
+                <span className="text-[11px] font-mono text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>Oracle Divination Inscription</span>
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
                   >
-                    {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied ? "Copied" : "Copy"}</span>
+                    {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-sky-400" />}
+                    <span>{copied ? "Copied" : "Copy Prophecy"}</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleInsert}
-                    className="flex items-center gap-1 px-3 py-1 rounded bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs shadow transition-all active:scale-95 cursor-pointer"
+                    className="flex items-center gap-1 px-3 py-1 rounded bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
                   >
                     <PlusCircle className="w-3.5 h-3.5" />
-                    <span>Insert into Canvas</span>
+                    <span>Inscribe into Canvas</span>
                   </button>
                 </div>
               </div>

@@ -427,7 +427,10 @@ export function WhiteboardOverlay({
             {/* Header / Mode Indicator */}
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold mr-1">
               <Edit3 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Whiteboard Markup</span>
+              <span className="hidden sm:inline font-bold">{"Daedalus's Drawing Board"}</span>
+              <span className="hidden lg:inline text-[10px] font-serif italic text-cyan-400/80 font-normal">
+                (celestial canvas)
+              </span>
             </div>
 
             {/* Inspect / Passthrough Toggle */}
@@ -465,7 +468,7 @@ export function WhiteboardOverlay({
                   ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
                   : "hover:bg-slate-800 text-slate-300"
               }`}
-              title="Freehand Pen"
+              title="Calliope's Stylus (Smooth Freehand Pen)"
             >
               <Pencil className="w-4 h-4" />
             </button>
@@ -481,7 +484,7 @@ export function WhiteboardOverlay({
                   ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
                   : "hover:bg-slate-800 text-slate-300"
               }`}
-              title="Text Highlighter"
+              title="Iris's Prismatic Highlighter (Translucent Marker)"
             >
               <Highlighter className="w-4 h-4" />
             </button>
@@ -497,7 +500,7 @@ export function WhiteboardOverlay({
                   ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
                   : "hover:bg-slate-800 text-slate-300"
               }`}
-              title="Architectural Arrow"
+              title="Apollo's Golden Arrow (Directional Vector)"
             >
               <MoveRight className="w-4 h-4" />
             </button>
@@ -513,7 +516,7 @@ export function WhiteboardOverlay({
                   ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
                   : "hover:bg-slate-800 text-slate-300"
               }`}
-              title="Box Outline"
+              title="Euclidean Geometric Frame (Bounding Box)"
             >
               <Square className="w-4 h-4" />
             </button>
@@ -529,7 +532,7 @@ export function WhiteboardOverlay({
                   ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
                   : "hover:bg-slate-800 text-slate-300"
               }`}
-              title="Ellipse / Circle"
+              title="Selene's Meniskos Orb (Circle / Ellipse)"
             >
               <Circle className="w-4 h-4" />
             </button>
@@ -545,7 +548,7 @@ export function WhiteboardOverlay({
                   ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
                   : "hover:bg-slate-800 text-slate-300"
               }`}
-              title="Stroke Eraser"
+              title="Lethe's Oblivion (Stroke Eraser)"
             >
               <Eraser className="w-4 h-4" />
             </button>

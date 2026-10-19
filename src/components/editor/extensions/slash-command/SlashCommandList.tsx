@@ -69,8 +69,9 @@ export const SlashCommandList = forwardRef<
 
   return (
     <div className="z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-800 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-md">
-      <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-        Insert Blocks & Sandboxes
+      <div className="flex items-center justify-between px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-sky-400/80 border-b border-slate-800/60 mb-1">
+        <span>✨ Olympian Blocks & Sandboxes</span>
+        <span className="font-mono text-[9px] text-slate-500">↑↓ to navigate</span>
       </div>
       <div className="space-y-0.5">
         {props.items.map((item, index) => {
