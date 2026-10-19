@@ -458,25 +458,25 @@ export function ChronosTimelineDrawer({
                 </div>
               ) : diffMode === "split" ? (
                 /* Side-by-Side (Split) Diff */
-                <div className="grid grid-cols-2 gap-4 h-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0 h-full">
                   {/* Left: Historical Epoch */}
-                  <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 overflow-auto">
-                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] font-bold text-slate-400">
+                  <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 min-h-0 flex flex-col overflow-auto">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] font-bold text-slate-400 shrink-0">
                       <span>HISTORICAL EPOCH</span>
                       <span className="text-violet-400">{new Date(selectedSnapshot.timestamp).toLocaleTimeString()}</span>
                     </div>
-                    <pre className="text-slate-300 whitespace-pre-wrap">
+                    <pre className="text-slate-300 whitespace-pre-wrap overflow-auto flex-1 font-mono text-xs">
                       <code>{selectedSnapshot.content}</code>
                     </pre>
                   </div>
 
                   {/* Right: Current Live Document */}
-                  <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 overflow-auto">
-                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] font-bold text-slate-400">
+                  <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3 min-h-0 flex flex-col overflow-auto">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] font-bold text-slate-400 shrink-0">
                       <span>CURRENT LIVE DOCUMENT</span>
                       <span className="text-emerald-400">Now</span>
                     </div>
-                    <pre className="text-slate-300 whitespace-pre-wrap">
+                    <pre className="text-slate-300 whitespace-pre-wrap overflow-auto flex-1 font-mono text-xs">
                       <code>{currentContent}</code>
                     </pre>
                   </div>

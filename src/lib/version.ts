@@ -4,7 +4,7 @@
  * API routes, splash screens, and licensing telemetry.
  */
 
-export const APP_VERSION = "0.3.0";
+export const APP_VERSION = "0.4.0";
 export const APP_NAME = "Selene";
 export const APP_EDITION = "Titan Edition";
 export const APP_VERSION_TAG = `v${APP_VERSION}`;

@@ -162,8 +162,8 @@ export function SecondaryDocumentViewer({
 
   return (
     <div
-      className={`border-l border-slate-800 bg-[#070914] flex flex-col h-full min-w-0 ${
-        splitOrientation === "vertical" ? "w-1/2" : "w-full h-1/2 border-t border-l-0"
+      className={`border-l border-slate-800 bg-[#070914] flex flex-col min-w-0 ${
+        splitOrientation === "vertical" ? "w-1/2 h-full" : "w-full h-1/2 border-t border-l-0"
       }`}
     >
       {/* Secondary Pane Header Bar */}

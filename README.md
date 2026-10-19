@@ -3,7 +3,7 @@
 > **The Hypermodern Technical Document & Code Canvas**  
 > *Where literate technical writing meets real-time code execution, interactive visual rendering, and seamless collaborative intelligence.* 🚀✨
 
-[![Release](https://img.shields.io/badge/Release-v0.3.0_(Titan_Edition)-sky?style=for-the-badge&logo=rocket)](https://github.com/indoctrinatedrecluse/Selene/releases)
+[![Release](https://img.shields.io/badge/Release-v0.4.0_(Titan_Edition)-sky?style=for-the-badge&logo=rocket)](https://github.com/indoctrinatedrecluse/Selene/releases)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.x_(Turbopack)-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React 19](https://img.shields.io/badge/React-19.x-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2_(Rust)-24C8D8?style=for-the-badge&logo=tauri)](https://tauri.app/)
@@ -198,11 +198,11 @@ To trigger an automated cross-platform release build and publish distribution bi
 # 1. Ensure all changes are committed
 git status
 
-# 2. Create a semantic version tag (e.g., v0.3.0)
-git tag -a v0.3.0 -m "Release v0.3.0 — Titan Edition"
+# 2. Create a semantic version tag (e.g., v0.4.0)
+git tag -a v0.4.0 -m "Release v0.4.0 — Titan Edition"
 
 # 3. Push tag to GitHub
-git push origin v0.3.0
+git push origin v0.4.0
 ```
 
 GitHub Actions will automatically:

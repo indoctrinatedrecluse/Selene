@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-10-20
+
+### 🏛️ The Pan-Hellenic & Selene Lunar Titan Release: Polyglot LiveView & SwiftUI, Hermes Relay, Chronos Epoch Timeline, Orbit Link P2P, and Athena's Wisdom Suite
+
+This milestone release expands Selene's technological frontier into 20 polyglot live execution sandboxes, introduces revolutionary peer-to-peer real-time co-authoring, weaves an immutable semantic revision timeline, and infuses a deeply authentic Greek mythological identity and astronomical synodic lunar tracking across the entire platform:
+
+#### ⚡ 1. Phoenix of Olympus & Zephyr Swift Canvas (Phase 1)
+- **Phoenix LiveView Interactive Simulation Engine (`heex` / `phoenix`)**:
+  - Live in-document execution and reactive template simulation for Elixir / Phoenix LiveView HEEx templates.
+  - Interactive assign modification (`@node_id`, `@latency_ms`, `@cpu_load`), `phx-click` event dispatch simulation, and state inspector.
+  - Full showcase sample: `samples/16_phoenix_liveview_interactive_telemetry_dashboard.md`.
+- **Zephyr Swift Canvas: Declarative SwiftUI Sandbox (`swift` / `swiftui`)**:
+  - In-browser reactive SwiftUI view hierarchy simulator rendering declarative stacks (`VStack`, `HStack`, `ZStack`), `@State` variable bindings, `Toggle`, `Button`, `Slider`, and `Text` views.
+  - Zero Xcode installation required; live interactive execution right in the literate document.
+  - Full showcase sample: `samples/17_swiftui_reactive_declarative_canvas_spec.md`.
+
+#### ⚡ 2. Hermes Relay: Interactive API & GraphQL Playground (Phase 2)
+- **Multi-Grammar Request Engine (`http` / `rest` / `curl` / `graphql`)**:
+  - Parses RFC 7230 HTTP request documents, raw cURL command snippets, and GraphQL queries into an interactive GUI request console.
+  - Dynamic key-value header and query parameter editor with reactive add/edit/disable/remove rows.
+  - Dual Execution Modes: Live network dispatches via the browser's Fetch API and offline Celestial Mock Mode with sub-millisecond telemetry.
+  - Latency roundtrip timing (`ms`), payload weight measurement (`KB`), and JSON search filter with 1-click clipboard cURL export.
+  - Full showcase sample: `samples/18_hermes_relay_api_and_graphql_playground.md`.
+
+#### ⏳ 3. Chronos Timeline: Semantic Revisions & Visual Diff (Phase 3)
+- **Cosmic Epoch Revision Control**:
+  - In-memory and SQLite-backed snapshot persistence silently capturing document states during authoring.
+  - Milestone Tagging (<kbd>Ctrl+S</kbd>): Label milestone checkpoints with human-readable tags (e.g. `[Alpha Architecture Approved]`).
+  - Multi-Mode Visual Diffing:
+    - **Unified Diff**: Line-by-line comparison with color-coded additions (emerald `+`) and deletions (rose `-`), line number gutters, and code block change counters.
+    - **Side-by-Side (Split) Diff**: Responsive dual-column parallel inspection between historical epochs and current live text.
+    - **Epoch Preview**: Raw text preview before restoring.
+  - Safe Time-Warp Rollbacks: 1-click historical restoration with automatic safeguard checkpoints before rollback.
+  - Full showcase sample: `samples/20_chronos_timeline_semantic_revisions_and_visual_diff.md`.
+
+#### 🪐 4. Orbit Link: Zero-Setup P2P WebRTC Collaboration (Phase 4)
+- **True Browser-to-Browser Co-Authoring**:
+  - Real-time peer-to-peer document synchronization powered by WebRTC data channels and Yjs CRDTs.
+  - Zero server database footprint: Keystrokes and text are exchanged directly over end-to-end peer meshes with zero cloud logging.
+  - Olympian Callsigns & Presence: Customizable avatars, divine names, and color-coded peer presence indicators.
+  - Ephemeral & Persistent Rooms: Instant 1-click invitation link generation for zero-friction peer onboarding.
+
+#### 💡 5. Athena's Wisdom: Olympian Master Guidance & Tips Suite
+- **Interactive In-App Guide Modal (<kbd>F1</kbd> / Header Button)**:
+  - Complete 9-chapter guide covering Selene architecture, the 20 polyglot sandboxes directory, split-screen ergonomics, and pro tips.
+  - Instant search across all tips, instructions, and code specimens.
+  - Copyable code fence snippets for every supported engine.
+  - Quick action jump links to launch Dual View, Whiteboard, Chronos, and Delphic Oracle directly from the guide.
+
+#### 🏛️ 6. Pan-Hellenic Mythological Elevation & Astronomical Synodic Lunar Tracker
+- **Astronomical Synodic Lunar Calendar & Diadem Widget**:
+  - Real-time astronomical lunar calculator (`src/lib/lunar-calendar.ts`) calculating synodic moon phase ($29.53058867$-day cycle), illumination percentage, and classical Greek phase nomenclature (*Noumenia*, *Meniskos*, *Dichotomos*, *Amphikyrtos*, *Panselinos*) with Orphic Hymns to Selene.
+  - Mounted in the header with celestial illumination glow and interactive popover.
+- **The Delphic Oracle**: Elevated AI copilot with Pythian vapor aesthetics, Olympian divination presets, and support for all 20 code stacks.
+- **Hephaestus's Subterranean Forge**: Lemnian forge-themed integrated terminal (`selene@olympus:~$`) with embers and quick presets.
+- **Daedalus's Drawing Board**: Celestial whiteboard with *Calliope's Stylus*, *Iris's Prismatic Highlighter*, *Apollo's Golden Arrow*, *Euclidean Frame*, and *Selene's Meniskos Orb*.
+- **The Dionysian Amphitheater**: Slide presentation deck with theater curtain transitions and *Scroll of Selene* stanza metrics.
+- **Hermes' Transmutation & Wings Publishing Suite**: Mythologized paper-to-canvas ingest and 9-format publishing suite.
+- **Scriptorium of Selene**: Rebranded workspace sidebar with *Pan-Hellenic Showcases*, *Sacred Scrolls*, and *Mnemosyne Local Vault*.
+
+#### 🛠️ 7. Split-Pane & UI Ergonomic Polish
+- **Symmetrical 50/50 Dual Pane Layout**: Fixed flex container sizing in Split MD and Dual View to prevent layout blowout or content squishing.
+- **Synchronized Split MD Scrolling**: Bi-directional proportional scroll linking between the TipTap visual canvas and raw GFM textarea.
+- **Horizontal Split Fix**: Resolved Tailwind CSS height rule conflict in `SecondaryDocumentViewer` ensuring clean stacked horizontal multi-document layouts.
+- **Responsive Epoch Diff**: Enhanced side-by-side split diff in `ChronosTimelineDrawer` with responsive wrapping and scroll bounds.
+
+---
+
 ## [0.3.0] - 2026-10-19
 
 ### 🚀 Grand Feature Release: Intelligent Canvas, Deep Data OLAP, Desktop Tooling, Publishing Suite & Dual-View Ergonomics

@@ -105,7 +105,10 @@ import {
   Terminal as TerminalIcon,
   Columns,
   PenTool,
+  Lightbulb,
+  Link2,
 } from "lucide-react";
+import { AthenaTipsModal } from "@/components/guidance/AthenaTipsModal";
 import { CollapsibleCommandRunner } from "@/components/terminal/CollapsibleCommandRunner";
 import { PaperToCanvasModal } from "@/components/ai/PaperToCanvasModal";
 import { WhiteboardOverlay } from "@/components/whiteboard/WhiteboardOverlay";
@@ -212,6 +215,8 @@ export function SeleneEditor() {
   const [isSyncScroll, setIsSyncScroll] = useState(false);
   const [primaryScrollProgress, setPrimaryScrollProgress] = useState(0);
   const editorScrollRef = useRef<HTMLDivElement | null>(null);
+  const splitMarkdownRef = useRef<HTMLTextAreaElement | null>(null);
+  const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
 
   // Fetch License Status from Registry Authority on mount
   useEffect(() => {
@@ -448,6 +453,9 @@ export function SeleneEditor() {
       } else if (e.altKey && (e.key === "D" || e.key === "d")) {
         e.preventDefault();
         setViewMode((prev) => (prev === "dual-doc" ? "wysiwyg" : "dual-doc"));
+      } else if (e.key === "F1" || ((e.ctrlKey || e.metaKey) && e.key === "/")) {
+        e.preventDefault();
+        setIsTipsModalOpen((prev) => !prev);
       } else if (e.key === "Escape" && ghostSuggestion) {
         setGhostSuggestion(null);
       }
@@ -494,7 +502,14 @@ export function SeleneEditor() {
     if (!container) return;
     const max = container.scrollHeight - container.clientHeight;
     if (max > 0) {
-      setPrimaryScrollProgress(container.scrollTop / max);
+      const progress = container.scrollTop / max;
+      setPrimaryScrollProgress(progress);
+      if (viewMode === "split" && splitMarkdownRef.current) {
+        const mdMax = splitMarkdownRef.current.scrollHeight - splitMarkdownRef.current.clientHeight;
+        if (mdMax > 0) {
+          splitMarkdownRef.current.scrollTop = progress * mdMax;
+        }
+      }
     }
   };
 
@@ -504,6 +519,19 @@ export function SeleneEditor() {
     if (!container) return;
     const max = container.scrollHeight - container.clientHeight;
     if (max > 0) {
+      container.scrollTop = progress * max;
+    }
+  };
+
+  const handleSplitMarkdownScroll = () => {
+    if (!isSyncScroll || viewMode !== "split") return;
+    const mdContainer = splitMarkdownRef.current;
+    const container = editorScrollRef.current;
+    if (!mdContainer || !container) return;
+    const mdMax = mdContainer.scrollHeight - mdContainer.clientHeight;
+    const max = container.scrollHeight - container.clientHeight;
+    if (mdMax > 0 && max > 0) {
+      const progress = mdContainer.scrollTop / mdMax;
       container.scrollTop = progress * max;
     }
   };
@@ -1063,6 +1091,16 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               <span className="hidden sm:inline">Chronos</span>
             </button>
 
+            {/* 💡 Athena's Wisdom (Tips & Master Guidance) Toggle */}
+            <button
+              onClick={() => setIsTipsModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/30 text-xs font-medium transition-all cursor-pointer shadow-sm"
+              title="Athena's Wisdom — Master Guide & Tips (F1)"
+            >
+              <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Tips</span>
+            </button>
+
             {/* Lunar Ambiance & Lore Toggle */}
             <button
               onClick={() => setIsLoreModalOpen(true)}
@@ -1259,8 +1297,10 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
             } ${
               viewMode === "dual-doc"
                 ? splitOrientation === "vertical"
-                  ? "w-1/2 flex-1"
+                  ? "w-1/2 min-w-0 flex-1"
                   : "w-full h-1/2 border-b border-slate-800"
+                : viewMode === "split" || viewMode === "project"
+                ? "w-1/2 min-w-0 flex-1"
                 : "flex-1"
             }`}
           >
@@ -1308,7 +1348,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
 
           {/* Right Pane: Live Project Render */}
           {viewMode === "project" && (
-            <div className="border-l border-slate-800 bg-slate-900/60 flex flex-col w-1/2 overflow-hidden">
+            <div className="border-l border-slate-800 bg-slate-900/60 flex flex-col w-1/2 min-w-0 overflow-hidden">
               <ProjectServerRenderer
                 currentFilePath={activeDoc.title}
                 defaultRoute="/"
@@ -1320,18 +1360,37 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
           {/* Split Raw Markdown Pane */}
           {(viewMode === "split" || viewMode === "markdown") && (
             <div
-              className={`border-l border-slate-800 bg-slate-900/60 flex flex-col ${
-                viewMode === "split" ? "w-1/2" : "w-full"
+              className={`border-l border-slate-800 bg-slate-900/60 flex flex-col min-w-0 overflow-hidden ${
+                viewMode === "split" ? "w-1/2 min-w-0 flex-1" : "w-full flex-1"
               }`}
             >
-              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono text-slate-400">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono text-slate-400 shrink-0">
                 <div className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-sky-400" />
                   <span>Raw Markdown (GFM Stream)</span>
                 </div>
-                <span className="text-[11px] text-slate-500">Live Bi-directional Sync</span>
+                <div className="flex items-center gap-3">
+                  {viewMode === "split" && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSyncScroll((s) => !s)}
+                      className={`text-[10px] px-2 py-0.5 rounded border transition-colors flex items-center gap-1 cursor-pointer ${
+                        isSyncScroll
+                          ? "bg-cyan-500/15 border-cyan-500/30 text-cyan-300"
+                          : "border-slate-800 text-slate-500 hover:text-slate-300"
+                      }`}
+                      title={isSyncScroll ? "Sync Scroll: Enabled" : "Sync Scroll: Disabled"}
+                    >
+                      <Link2 className="w-3 h-3" />
+                      <span>Sync Scroll</span>
+                    </button>
+                  )}
+                  <span className="text-[11px] text-slate-500 hidden sm:inline">Live Bi-directional Sync</span>
+                </div>
               </div>
               <textarea
+                ref={splitMarkdownRef}
+                onScroll={handleSplitMarkdownScroll}
                 value={markdownContent}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -1340,7 +1399,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                     editor.commands.setContent(val);
                   }
                 }}
-                className="flex-1 p-6 bg-transparent font-mono text-xs text-slate-300 resize-none focus:outline-none leading-relaxed overflow-y-auto selection:bg-sky-500/30"
+                className="flex-1 p-6 bg-transparent font-mono text-xs text-slate-300 resize-none focus:outline-none leading-relaxed overflow-y-auto selection:bg-sky-500/30 min-h-0"
                 spellCheck={false}
               />
             </div>
@@ -1356,6 +1415,16 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         documentTitle={docTitle}
         currentContent={markdownContent}
         onRestoreSnapshot={handleRestoreChronosSnapshot}
+      />
+
+      {/* 💡 Athena's Wisdom: Olympian Master Guide & Tips Suite Modal */}
+      <AthenaTipsModal
+        isOpen={isTipsModalOpen}
+        onClose={() => setIsTipsModalOpen(false)}
+        onOpenDualView={() => setViewMode("dual-doc")}
+        onOpenWhiteboard={() => setIsWhiteboardOpen(true)}
+        onOpenChronos={() => setIsChronosOpen(true)}
+        onOpenDelphicOracle={() => setIsAiCopilotOpen(true)}
       />
 
       {/* 🪐 Orbit Link (Zero-Setup P2P WebRTC Collaboration Modal) */}
