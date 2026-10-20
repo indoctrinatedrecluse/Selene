@@ -170,17 +170,36 @@ class DocumentRepository extends ChangeNotifier {
 
   Future<void> deleteDocument(String id) async {
     _documents.removeWhere((d) => d.id == id);
-    if (_selectedDocumentId == id) {
-      _selectedDocumentId = _documents.isNotEmpty ? _documents.first.id : null;
+    if (_documents.isEmpty) {
+      final now = DateTime.now();
+      final fresh = DocumentModel(
+        id: _uuid.v4(),
+        title: 'New Celestial Note',
+        content: '# 🌙 New Celestial Note\n\nBegin writing technical prose, equations, or code blocks here.\n',
+        updatedAt: now,
+        createdAt: now,
+      );
+      _documents.add(fresh);
+      _selectedDocumentId = fresh.id;
+    } else if (_selectedDocumentId == id) {
+      _selectedDocumentId = _documents.first.id;
     }
     await _persistToDisk();
     notifyListeners();
   }
 
+  Future<void> flushToDisk() async {
+    await _persistToDisk();
+  }
+
   Future<void> _persistToDisk() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = json.encode(_documents.map((d) => d.toJson()).toList());
-    await prefs.setString(_storageKey, jsonString);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = json.encode(_documents.map((d) => d.toJson()).toList());
+      await prefs.setString(_storageKey, jsonString);
+    } catch (e) {
+      debugPrint('Error persisting documents to disk: $e');
+    }
   }
 
   List<DocumentModel> _getSeedDocuments() {

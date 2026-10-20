@@ -21,12 +21,10 @@ class CelestialStar {
 }
 
 class CelestialCanvasBackground extends StatefulWidget {
-  final Widget child;
   final bool isSparklingEnabled;
 
   const CelestialCanvasBackground({
     super.key,
-    required this.child,
     this.isSparklingEnabled = true,
   });
 
@@ -45,9 +43,23 @@ class _CelestialCanvasBackgroundState extends State<CelestialCanvasBackground>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 8),
-    )..repeat();
+    );
 
-    _stars = _generateStars(55);
+    if (widget.isSparklingEnabled) {
+      _controller.repeat();
+    }
+
+    _stars = _generateStars(50);
+  }
+
+  @override
+  void didUpdateWidget(covariant CelestialCanvasBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSparklingEnabled && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!widget.isSparklingEnabled && _controller.isAnimating) {
+      _controller.stop();
+    }
   }
 
   List<CelestialStar> _generateStars(int count) {
@@ -64,8 +76,8 @@ class _CelestialCanvasBackgroundState extends State<CelestialCanvasBackground>
       return CelestialStar(
         x: random.nextDouble(),
         y: random.nextDouble(),
-        radius: 0.6 + random.nextDouble() * 1.6,
-        speed: 1.0 + random.nextDouble() * 2.5,
+        radius: 0.6 + random.nextDouble() * 1.5,
+        speed: 1.0 + random.nextDouble() * 2.0,
         phase: random.nextDouble() * 2 * math.pi,
         color: colors[random.nextInt(colors.length)],
       );
@@ -81,24 +93,22 @@ class _CelestialCanvasBackgroundState extends State<CelestialCanvasBackground>
   @override
   Widget build(BuildContext context) {
     if (!widget.isSparklingEnabled) {
-      return Container(
-        color: SeleneTheme.background,
-        child: widget.child,
-      );
+      return const ColoredBox(color: SeleneTheme.background);
     }
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: _CelestialSkyPainter(
-            stars: _stars,
-            progress: _controller.value,
-          ),
-          child: child,
-        );
-      },
-      child: widget.child,
+    // Isolated RepaintBoundary prevents animation ticks from invalidating foreground text or UI
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: _CelestialSkyPainter(
+              stars: _stars,
+              progress: _controller.value,
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -116,11 +126,11 @@ class _CelestialSkyPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
 
-    // 1. Deep Space Cosmic Nebula Gradient
+    // 1. Cosmic Deep Space Gradient
     final bgPaint = Paint()
       ..shader = const RadialGradient(
-        center: Alignment(0.65, -0.75),
-        radius: 1.2,
+        center: Alignment(0.70, -0.75),
+        radius: 1.25,
         colors: [
           Color(0xFF0F1A30),
           Color(0xFF090E18),
@@ -130,22 +140,17 @@ class _CelestialSkyPainter extends CustomPainter {
       ).createShader(rect);
     canvas.drawRect(rect, bgPaint);
 
-    // 2. Glowing Crescent Moon in top right celestial sphere
+    // 2. Glowing Crescent Moon in upper right
     final moonCenter = Offset(size.width * 0.86, size.height * 0.08);
     final moonRadius = math.min(size.width, size.height) * 0.055;
 
-    // Lunar atmospheric corona glow
+    // Lunar corona glow
     final glowPaint = Paint()
-      ..color = SeleneTheme.lunarCyan.withValues(alpha: 0.06)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24);
+      ..color = SeleneTheme.lunarCyan.withValues(alpha: 0.05)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
     canvas.drawCircle(moonCenter, moonRadius * 2.2, glowPaint);
 
-    final innerGlowPaint = Paint()
-      ..color = const Color(0xFFF1F5F9).withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    canvas.drawCircle(moonCenter, moonRadius * 1.3, innerGlowPaint);
-
-    // Crescent Moon Shape
+    // Crescent Moon Cutout
     final moonPath = Path()
       ..addOval(Rect.fromCircle(center: moonCenter, radius: moonRadius));
     final cutoutPath = Path()
@@ -165,16 +170,14 @@ class _CelestialSkyPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: moonCenter, radius: moonRadius));
     canvas.drawPath(crescentPath, crescentPaint);
 
-    // 3. Twinkling / Sparkling Stars
+    // 3. Twinkling Stars
     final timeAngle = progress * 2 * math.pi;
 
     for (final star in stars) {
       final starPos = Offset(star.x * size.width, star.y * size.height);
 
-      // Avoid drawing right under the moon
       if ((starPos - moonCenter).distance < moonRadius * 2.0) continue;
 
-      // Sinusoidal twinkle pulsation
       final twinkle = (math.sin(timeAngle * star.speed + star.phase) + 1.0) / 2.0;
       final alpha = 0.2 + (twinkle * 0.75);
       final currentRadius = star.radius * (0.75 + (twinkle * 0.45));
@@ -185,14 +188,14 @@ class _CelestialSkyPainter extends CustomPainter {
 
       canvas.drawCircle(starPos, currentRadius, starPaint);
 
-      // Occasional celestial sparkle cross on brighter stars
-      if (star.radius > 1.6 && twinkle > 0.7) {
+      // Celestial sparkle on bright stars
+      if (star.radius > 1.5 && twinkle > 0.75) {
         final crossPaint = Paint()
           ..color = star.color.withValues(alpha: (alpha * 0.5).clamp(0.0, 1.0))
           ..strokeWidth = 0.8
           ..style = PaintingStyle.stroke;
 
-        final crossLen = currentRadius * 2.2;
+        final crossLen = currentRadius * 2.0;
         canvas.drawLine(
           starPos.translate(-crossLen, 0),
           starPos.translate(crossLen, 0),

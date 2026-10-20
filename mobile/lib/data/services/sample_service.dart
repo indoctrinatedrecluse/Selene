@@ -184,37 +184,34 @@ class SampleService {
     ),
   ];
 
+  static final Map<String, String> _cache = {};
+
   static Future<String> loadSampleContent(SampleItem sample) async {
-    try {
-      return await rootBundle.loadString(sample.assetPath);
-    } catch (_) {
-      return _getEmbeddedFallback(sample);
+    if (_cache.containsKey(sample.id)) {
+      return _cache[sample.id]!;
     }
-  }
 
-  static String _getEmbeddedFallback(SampleItem sample) {
-    return '''# ${sample.icon} ${sample.title}
-
-> *${sample.subtitle}* — Selene Canonical Showcase
-
----
-
-## Overview
-This canonical showcase demonstrates **${sample.title}** within Selene's hypermodern technical document canvas.
-
-- **Category**: ${sample.category}
-- **Artifact**: `${sample.filename}`
-- **Engine**: Selene Mobile Titan
-
-```markdown
-# Literate Technical Notes & Embedded Sandboxes
-Selene merges prose, equations, and code into an interactive mobile experience.
-```
-
-### Mathematical Formulation
-\$\$ \\oint_{\\partial \\Sigma} \\mathbf{E} \\cdot d\\boldsymbol{\\ell} = -\\frac{d\\Phi_B}{dt} \$\$
-
-*Loaded from canonical sample repository.*
-''';
+    try {
+      final content = await rootBundle.loadString(sample.assetPath);
+      _cache[sample.id] = content;
+      return content;
+    } catch (_) {
+      return '# ${sample.icon} ${sample.title}\n\n'
+          '> *${sample.subtitle}* — Selene Canonical Showcase\n\n'
+          '---\n\n'
+          '## Overview\n'
+          'This canonical showcase demonstrates **${sample.title}** within Selene\'s hypermodern technical document canvas.\n\n'
+          '- **Category**: ${sample.category}\n'
+          '- **Artifact**: `${sample.filename}`\n'
+          '- **Engine**: Selene Mobile Titan\n\n'
+          '```markdown\n'
+          '# Literate Technical Notes & Embedded Sandboxes\n'
+          'Selene merges prose, equations, and code into an interactive mobile experience.\n'
+          '```\n\n'
+          '### Mathematical Formulation\n'
+          r'$$ \oint_{\partial \Sigma} \mathbf{E} \cdot d\boldsymbol{\ell} = -\frac{d\Phi_B}{dt} $$'
+          '\n\n'
+          '*Loaded from canonical sample repository.*';
+    }
   }
 }

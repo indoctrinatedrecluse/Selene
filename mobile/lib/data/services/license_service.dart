@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -12,7 +13,7 @@ class LicenseStatus {
   final String key;
   final String maskedKey;
   final String username;
-  final String status; // 'active', 'trial', 'expired', 'tampered'
+  final String status;
   final int daysRemaining;
   final String? expiresAt;
   final String hwid;
@@ -79,6 +80,55 @@ class LicenseService extends ChangeNotifier {
 
   Future<void>? _initFuture;
 
+  // In-memory fallback store to ensure zero platform-channel crashes on Android
+  final Map<String, String> _memoryStore = {};
+  SharedPreferences? _prefsInstance;
+
+  Future<SharedPreferences?> _getPrefsSafe() async {
+    if (_prefsInstance != null) return _prefsInstance;
+    try {
+      _prefsInstance = await SharedPreferences.getInstance();
+      return _prefsInstance;
+    } catch (e) {
+      debugPrint('SharedPreferences platform warning: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _getString(String key) async {
+    final p = await _getPrefsSafe();
+    if (p != null) {
+      try {
+        final val = p.getString(key);
+        if (val != null) {
+          _memoryStore[key] = val;
+          return val;
+        }
+      } catch (_) {}
+    }
+    return _memoryStore[key];
+  }
+
+  Future<void> _setString(String key, String value) async {
+    _memoryStore[key] = value;
+    final p = await _getPrefsSafe();
+    if (p != null) {
+      try {
+        await p.setString(key, value);
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _removeKey(String key) async {
+    _memoryStore.remove(key);
+    final p = await _getPrefsSafe();
+    if (p != null) {
+      try {
+        await p.remove(key);
+      } catch (_) {}
+    }
+  }
+
   LicenseService() {
     _currentStatus = _buildInitialStatus();
     initialize();
@@ -104,20 +154,18 @@ class LicenseService extends ChangeNotifier {
   }
 
   Future<void> _doInitialize() async {
-    final prefs = await SharedPreferences.getInstance();
-
     // 1. Ensure Hardware ID (HWID)
-    String hwid = prefs.getString(_prefHwid) ?? '';
-    if (hwid.isEmpty) {
-      hwid = 'SELENE-AND-${const Uuid().v4().substring(0, 13).toUpperCase()}';
-      await prefs.setString(_prefHwid, hwid);
+    String hwidVal = await _getString(_prefHwid) ?? '';
+    if (hwidVal.isEmpty) {
+      hwidVal = 'SELENE-AND-${const Uuid().v4().substring(0, 13).toUpperCase()}';
+      await _setString(_prefHwid, hwidVal);
     }
 
     // 2. Read bound license if any
-    final boundKey = prefs.getString(_prefKey);
-    final boundTypeStr = prefs.getString(_prefType);
-    final boundUsername = prefs.getString(_prefUsername) ?? '';
-    final boundExpiresAt = prefs.getString(_prefExpiresAt);
+    final boundKey = await _getString(_prefKey);
+    final boundTypeStr = await _getString(_prefType);
+    final boundUsername = await _getString(_prefUsername) ?? '';
+    final boundExpiresAt = await _getString(_prefExpiresAt);
 
     if (boundKey != null && boundKey.isNotEmpty && boundKey != 'TRIAL') {
       final tier = _parseTier(boundTypeStr ?? _detectTier(boundKey));
@@ -138,7 +186,7 @@ class LicenseService extends ChangeNotifier {
           ? _issueAttestationToken(
               tier: tierCode,
               licenseKey: boundKey,
-              hwid: hwid,
+              hwid: hwidVal,
               username: boundUsername,
               status: isExpired ? 'expired' : 'active',
             )
@@ -152,7 +200,7 @@ class LicenseService extends ChangeNotifier {
         status: isExpired ? 'expired' : 'active',
         daysRemaining: boundExpiresAt == 'never' ? 36500 : daysRemaining,
         expiresAt: boundExpiresAt,
-        hwid: hwid,
+        hwid: hwidVal,
         machineName: 'Android Device',
         isLocked: isExpired,
         licenseToken: token,
@@ -162,32 +210,32 @@ class LicenseService extends ChangeNotifier {
       );
     } else {
       // 3. Evaluate Tamper-Proof 60-Day Trial
-      _currentStatus = await _evaluateTrial(prefs, hwid);
+      _currentStatus = await _evaluateTrial(hwidVal);
     }
 
     _isInitialized = true;
     notifyListeners();
   }
 
-  Future<LicenseStatus> _evaluateTrial(SharedPreferences prefs, String hwid) async {
+  Future<LicenseStatus> _evaluateTrial(String hwidVal) async {
     final now = DateTime.now();
-    String? installedAtStr = prefs.getString(_prefTrialInstalledAt);
-    String? signature = prefs.getString(_prefTrialSignature);
-    String? lastSeenStr = prefs.getString(_prefTrialLastSeenAt);
+    String? installedAtStr = await _getString(_prefTrialInstalledAt);
+    String? signature = await _getString(_prefTrialSignature);
+    String? lastSeenStr = await _getString(_prefTrialLastSeenAt);
 
     if (installedAtStr == null) {
       final isoNow = now.toIso8601String();
       installedAtStr = isoNow;
       lastSeenStr = isoNow;
-      signature = _computeTrialSignature(hwid, installedAtStr);
+      signature = _computeTrialSignature(hwidVal, installedAtStr);
 
-      await prefs.setString(_prefTrialInstalledAt, installedAtStr);
-      await prefs.setString(_prefTrialLastSeenAt, lastSeenStr);
-      await prefs.setString(_prefTrialSignature, signature);
+      await _setString(_prefTrialInstalledAt, installedAtStr);
+      await _setString(_prefTrialLastSeenAt, lastSeenStr);
+      await _setString(_prefTrialSignature, signature);
     }
 
     // 1. Verify Cryptographic HMAC Signature
-    final expectedSignature = _computeTrialSignature(hwid, installedAtStr);
+    final expectedSignature = _computeTrialSignature(hwidVal, installedAtStr);
     if (signature != expectedSignature) {
       return LicenseStatus(
         type: LicenseTier.trial,
@@ -196,7 +244,7 @@ class LicenseService extends ChangeNotifier {
         username: 'Trial User',
         status: 'tampered',
         daysRemaining: 0,
-        hwid: hwid,
+        hwid: hwidVal,
         machineName: 'Android Device',
         isLocked: true,
         tamperReason: 'Cryptographic trial signature mismatch. Storage tampering detected.',
@@ -216,7 +264,7 @@ class LicenseService extends ChangeNotifier {
             username: 'Trial User',
             status: 'tampered',
             daysRemaining: 0,
-            hwid: hwid,
+            hwid: hwidVal,
             machineName: 'Android Device',
             isLocked: true,
             tamperReason: 'System clock rollback detected. Current device time is prior to last session.',
@@ -227,7 +275,7 @@ class LicenseService extends ChangeNotifier {
     }
 
     // Update LastSeen
-    await prefs.setString(_prefTrialLastSeenAt, now.toIso8601String());
+    await _setString(_prefTrialLastSeenAt, now.toIso8601String());
 
     // 3. Compute 60-Day Trial Expiration
     final installedAt = DateTime.parse(installedAtStr);
@@ -240,7 +288,7 @@ class LicenseService extends ChangeNotifier {
         ? _issueAttestationToken(
             tier: 'TRIAL',
             licenseKey: 'TRIAL-EVALUATION',
-            hwid: hwid,
+            hwid: hwidVal,
             username: 'Trial User',
             status: 'trial',
           )
@@ -254,7 +302,7 @@ class LicenseService extends ChangeNotifier {
       status: isExpired ? 'expired' : 'trial',
       daysRemaining: daysRemaining,
       expiresAt: expirationDate.toIso8601String(),
-      hwid: hwid,
+      hwid: hwidVal,
       machineName: 'Android Device',
       isLocked: isExpired,
       licenseToken: trialToken,
@@ -316,13 +364,12 @@ class LicenseService extends ChangeNotifier {
           (data['success'] == true || data['status'] == 'active' || !data.containsKey('error'));
 
       if (isSuccess) {
-        final prefs = await SharedPreferences.getInstance();
         final expiresAt = data['expires_at'] ?? 'never';
 
-        await prefs.setString(_prefKey, key);
-        await prefs.setString(_prefType, tier);
-        await prefs.setString(_prefUsername, username?.trim() ?? (tier == 'ADMIN' ? 'Enterprise Admin' : ''));
-        await prefs.setString(_prefExpiresAt, expiresAt);
+        await _setString(_prefKey, key);
+        await _setString(_prefType, tier);
+        await _setString(_prefUsername, username?.trim() ?? (tier == 'ADMIN' ? 'Enterprise Admin' : ''));
+        await _setString(_prefExpiresAt, expiresAt);
 
         _initFuture = null;
         await initialize();
@@ -341,15 +388,13 @@ class LicenseService extends ChangeNotifier {
     } catch (e) {
       // Local offline fallback validation for validly structured keys
       if (_isValidKeyFormat(key)) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_prefKey, key);
-        await prefs.setString(_prefType, tier);
-        await prefs.setString(_prefUsername, username?.trim() ?? 'Offline Operator');
-        await prefs.setString(_prefExpiresAt, 'never');
+        await _setString(_prefKey, key);
+        await _setString(_prefType, tier);
+        await _setString(_prefUsername, username?.trim() ?? 'Offline Operator');
+        await _setString(_prefExpiresAt, 'never');
 
         _initFuture = null;
-        _initFuture = null;
-    await initialize();
+        await initialize();
 
         return ActivationResult(
           success: true,
@@ -366,8 +411,7 @@ class LicenseService extends ChangeNotifier {
   }
 
   Future<void> deactivateLicense() async {
-    final prefs = await SharedPreferences.getInstance();
-    final currentKey = prefs.getString(_prefKey);
+    final currentKey = await _getString(_prefKey);
 
     if (currentKey != null && currentKey.isNotEmpty) {
       try {
@@ -384,17 +428,17 @@ class LicenseService extends ChangeNotifier {
       } catch (_) {}
     }
 
-    await prefs.remove(_prefKey);
-    await prefs.remove(_prefType);
-    await prefs.remove(_prefUsername);
-    await prefs.remove(_prefExpiresAt);
+    await _removeKey(_prefKey);
+    await _removeKey(_prefType);
+    await _removeKey(_prefUsername);
+    await _removeKey(_prefExpiresAt);
 
     _initFuture = null;
     await initialize();
   }
 
-  String _computeTrialSignature(String hwid, String installedAt) {
-    final raw = '$hwid:$installedAt';
+  String _computeTrialSignature(String hwidVal, String installedAt) {
+    final raw = '$hwidVal:$installedAt';
     final key = utf8.encode(hmacSecret);
     final bytes = utf8.encode(raw);
     final hmac = Hmac(sha256, key);
@@ -407,29 +451,31 @@ class LicenseService extends ChangeNotifier {
     required String hwid,
     required String username,
     required String status,
-    int durationSeconds = 86400 * 30,
   }) {
-    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final payload = {
+      'sub': hwid,
       'tier': tier,
-      'licenseKey': licenseKey,
-      'hwid': hwid,
-      'username': username,
+      'key': licenseKey,
+      'user': username,
+      'app': appId,
       'status': status,
-      'iat': now,
-      'exp': now + durationSeconds,
+      'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      'exp': (DateTime.now().millisecondsSinceEpoch ~/ 1000) + 86400,
     };
 
+    final headerJson = json.encode({'alg': 'HS256', 'typ': 'JWT'});
     final payloadJson = json.encode(payload);
+
+    final headerB64 = base64Url.encode(utf8.encode(headerJson)).replaceAll('=', '');
     final payloadB64 = base64Url.encode(utf8.encode(payloadJson)).replaceAll('=', '');
 
+    final unsignedToken = '$headerB64.$payloadB64';
     final key = utf8.encode(attestationSecret);
-    final messageBytes = utf8.encode('$appId:$payloadB64');
+    final bytes = utf8.encode(unsignedToken);
     final hmac = Hmac(sha256, key);
-    final sigBytes = hmac.convert(messageBytes).bytes;
-    final sigB64 = base64Url.encode(sigBytes).replaceAll('=', '');
+    final sig = base64Url.encode(hmac.convert(bytes).bytes).replaceAll('=', '');
 
-    return '$payloadB64.$sigB64';
+    return '$unsignedToken.$sig';
   }
 
   static String maskKey(String key) {
@@ -437,11 +483,11 @@ class LicenseService extends ChangeNotifier {
     final parts = key.split('-');
     if (parts.length > 1) {
       final prefix = parts.first;
-      final last = parts.last;
-      final maskedMiddle = parts.sublist(1, parts.length - 1).map((_) => '••••').join('-');
-      return '$prefix-${maskedMiddle.isNotEmpty ? '$maskedMiddle-' : ''}$last';
+      final suffix = parts.last;
+      final middle = parts.sublist(1, parts.length - 1).map((_) => '••••').join('-');
+      return '$prefix-${middle.isNotEmpty ? '$middle-' : ''}$suffix';
     }
-    return '${key.substring(0, 4)}-••••-••••-${key.substring(key.length - 4)}';
+    return '${key.substring(0, 4)}-••••-${key.substring(key.length - 4)}';
   }
 
   static String _detectTier(String key) {

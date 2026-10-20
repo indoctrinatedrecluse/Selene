@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:selene_mobile/data/repositories/document_repository.dart';
@@ -23,31 +24,73 @@ class EditorScreen extends StatefulWidget {
   State<EditorScreen> createState() => _EditorScreenState();
 }
 
-class _EditorScreenState extends State<EditorScreen> {
+class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver {
   final TextEditingController _textController = TextEditingController();
   CanvasViewMode _viewMode = CanvasViewMode.preview;
   bool _isWhiteboardActive = false;
   bool _sparklesEnabled = true;
   String? _loadedDocId;
 
+  Timer? _autoSaveDebounceTimer;
+  Timer? _periodicAutoSaveTimer;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _textController.addListener(_onTextChanged);
+
+    // Periodic auto-save heartbeat every 5 seconds
+    _periodicAutoSaveTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) {
+        _flushActiveDocument();
+      }
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _autoSaveDebounceTimer?.cancel();
+    _periodicAutoSaveTimer?.cancel();
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Automatically save document whenever app loses focus, is minimized, or closed
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      _flushActiveDocument();
+    }
+  }
+
+  void _flushActiveDocument() {
+    final repo = context.read<DocumentRepository>();
+    final doc = repo.activeDocument;
+    if (doc != null && doc.content != _textController.text) {
+      repo.updateActiveDocumentContent(_textController.text);
+    } else {
+      repo.flushToDisk();
+    }
   }
 
   void _onTextChanged() {
     final repo = context.read<DocumentRepository>();
     final doc = repo.activeDocument;
     if (doc != null && doc.content != _textController.text) {
-      repo.updateActiveDocumentContent(_textController.text);
+      doc.content = _textController.text;
+      doc.updatedAt = DateTime.now();
+
+      // Debounced auto-save 700ms after user pauses typing
+      _autoSaveDebounceTimer?.cancel();
+      _autoSaveDebounceTimer = Timer(const Duration(milliseconds: 700), () {
+        repo.updateActiveDocumentContent(_textController.text);
+      });
     }
   }
 
@@ -71,6 +114,7 @@ class _EditorScreenState extends State<EditorScreen> {
         onInsertResult: (text) {
           final current = _textController.text;
           _textController.text = '$current\n\n$text\n';
+          _flushActiveDocument();
         },
       ),
     );
@@ -156,10 +200,12 @@ class _EditorScreenState extends State<EditorScreen> {
     final doc = repo.activeDocument;
     if (doc == null) return;
 
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Transmuting document to Selene Cloud Gist...'),
-        duration: Duration(seconds: 1),
+        duration: Duration(milliseconds: 900),
+        behavior: SnackBarBehavior.floating,
       ),
     );
 
@@ -199,6 +245,7 @@ class _EditorScreenState extends State<EditorScreen> {
         const SnackBar(
           content: Text('Published locally. Connect to network for Cloud Run sync.'),
           duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
@@ -206,23 +253,36 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _handleLoadSample(SampleItem sample) async {
     final repo = context.read<DocumentRepository>();
-    Navigator.pop(context); // Close drawer
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Unrolling canonical showcase: ${sample.title}...'),
-        duration: const Duration(milliseconds: 900),
-      ),
-    );
+    // 1. Auto-save any active edits before loading
+    _flushActiveDocument();
 
+    // 2. Dismiss drawer
+    Navigator.pop(context);
+
+    // 3. Clear any existing snackbars immediately
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    // 4. Instant sample load from embedded cache (0ms)
     final content = await SampleService.loadSampleContent(sample);
+
+    // 5. Update UI immediately
+    setState(() {
+      _loadedDocId = sample.id;
+      _textController.text = content;
+    });
+
+    // 6. Save in document repository
     await repo.openOrImportSample(sample.id, '${sample.icon} ${sample.title}', content);
 
     if (mounted) {
-      setState(() {
-        _loadedDocId = sample.id;
-        _textController.text = content;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✨ Loaded ${sample.title}'),
+          duration: const Duration(milliseconds: 700),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -232,7 +292,6 @@ class _EditorScreenState extends State<EditorScreen> {
     final licenseService = context.watch<LicenseService>();
     final licenseStatus = licenseService.currentStatus;
 
-    // Check if License Lock is active (expired or tampered)
     if (licenseStatus.isLocked) {
       return _buildLockedLicenseScreen(licenseStatus);
     }
@@ -243,7 +302,6 @@ class _EditorScreenState extends State<EditorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        // Generous, dedicated leading hamburger button with zero badge collisions
         leading: Builder(
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu, color: SeleneTheme.lunarCyan, size: 24),
@@ -266,17 +324,12 @@ class _EditorScreenState extends State<EditorScreen> {
           ],
         ),
         actions: [
-          // Lunar Diadem Ephemeris indicator
           const LunarDiademWidget(),
-
-          // Athena's Wisdom
           IconButton(
             icon: const Icon(Icons.lightbulb_outline, size: 20, color: SeleneTheme.goldAccent),
             tooltip: "Athena's Wisdom",
             onPressed: _showWisdomSheet,
           ),
-
-          // Overflow menu for licensing, timeline, share, and celestial sky
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, size: 20, color: SeleneTheme.textSecondary),
             color: SeleneTheme.surfaceElevated,
@@ -365,13 +418,20 @@ class _EditorScreenState extends State<EditorScreen> {
         ],
       ),
       drawer: _buildScriptoriumDrawer(repo, licenseStatus),
-      body: CelestialCanvasBackground(
-        isSparklingEnabled: _sparklesEnabled,
-        child: Stack(
-          children: [
-            Column(
+      body: Stack(
+        children: [
+          // 1. Isolated Starry Background Layer (zero impact on foreground text/scroll)
+          Positioned.fill(
+            child: CelestialCanvasBackground(
+              isSparklingEnabled: _sparklesEnabled,
+            ),
+          ),
+
+          // 2. Foreground Interactive Interface
+          Positioned.fill(
+            child: Column(
               children: [
-                // Mode switcher bar (Preview vs Edit vs Split on tablet)
+                // Mode switcher bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: const BoxDecoration(
@@ -380,7 +440,6 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                   child: Row(
                     children: [
-                      // View Mode Segmented Controls
                       SegmentedButton<CanvasViewMode>(
                         segments: [
                           const ButtonSegment(
@@ -413,10 +472,7 @@ class _EditorScreenState extends State<EditorScreen> {
                           visualDensity: VisualDensity.compact,
                         ),
                       ),
-
                       const Spacer(),
-
-                      // Whiteboard Markup Toggle
                       IconButton(
                         icon: Icon(
                           _isWhiteboardActive ? Icons.brush : Icons.brush_outlined,
@@ -428,8 +484,6 @@ class _EditorScreenState extends State<EditorScreen> {
                           setState(() => _isWhiteboardActive = !_isWhiteboardActive);
                         },
                       ),
-
-                      // Delphic Oracle AI Copilot
                       IconButton(
                         icon: const Icon(Icons.auto_awesome, color: SeleneTheme.purpleMystic, size: 20),
                         tooltip: 'The Delphic Oracle',
@@ -439,26 +493,26 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                 ),
 
-                // Main Canvas / Editor Area
+                // Main Canvas Area
                 Expanded(
                   child: _buildMainView(isTablet),
                 ),
 
-                // Bottom sticky keyboard formatting accessory (Edit Mode only)
+                // Keyboard accessory in edit mode
                 if (_viewMode == CanvasViewMode.edit)
                   KeyboardAccessoryBar(controller: _textController),
               ],
             ),
+          ),
 
-            // Floating Whiteboard Overlay
-            if (_isWhiteboardActive)
-              Positioned.fill(
-                child: WhiteboardOverlay(
-                  onClose: () => setState(() => _isWhiteboardActive = false),
-                ),
+          // 3. Floating Whiteboard Overlay
+          if (_isWhiteboardActive)
+            Positioned.fill(
+              child: WhiteboardOverlay(
+                onClose: () => setState(() => _isWhiteboardActive = false),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -623,6 +677,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     icon: const Icon(Icons.note_add_outlined, color: SeleneTheme.lunarCyan, size: 22),
                     tooltip: 'New Scroll',
                     onPressed: () {
+                      _flushActiveDocument();
                       repo.createDocument();
                       Navigator.pop(context);
                     },
@@ -631,7 +686,7 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
 
-            // Prominent License Status Banner in Drawer
+            // License Status Banner in Drawer
             InkWell(
               onTap: () {
                 Navigator.pop(context);
@@ -693,7 +748,7 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
 
-            // Scrollable Sections: User Scrolls, Canonical Samples, Features, and Docs
+            // Scrollable Drawer Sections
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -745,13 +800,22 @@ class _EditorScreenState extends State<EditorScreen> {
                             fontSize: 13,
                           ),
                         ),
-                        trailing: repo.documents.length > 1
-                            ? IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 16, color: SeleneTheme.textMuted),
-                                onPressed: () => repo.deleteDocument(doc.id),
-                              )
-                            : null,
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 18, color: SeleneTheme.textMuted),
+                          tooltip: 'Delete Note',
+                          onPressed: () async {
+                            await repo.deleteDocument(doc.id);
+                            if (mounted) {
+                              final active = repo.activeDocument;
+                              setState(() {
+                                _loadedDocId = active?.id;
+                                _textController.text = active?.content ?? '';
+                              });
+                            }
+                          },
+                        ),
                         onTap: () {
+                          _flushActiveDocument();
                           repo.selectDocument(doc.id);
                           Navigator.pop(context);
                         },
