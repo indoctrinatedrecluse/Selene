@@ -59,19 +59,24 @@ class SeleneApiClient {
   Future<String> askDelphicOracle({
     required String prompt,
     String context = '',
-    String mode = 'complete',
+    String language = 'markdown',
+    String mode = 'prose',
   }) async {
     try {
       final path = '/api/ai/complete';
       final uri = Uri.parse('$baseUrl$path');
       final headers = _generateAttestationHeaders(path);
       final body = json.encode({
+        'contextBefore': prompt.isNotEmpty ? prompt : context,
+        'contextAfter': '',
+        'language': language,
+        'mode': mode,
+        // Fallbacks for legacy/alternative servers
         'prompt': prompt,
         'context': context,
-        'mode': mode,
       });
 
-      final res = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 15));
+      final res = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 12));
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
         return data['completion'] ?? data['result'] ?? 'The Oracle remains in contemplative silence.';
@@ -87,15 +92,20 @@ class SeleneApiClient {
     required String code,
     required String language,
     String? errorDetail,
+    String? stackContext,
   }) async {
     try {
       final path = '/api/ai/fix';
       final uri = Uri.parse('$baseUrl$path');
       final headers = _generateAttestationHeaders(path);
+      final err = errorDetail ?? 'Code syntax or execution error';
       final body = json.encode({
         'code': code,
         'language': language,
-        'error': errorDetail ?? '',
+        'errorMessage': err,
+        'stackContext': stackContext ?? '',
+        // Fallback for legacy servers
+        'error': err,
       });
 
       final res = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 15));
@@ -108,6 +118,35 @@ class SeleneApiClient {
     }
   }
 
+  /// Synthesizes UI components, diagrams, or math formulas with the Delphic Oracle
+  Future<String?> generateWithOracle({
+    required String prompt,
+    String category = 'ui',
+    String stack = 'tsx',
+    String diagramType = 'flowchart',
+  }) async {
+    try {
+      final path = '/api/ai/generate';
+      final uri = Uri.parse('$baseUrl$path');
+      final headers = _generateAttestationHeaders(path);
+      final body = json.encode({
+        'prompt': prompt,
+        'category': category,
+        'stack': stack,
+        'diagramType': diagramType,
+      });
+
+      final res = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 15));
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        return data['content'] ?? data['code'] ?? data['result'];
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Syncs document to cloud share gist
   Future<String?> createCloudShareGist(DocumentModel doc) async {
     try {
@@ -116,14 +155,19 @@ class SeleneApiClient {
       final headers = _generateAttestationHeaders(path);
       final body = json.encode({
         'title': doc.title,
+        'contentMarkdown': doc.content,
         'content': doc.content,
+        'author': 'Selene Mobile Titan',
       });
 
-      final res = await http.post(uri, headers: headers, body: body);
+      final res = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 10));
       if (res.statusCode == 200 || res.statusCode == 201) {
         final data = json.decode(res.body);
-        final shareId = data['id'];
-        return '$baseUrl/share/$shareId';
+        final shareId = data['id'] ?? data['shareId'];
+        if (shareId != null) {
+          return '$baseUrl/share/$shareId';
+        }
+        return data['shareUrl'] as String?;
       }
       return null;
     } catch (_) {

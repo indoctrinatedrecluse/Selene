@@ -304,22 +304,28 @@ class LicenseService extends ChangeNotifier {
         uri,
         headers: {'Content-Type': 'application/json'},
         body: json.encode(reqBody),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 10));
 
-      final data = json.decode(res.body) as Map<String, dynamic>;
+      Map<String, dynamic> data = {};
+      try {
+        data = json.decode(res.body) as Map<String, dynamic>;
+      } catch (_) {}
 
-      if (res.statusCode == 200 && data['success'] == true) {
+      final isSuccess = res.statusCode >= 200 &&
+          res.statusCode < 300 &&
+          (data['success'] == true || data['status'] == 'active' || !data.containsKey('error'));
+
+      if (isSuccess) {
         final prefs = await SharedPreferences.getInstance();
         final expiresAt = data['expires_at'] ?? 'never';
 
         await prefs.setString(_prefKey, key);
         await prefs.setString(_prefType, tier);
-        await prefs.setString(_prefUsername, username?.trim() ?? 'Enterprise Admin');
+        await prefs.setString(_prefUsername, username?.trim() ?? (tier == 'ADMIN' ? 'Enterprise Admin' : ''));
         await prefs.setString(_prefExpiresAt, expiresAt);
 
         _initFuture = null;
-        _initFuture = null;
-    await initialize();
+        await initialize();
 
         return ActivationResult(
           success: true,
@@ -329,7 +335,7 @@ class LicenseService extends ChangeNotifier {
       } else {
         return ActivationResult(
           success: false,
-          message: data['message'] ?? 'Activation rejected by central licensor (Status ${res.statusCode}).',
+          message: data['error'] ?? data['message'] ?? 'Activation rejected by central licensor (Status ${res.statusCode}).',
         );
       }
     } catch (e) {

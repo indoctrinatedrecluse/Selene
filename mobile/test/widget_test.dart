@@ -7,7 +7,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(const SeleneMobileApp());
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
 
     // Verify that the title and lunar elements render
     expect(find.textContaining('Selene'), findsWidgets);

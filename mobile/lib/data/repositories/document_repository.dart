@@ -86,6 +86,31 @@ class DocumentRepository extends ChangeNotifier {
     return newDoc;
   }
 
+  Future<DocumentModel> openOrImportSample(String id, String title, String content) async {
+    final existingIndex = _documents.indexWhere((d) => d.id == id);
+    if (existingIndex != -1) {
+      _selectedDocumentId = id;
+      notifyListeners();
+      return _documents[existingIndex];
+    }
+
+    final now = DateTime.now();
+    final sampleDoc = DocumentModel(
+      id: id,
+      title: title,
+      content: content,
+      updatedAt: now,
+      createdAt: now,
+      tags: ['Sample', 'Showcase'],
+    );
+
+    _documents.add(sampleDoc);
+    _selectedDocumentId = id;
+    await _persistToDisk();
+    notifyListeners();
+    return sampleDoc;
+  }
+
   Future<void> updateActiveDocumentContent(String newContent) async {
     final doc = activeDocument;
     if (doc == null) return;

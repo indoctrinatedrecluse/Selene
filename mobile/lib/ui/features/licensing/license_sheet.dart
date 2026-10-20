@@ -44,24 +44,37 @@ class _LicenseSheetState extends State<LicenseSheet> {
       _successMessage = null;
     });
 
-    final res = await licenseService.activateLicense(
-      licenseKey: _keyController.text,
-      username: _userController.text,
-      password: _passController.text,
-    );
+    try {
+      final res = await licenseService.activateLicense(
+        licenseKey: _keyController.text,
+        username: _userController.text,
+        password: _passController.text,
+      );
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        if (res.success) {
-          _successMessage = res.message;
-          _keyController.clear();
-          _userController.clear();
-          _passController.clear();
-        } else {
-          _errorMessage = res.message;
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (res.success) {
+            _successMessage = res.message;
+            _keyController.clear();
+            _userController.clear();
+            _passController.clear();
+          } else {
+            _errorMessage = res.message;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Activation error: ${e.toString()}';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
