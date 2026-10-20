@@ -2,6 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:selene_mobile/data/services/selene_api_client.dart';
 import 'package:selene_mobile/ui/core/theme.dart';
 
+class OracleDivinationPreset {
+  final String icon;
+  final String name;
+  final String role;
+  final String prompt;
+
+  const OracleDivinationPreset({
+    required this.icon,
+    required this.name,
+    required this.role,
+    required this.prompt,
+  });
+}
+
 class DelphicOracleSheet extends StatefulWidget {
   final SeleneApiClient apiClient;
   final String activeContext;
@@ -23,11 +37,43 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
   bool _isLoading = false;
   String? _response;
 
-  final List<String> _presets = [
-    '✨ Continue technical prose',
-    '🧮 Explain mathematical proof',
-    '⚡ Optimize code block',
-    '📑 Generate API specification',
+  final List<OracleDivinationPreset> _divinations = const [
+    OracleDivinationPreset(
+      icon: '🌋',
+      name: "Hephaestus's Forge",
+      role: 'Algorithm Optimization',
+      prompt: 'Harden and optimize this implementation: diagnose algorithmic bottlenecks, improve asymptotic runtime, and ensure robust error boundaries.',
+    ),
+    OracleDivinationPreset(
+      icon: '🦉',
+      name: "Athena's Wisdom",
+      role: 'Architectural Critique',
+      prompt: 'Evaluate this architecture with strategic wisdom: critique component coupling, state invariants, data flow, and recommend hardened design patterns.',
+    ),
+    OracleDivinationPreset(
+      icon: '💨',
+      name: "Zephyrus's Breeze",
+      role: 'Prose Polish',
+      prompt: 'Refine and polish this technical prose: elevate clarity, conciseness, and precision while maintaining an authoritative engineering voice.',
+    ),
+    OracleDivinationPreset(
+      icon: '📜',
+      name: "Hermes' Transmutation",
+      role: 'API & Schema Spec',
+      prompt: 'Transmute this specification into a rigorous RFC schema with complete endpoint signatures, type models, and HTTP telemetry.',
+    ),
+    OracleDivinationPreset(
+      icon: '🧮',
+      name: 'Pythagorean Lemma',
+      role: 'Formal KaTeX Derivation',
+      prompt: 'Derive a step-by-step mathematical proof in KaTeX LaTeX notation for the theoretical equations described in this document.',
+    ),
+    OracleDivinationPreset(
+      icon: '🪐',
+      name: "Apollo's Prophecy",
+      role: 'Failure Mode Analysis',
+      prompt: 'Identify subtle concurrency edge cases, race conditions, memory leaks, and distributed network partition risks in this system.',
+    ),
   ];
 
   Future<void> _submitPrompt(String prompt) async {
@@ -59,8 +105,15 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 24),
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).viewInsets.bottom + 24),
+      decoration: const BoxDecoration(
+        color: SeleneTheme.surfaceElevated,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +123,7 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
             child: Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: SeleneTheme.borderHighlight,
                 borderRadius: BorderRadius.circular(2),
@@ -103,7 +156,7 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
                     ),
                   ),
                   Text(
-                    'Pythian Intelligence & Prose Copilot',
+                    'Pythian Intelligence & Olympian Divinations',
                     style: TextStyle(color: SeleneTheme.textSecondary, fontSize: 12),
                   ),
                 ],
@@ -121,22 +174,23 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Presets Carousel
+          // Divination Presets Carousel
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: _presets.map((preset) {
+              children: _divinations.map((divination) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
-                    label: Text(preset, style: const TextStyle(fontSize: 12, color: SeleneTheme.textPrimary)),
+                    avatar: Text(divination.icon, style: const TextStyle(fontSize: 13)),
+                    label: Text(divination.name, style: const TextStyle(fontSize: 12, color: SeleneTheme.textPrimary)),
                     backgroundColor: SeleneTheme.surface,
                     side: const BorderSide(color: SeleneTheme.border),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     onPressed: () {
-                      _promptController.text = preset.substring(2).trim();
+                      _promptController.text = divination.prompt;
                       _submitPrompt(_promptController.text);
                     },
                   ),
@@ -150,13 +204,15 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
           // Input field
           TextField(
             controller: _promptController,
-            style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 14),
+            style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 13.5),
+            maxLines: 2,
+            minLines: 1,
             decoration: InputDecoration(
-              hintText: 'Ask the Oracle for prose continuation, KaTeX formulas, or code...',
-              hintStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 13),
+              hintText: 'Seek divination from the Pythia (prose, formulas, architecture)...',
+              hintStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 12.5),
               filled: true,
               fillColor: SeleneTheme.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: SeleneTheme.border),
@@ -167,7 +223,7 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: SeleneTheme.purpleMystic, width: 1.5),
+                borderSide: const BorderSide(color: SeleneTheme.purpleMystic),
               ),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.arrow_upward, color: SeleneTheme.purpleMystic),
@@ -179,38 +235,76 @@ class _DelphicOracleSheetState extends State<DelphicOracleSheet> {
 
           // Response area
           if (_response != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              constraints: const BoxConstraints(maxHeight: 180),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: SeleneTheme.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: SeleneTheme.borderHighlight),
-              ),
-              child: SingleChildScrollView(
-                child: Text(
-                  _response!,
-                  style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 13.5, height: 1.5),
+            const SizedBox(height: 12),
+            Flexible(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: SeleneTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: SeleneTheme.purpleMystic.withValues(alpha: 0.4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.auto_awesome, size: 14, color: SeleneTheme.purpleMystic),
+                            SizedBox(width: 6),
+                            Text(
+                              'Pythian Revelation',
+                              style: TextStyle(
+                                color: SeleneTheme.purpleMystic,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.input, size: 14),
+                          label: const Text('Insert into Canvas'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: SeleneTheme.purpleMystic.withValues(alpha: 0.25),
+                            foregroundColor: SeleneTheme.purpleMystic,
+                            elevation: 0,
+                            side: const BorderSide(color: SeleneTheme.purpleMystic),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            visualDensity: VisualDensity.compact,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: () {
+                            widget.onInsertResult(_response!);
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Oracle divination appended to document'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 16, color: SeleneTheme.border),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: SelectableText(
+                          _response!,
+                          style: const TextStyle(
+                            color: SeleneTheme.textPrimary,
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  icon: const Icon(Icons.add_circle_outline, size: 16),
-                  label: const Text('Insert into Document'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: SeleneTheme.lunarCyan,
-                  ),
-                  onPressed: () {
-                    widget.onInsertResult(_response!);
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
             ),
           ],
         ],

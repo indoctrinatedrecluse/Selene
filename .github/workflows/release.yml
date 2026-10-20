@@ -98,12 +98,64 @@ jobs:
             
             Welcome to the official native desktop release of **Selene — The Hypermodern Technical Document & Code Canvas**.
             
-            ### 📦 Included Desktop Distributions:
+            ### 📦 Included Distributions:
             - **Windows**: `.msi` Installer & Portable `.exe`
             - **macOS**: Universal `.dmg` Disk Image (Apple Silicon + Intel)
             - **Linux**: `.AppImage` & Debian `.deb` Packages
+            - **Android**: Native Flutter Release APK (`.apk`)
             
             See [CHANGELOG.md](https://github.com/indoctrinatedrecluse/Selene/blob/main/CHANGELOG.md) for full release details.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+  build-mobile-android:
+    name: Build Android Mobile APK
+    needs: [test-and-verify, build-desktop-tauri]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Mobile Dependencies
+        working-directory: ./mobile
+        run: flutter pub get
+
+      - name: Verify Flutter Analysis & Tests
+        working-directory: ./mobile
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Build Android Release APK
+        working-directory: ./mobile
+        run: flutter build apk --release
+
+      - name: Prepare APK Asset
+        run: |
+          VERSION="${{ github.ref_name }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="v0.4.0"
+          fi
+          mkdir -p dist-mobile
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk dist-mobile/selene-${VERSION}-android.apk
+
+      - name: Upload Android APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: dist-mobile/selene-*-android.apk

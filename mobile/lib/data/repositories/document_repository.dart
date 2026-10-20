@@ -243,17 +243,94 @@ class LunarBeacon extends StatelessWidget {
         content: r'''# 📐 Quantum Mechanics & Field Equations
 
 ### The Time-Dependent Schrödinger Equation:
-$$i\\hbar \\frac{\\partial}{\\partial t} \\Psi(\\mathbf{r}, t) = \\left[ -\\frac{\\hbar^2}{2m} \\nabla^2 + V(\\mathbf{r}, t) \\right] \\Psi(\\mathbf{r}, t)$$
+$$i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r}, t) = \left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r}, t) \right] \Psi(\mathbf{r}, t)$$
 
 ### Einstein Field Equations of General Relativity:
-$$R_{\\mu\\nu} - \\frac{1}{2} R g_{\\mu\\nu} + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4} T_{\\mu\\nu}$$
+$$R_{\mu\nu} - \frac{1}{2} R g_{\mu\nu} + \Lambda g_{\mu\nu} = \frac{8\pi G}{c^4} T_{\mu\nu}$$
 
 ### Maxwell-Heaviside Tensor Formulation:
-$$\\partial_\\mu F^{\\mu\\nu} = \\mu_0 J^\\nu, \\quad \\partial_\\mu \\tilde{F}^{\\mu\\nu} = 0$$
+$$\partial_\mu F^{\mu\nu} = \mu_0 J^\nu, \quad \partial_\mu \tilde{F}^{\mu\nu} = 0$$
 ''',
         updatedAt: now.subtract(const Duration(hours: 3)),
         createdAt: now.subtract(const Duration(hours: 3)),
         tags: ['Physics', 'KaTeX', 'Mathematics'],
+      ),
+      DocumentModel(
+        id: 'seed-03-polyglot',
+        title: '⚡ Pan-Hellenic Polyglot Living Sandboxes',
+        content: r'''# ⚡ Pan-Hellenic Polyglot Living Sandboxes
+
+Selene Mobile brings the Olympian literate computing engines directly to your Android device. Tap **Run Engine** on any code block below to execute or preview interactive UI widgets.
+
+---
+
+## 1. ⚛️ React 19 WASM Sandbox
+
+```react
+export default function Counter() {
+  const [count, setCount] = React.useState(0);
+  return (
+    <button onClick={() => setCount(c => c + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+```
+
+---
+
+## 2. 🦅 Phoenix of Olympus LiveView
+
+```heex
+<div class="p-4 bg-amber-950/30 border border-amber-500/40 rounded-xl">
+  <h3 class="font-bold text-amber-400">Phoenix LiveView Telemetry</h3>
+  <p class="text-xs text-amber-200 mt-1">Assigns: {@node_id} (Ping: {@latency_ms}ms)</p>
+  <button phx-click="ping" class="mt-3 px-3 py-1 bg-amber-600 text-white text-xs rounded">
+    Dispatch phx-click
+  </button>
+</div>
+```
+
+---
+
+## 3. 🪶 Hermes Relay: Interactive HTTP / cURL
+
+```http
+GET /api/health HTTP/1.1
+Host: localhost:3000
+Accept: application/json
+X-Hermes-Relay: celestial-gateway-v4
+```
+
+---
+
+## 4. 🗄️ DuckDB Vectorized SQL Analytics
+
+```sql
+SELECT region, COUNT(*) as count 
+FROM servers 
+GROUP BY region 
+ORDER BY count DESC;
+```
+
+---
+
+## 5. 🕊️ Zephyr Swift: SwiftUI Canvas
+
+```swift
+import SwiftUI
+
+struct CelestialView: View {
+    @State private var telemetryActive = true
+    var body: some View {
+        Toggle("Starlight Telemetry", isOn: $telemetryActive)
+    }
+}
+```
+''',
+        updatedAt: now.subtract(const Duration(hours: 1)),
+        createdAt: now.subtract(const Duration(hours: 1)),
+        tags: ['Polyglot', 'Engines', 'Sandboxes'],
       ),
     ];
   }
