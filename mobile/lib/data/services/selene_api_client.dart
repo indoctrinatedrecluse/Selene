@@ -2,22 +2,30 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import '../models/document_model.dart';
+import 'license_service.dart';
 
 class SeleneApiClient {
   final String baseUrl;
   final String sharedSecret;
   final String deviceHwid;
+  final LicenseService? licenseService;
 
   SeleneApiClient({
     this.baseUrl = 'https://selene-h5zdysrkqa-uc.a.run.app',
-    this.sharedSecret = 'selene_titan_attestation_secret_2026',
+    this.sharedSecret = 'selene_titan_celestial_secret_auth_key_2026_abmitra',
     this.deviceHwid = 'mobile-android-client',
+    this.licenseService,
   });
 
   /// Computes the HMAC-SHA256 attestation headers required by Next.js middleware
   Map<String, String> _generateAttestationHeaders(String path) {
+    final effectiveHwid = licenseService?.hwid ?? deviceHwid;
+    final effectiveToken = (licenseService != null && licenseService!.licenseToken.isNotEmpty)
+        ? licenseService!.licenseToken
+        : 'TRIAL-ACTIVE-MOBILE-SEAT';
+
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final message = '$timestamp:$path:$deviceHwid';
+    final message = '$timestamp:$path:$effectiveHwid';
     final key = utf8.encode(sharedSecret);
     final bytes = utf8.encode(message);
     final hmac = Hmac(sha256, key);
@@ -25,11 +33,11 @@ class SeleneApiClient {
 
     return {
       'Content-Type': 'application/json',
-      'X-Selene-App-ID': 'selene-mobile-client',
+      'X-Selene-App-ID': 'selene-titan-app-v1',
       'X-Selene-Timestamp': timestamp,
-      'X-Selene-HWID': deviceHwid,
+      'X-Selene-HWID': effectiveHwid,
       'X-Selene-Signature': signature,
-      'X-Selene-License-Token': 'TRIAL-ACTIVE-MOBILE-SEAT',
+      'X-Selene-License-Token': effectiveToken,
     };
   }
 

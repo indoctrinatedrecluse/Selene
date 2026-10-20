@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:selene_mobile/data/repositories/document_repository.dart';
+import 'package:selene_mobile/data/services/license_service.dart';
 import 'package:selene_mobile/ui/core/theme.dart';
 import 'package:selene_mobile/ui/features/canvas/whiteboard_overlay.dart';
+import 'package:selene_mobile/ui/features/licensing/license_sheet.dart';
 import 'package:selene_mobile/ui/features/lunar/lunar_diadem_widget.dart';
 import 'package:selene_mobile/ui/features/oracle/delphic_oracle_sheet.dart';
 import 'package:selene_mobile/ui/features/timeline/chronos_timeline_sheet.dart';
@@ -94,6 +96,16 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
+  void _showLicenseSheet({bool isDismissible = true}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: isDismissible,
+      enableDrag: isDismissible,
+      builder: (context) => LicenseSheet(isDismissible: isDismissible),
+    );
+  }
+
   Future<void> _shareCloudGist() async {
     final repo = context.read<DocumentRepository>();
     final doc = repo.activeDocument;
@@ -113,11 +125,16 @@ class _EditorScreenState extends State<EditorScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
+          backgroundColor: SeleneTheme.surfaceElevated,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: SeleneTheme.lunarCyan),
+          ),
           title: const Row(
             children: [
               Text('☁️', style: TextStyle(fontSize: 18)),
               SizedBox(width: 8),
-              Text('Cloud Gist Published', style: TextStyle(fontSize: 16)),
+              Text('Cloud Gist Published', style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 16)),
             ],
           ),
           content: SelectableText(
@@ -145,8 +162,15 @@ class _EditorScreenState extends State<EditorScreen> {
   @override
   Widget build(BuildContext context) {
     final repo = context.watch<DocumentRepository>();
-    _syncControllerWithActiveDoc();
+    final licenseService = context.watch<LicenseService>();
+    final licenseStatus = licenseService.currentStatus;
 
+    // Check if License Lock is active (expired or tampered)
+    if (licenseStatus.isLocked) {
+      return _buildLockedLicenseScreen(licenseStatus);
+    }
+
+    _syncControllerWithActiveDoc();
     final activeDoc = repo.activeDocument;
     final isTablet = MediaQuery.of(context).size.width > 768;
 
@@ -166,9 +190,51 @@ class _EditorScreenState extends State<EditorScreen> {
           ],
         ),
         actions: [
+          // License Status Badge
+          InkWell(
+            onTap: () => _showLicenseSheet(),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: licenseStatus.status == 'active'
+                    ? SeleneTheme.emeraldSuccess.withValues(alpha: 0.15)
+                    : SeleneTheme.goldAccent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: licenseStatus.status == 'active'
+                      ? SeleneTheme.emeraldSuccess.withValues(alpha: 0.3)
+                      : SeleneTheme.goldAccent.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.shield,
+                    size: 11,
+                    color: licenseStatus.status == 'active' ? SeleneTheme.emeraldSuccess : SeleneTheme.goldAccent,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    licenseStatus.type == LicenseTier.trial
+                        ? '${licenseStatus.daysRemaining}D TRIAL'
+                        : licenseStatus.type.name.toUpperCase(),
+                    style: TextStyle(
+                      color: licenseStatus.status == 'active' ? SeleneTheme.emeraldSuccess : SeleneTheme.goldAccent,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+
           // Lunar Diadem
           const LunarDiademWidget(),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
 
           // Athena's Wisdom
           IconButton(
@@ -192,7 +258,7 @@ class _EditorScreenState extends State<EditorScreen> {
           ),
         ],
       ),
-      drawer: _buildScriptoriumDrawer(repo),
+      drawer: _buildScriptoriumDrawer(repo, licenseStatus),
       body: Stack(
         children: [
           Column(
@@ -239,62 +305,44 @@ class _EditorScreenState extends State<EditorScreen> {
                         visualDensity: VisualDensity.compact,
                       ),
                     ),
+
                     const Spacer(),
 
-                    // Daedalus Whiteboard Toggle Button
-                    InkWell(
-                      onTap: () => setState(() => _isWhiteboardActive = !_isWhiteboardActive),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _isWhiteboardActive
-                              ? SeleneTheme.lunarCyan.withValues(alpha: 0.2)
-                              : SeleneTheme.surfaceElevated,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: _isWhiteboardActive
-                                ? SeleneTheme.lunarCyan
-                                : SeleneTheme.border,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Text('🎨', style: TextStyle(fontSize: 14)),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Daedalus',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: _isWhiteboardActive
-                                    ? SeleneTheme.lunarCyan
-                                    : SeleneTheme.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
+                    // Whiteboard Markup Toggle
+                    IconButton(
+                      icon: Icon(
+                        _isWhiteboardActive ? Icons.brush : Icons.brush_outlined,
+                        color: _isWhiteboardActive ? SeleneTheme.goldAccent : SeleneTheme.textSecondary,
+                        size: 20,
                       ),
+                      tooltip: "Daedalus's Drawing Board",
+                      onPressed: () {
+                        setState(() => _isWhiteboardActive = !_isWhiteboardActive);
+                      },
+                    ),
+
+                    // Delphic Oracle AI Copilot
+                    IconButton(
+                      icon: const Icon(Icons.auto_awesome, color: SeleneTheme.purpleMystic, size: 20),
+                      tooltip: 'The Delphic Oracle',
+                      onPressed: _showOracleSheet,
                     ),
                   ],
                 ),
               ),
 
-              // Canvas Content Area
+              // Main Canvas / Editor Area
               Expanded(
-                child: _buildCanvasContent(isTablet),
+                child: _buildMainView(isTablet),
               ),
 
-              // Sticky Keyboard Accessory Bar (in Edit Mode)
-              if (_viewMode == CanvasViewMode.edit || _viewMode == CanvasViewMode.split)
-                KeyboardAccessoryBar(
-                  controller: _textController,
-                  onOracleRequested: _showOracleSheet,
-                ),
+              // Bottom sticky keyboard formatting accessory (Edit Mode only)
+              if (_viewMode == CanvasViewMode.edit)
+                KeyboardAccessoryBar(controller: _textController),
             ],
           ),
 
-          // Daedalus Whiteboard Vector Canvas Overlay
+          // Floating Whiteboard Overlay
           if (_isWhiteboardActive)
             Positioned.fill(
               child: WhiteboardOverlay(
@@ -306,57 +354,133 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildCanvasContent(bool isTablet) {
-    if (_viewMode == CanvasViewMode.preview) {
-      return MarkdownCanvas(content: _textController.text);
-    } else if (_viewMode == CanvasViewMode.edit) {
-      return _buildTextEditor();
-    } else {
-      // Split mode on tablet / landscape
-      return Row(
-        children: [
-          Expanded(child: _buildTextEditor()),
-          const VerticalDivider(width: 1),
-          Expanded(child: MarkdownCanvas(content: _textController.text)),
-        ],
-      );
+  Widget _buildLockedLicenseScreen(LicenseStatus status) {
+    return Scaffold(
+      backgroundColor: SeleneTheme.background,
+      body: Center(
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: SeleneTheme.surfaceElevated,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: SeleneTheme.goldAccent.withValues(alpha: 0.4)),
+            boxShadow: [
+              BoxShadow(
+                color: SeleneTheme.goldAccent.withValues(alpha: 0.1),
+                blurRadius: 30,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: SeleneTheme.goldAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: SeleneTheme.goldAccent.withValues(alpha: 0.4)),
+                ),
+                child: const Text('🛡️', style: TextStyle(fontSize: 36)),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Selene License Time-Lock',
+                style: TextStyle(
+                  color: SeleneTheme.textPrimary,
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                status.message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: SeleneTheme.textSecondary, fontSize: 13, height: 1.45),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: SeleneTheme.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: SeleneTheme.border),
+                ),
+                child: Text(
+                  'Device HWID: ${status.hwid}',
+                  style: const TextStyle(fontFamily: 'monospace', color: SeleneTheme.lunarCyan, fontSize: 11),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.key, size: 16),
+                label: const Text('Activate License or Manage Device'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SeleneTheme.goldAccent,
+                  foregroundColor: SeleneTheme.background,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () => _showLicenseSheet(isDismissible: false),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainView(bool isTablet) {
+    switch (_viewMode) {
+      case CanvasViewMode.preview:
+        return MarkdownCanvas(content: _textController.text);
+      case CanvasViewMode.edit:
+        return _buildRawEditor();
+      case CanvasViewMode.split:
+        return Row(
+          children: [
+            Expanded(child: MarkdownCanvas(content: _textController.text)),
+            const VerticalDivider(width: 1, color: SeleneTheme.border),
+            Expanded(child: _buildRawEditor()),
+          ],
+        );
     }
   }
 
-  Widget _buildTextEditor() {
+  Widget _buildRawEditor() {
     return Container(
-      color: SeleneTheme.background,
+      color: SeleneTheme.surface,
       child: TextField(
         controller: _textController,
         maxLines: null,
         expands: true,
         keyboardType: TextInputType.multiline,
         style: const TextStyle(
-          color: SeleneTheme.textPrimary,
-          fontSize: 14.5,
           fontFamily: 'monospace',
-          height: 1.55,
+          fontSize: 14,
+          height: 1.5,
+          color: SeleneTheme.textPrimary,
         ),
         decoration: const InputDecoration(
+          hintText: 'Compose your technical prose, equations, and code blocks...',
+          hintStyle: TextStyle(color: SeleneTheme.textMuted),
           contentPadding: EdgeInsets.all(16),
           border: InputBorder.none,
-          hintText: 'Compose your literate markdown prose, KaTeX math formulas, or code blocks...',
-          hintStyle: TextStyle(color: SeleneTheme.textMuted, fontSize: 14),
         ),
       ),
     );
   }
 
-  Widget _buildScriptoriumDrawer(DocumentRepository repo) {
+  Widget _buildScriptoriumDrawer(DocumentRepository repo, LicenseStatus licenseStatus) {
     return Drawer(
       backgroundColor: SeleneTheme.surfaceElevated,
       child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drawer Header
+            // Header
             Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: SeleneTheme.border)),
               ),
@@ -439,6 +563,29 @@ class _EditorScreenState extends State<EditorScreen> {
                       },
                     ),
                   );
+                },
+              ),
+            ),
+
+            // Manage License & Device Option (Matches Desktop Help Menu)
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: SeleneTheme.border)),
+              ),
+              child: ListTile(
+                dense: true,
+                leading: const Icon(Icons.shield_outlined, size: 18, color: SeleneTheme.goldAccent),
+                title: const Text('Manage License & Device...', style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13)),
+                subtitle: Text(
+                  licenseStatus.type == LicenseTier.trial
+                      ? '60-Day Trial (${licenseStatus.daysRemaining}d remaining)'
+                      : '${licenseStatus.type.name.toUpperCase()} License Active',
+                  style: const TextStyle(color: SeleneTheme.textSecondary, fontSize: 11),
+                ),
+                trailing: const Icon(Icons.chevron_right, size: 16, color: SeleneTheme.textMuted),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showLicenseSheet();
                 },
               ),
             ),
