@@ -141,7 +141,8 @@ export function WatBytecodeRenderer({
       }
 
       // Extract functions: (func $name (param $x i32) ... (result i32) ...)
-      const funcRegex = /\(func\s+(\$?[\w.-]+)([\s\S]*?)(?=\n\s*\((?:func|memory|export|\)|\Z))/g;
+      // Exclude empty export stubs like (export "add" (func $add))
+      const funcRegex = /(?:^|\n)\s*\(\s*func\s+(\$?[\w.-]+)([\s\S]*?)(?=(?:\n\s*\(\s*(?:func|memory|export|\))\s*|\Z))/g;
       let fnMatch;
       while ((fnMatch = funcRegex.exec(code)) !== null) {
         const internalName = fnMatch[1];
@@ -176,6 +177,11 @@ export function WatBytecodeRenderer({
         const expEntry = Object.entries(exportNames).find(([, intN]) => intN === internalName);
         const expName = expEntry ? expEntry[0] : internalName.replace(/^\$/, "");
 
+        // Protect already parsed functions against being overwritten by empty export stubs
+        if (funcs[expName] && funcs[expName].params.length > 0 && params.length === 0) {
+          continue;
+        }
+
         funcs[expName] = {
           name: expName,
           internalName,
@@ -200,16 +206,31 @@ export function WatBytecodeRenderer({
     }
   }, [code]);
 
+  const getDefaultArgs = (target: WatExportedFunc | undefined): Record<string, number> => {
+    if (!target) return { $a: 24, $b: 18 };
+    const args: Record<string, number> = {};
+    if (target.name === "add") {
+      args["$a"] = 24;
+      args["$b"] = 18;
+    } else if (target.name === "hypot_squared") {
+      args["$x"] = 3;
+      args["$y"] = 4;
+    } else if (target.name === "fibonacci") {
+      args["$n"] = 7;
+    } else {
+      target.params.forEach((p, idx) => {
+        args[p.name] = (idx + 1) * 7;
+      });
+    }
+    return args;
+  };
+
   // Handle function change
   const handleSelectFunction = (name: string) => {
     setSelectedFunc(name);
     const target = exportedFunctions.find((f) => f.name === name);
     if (target) {
-      const defaultArgs: Record<string, number> = {};
-      target.params.forEach((p, idx) => {
-        defaultArgs[p.name] = (idx + 1) * 7;
-      });
-      setFuncArgs(defaultArgs);
+      setFuncArgs(getDefaultArgs(target));
     }
     setExecResult(null);
   };
@@ -233,21 +254,28 @@ export function WatBytecodeRenderer({
     const start = performance.now();
 
     try {
-      const activeDef = exportedFunctions.find((f) => f.name === selectedFunc);
+      const activeDef = exportedFunctions.find((f) => f.name === selectedFunc) || exportedFunctions[0];
       if (!activeDef) return;
 
-      const argsList = activeDef.params.map((p) => funcArgs[p.name] ?? 0);
+      const argsList = activeDef.params.map((p) => {
+        if (funcArgs[p.name] !== undefined) return funcArgs[p.name];
+        if (activeDef.name === "fibonacci") return 7;
+        if (activeDef.name === "hypot_squared") return p.name === "$x" ? 3 : 4;
+        return p.name === "$a" ? 24 : 18;
+      });
       let calculatedValue = 0;
 
       // Mathematical emulation of the WASM bytecode
       if (activeDef.name === "add") {
-        calculatedValue = (argsList[0] || 0) + (argsList[1] || 0);
+        const a = argsList[0] ?? 24;
+        const b = argsList[1] ?? 18;
+        calculatedValue = a + b;
       } else if (activeDef.name === "hypot_squared") {
-        const x = argsList[0] || 0;
-        const y = argsList[1] || 0;
+        const x = argsList[0] ?? 3;
+        const y = argsList[1] ?? 4;
         calculatedValue = x * x + y * y;
       } else if (activeDef.name === "fibonacci") {
-        const n = Math.min(46, Math.max(0, argsList[0] || 0));
+        const n = Math.min(46, Math.max(0, argsList[0] ?? 7));
         let a = 0;
         let b = 1;
         if (n === 0) calculatedValue = 0;
@@ -268,9 +296,9 @@ export function WatBytecodeRenderer({
       const elapsed = Math.max(0.012, performance.now() - start);
 
       const stackSteps = [
-        `Push arguments to virtual stack: [${argsList.join(", ")}]`,
+        `Push arguments to virtual stack: [${activeDef.params.map((p, i) => `${p.name}=${argsList[i]}`).join(", ")}]`,
         `Resolve local.get references: { ${activeDef.params.map((p, i) => `${p.name}: ${argsList[i]}`).join(", ")} }`,
-        `Execute opcode instruction flow: ${activeDef.body.slice(0, 3).join(" -> ")} ...`,
+        `Execute opcode instruction flow: ${activeDef.body.slice(0, 4).join(" -> ")} ...`,
         `Stack return value: i32.const ${calculatedValue}`,
       ];
 
@@ -428,7 +456,7 @@ export function WatBytecodeRenderer({
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-slate-400">Invocation Return:</span>
                     <span className="text-base font-bold font-mono text-emerald-300">
-                      {activeFuncDef?.name}({Object.values(funcArgs).join(", ")}) =&gt; {execResult.value}
+                      {activeFuncDef?.name}({activeFuncDef?.params.map((p) => `${p.name}: ${funcArgs[p.name] ?? 0}`).join(", ")}) =&gt; {execResult.value}
                     </span>
                   </div>
                   <span className="text-[10px] font-mono text-slate-500">

@@ -309,6 +309,50 @@ export function SeleneEditor() {
 
 
 
+  // Active document and title tracking refs to avoid stale closure state during async switching
+  const isSwitchingDocRef = useRef(false);
+  const activeDocIdRef = useRef(activeDocId);
+  const docTitleRef = useRef(docTitle);
+
+  useEffect(() => {
+    activeDocIdRef.current = activeDocId;
+  }, [activeDocId]);
+
+  useEffect(() => {
+    docTitleRef.current = docTitle;
+  }, [docTitle]);
+
+  const ghostTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const chronosTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced DB persistence
+  const debounceDbSave = useCallback((id: string, title: string, content: string) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    setIsSavingDb(true);
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await apiFetch(`/api/documents/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, contentMarkdown: content }),
+        });
+      } catch {
+        // Fallback to local storage
+      } finally {
+        setIsSavingDb(false);
+      }
+    }, 800);
+  }, []);
+
+  // Debounced Chronos checkpointing
+  const debounceChronosSave = useCallback((id: string, title: string, content: string) => {
+    if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+    chronosTimeoutRef.current = setTimeout(() => {
+      saveChronosSnapshot(id, title, content);
+    }, 25000);
+  }, []);
+
   // Fetch revisions when active document changes
   const loadRevisions = useCallback(async (docId: string) => {
     try {
@@ -352,13 +396,17 @@ export function SeleneEditor() {
       },
     },
     onUpdate: ({ editor }) => {
+      if (isSwitchingDocRef.current) return;
       const md = (editor.storage as { markdown?: { getMarkdown: () => string } }).markdown?.getMarkdown();
       if (md) {
         setMarkdownContent(md);
+        const currentDocId = activeDocIdRef.current;
+        const currentTitle = docTitleRef.current;
+
         // Auto-save to local state
         setDocuments((prev) => {
           const updated = prev.map((d) =>
-            d.id === activeDocId
+            d.id === currentDocId
               ? { ...d, content: md, updatedAt: Date.now() }
               : d
           );
@@ -367,10 +415,10 @@ export function SeleneEditor() {
         });
 
         // Trigger debounced cloud save
-        debounceDbSave(activeDocId, docTitle, md);
+        debounceDbSave(currentDocId, currentTitle, md);
 
         // Trigger debounced Chronos historical checkpoint
-        debounceChronosSave(activeDocId, docTitle, md);
+        debounceChronosSave(currentDocId, currentTitle, md);
 
         // Trigger debounced AI ghostwriter
         if (isGhostwritingEnabled) {
@@ -403,37 +451,6 @@ export function SeleneEditor() {
     },
     immediatelyRender: false,
   });
-
-  const ghostTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Debounced DB persistence
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const debounceDbSave = useCallback((id: string, title: string, content: string) => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    setIsSavingDb(true);
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        await apiFetch(`/api/documents/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, contentMarkdown: content }),
-        });
-      } catch {
-        // Fallback to local storage
-      } finally {
-        setIsSavingDb(false);
-      }
-    }, 800);
-  }, []);
-
-  // Debounced Chronos checkpointing
-  const chronosTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const debounceChronosSave = useCallback((id: string, title: string, content: string) => {
-    if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
-    chronosTimeoutRef.current = setTimeout(() => {
-      saveChronosSnapshot(id, title, content);
-    }, 25000);
-  }, []);
 
   // Global Keyboard Shortcuts (Ctrl+Shift+A: Copilot, Alt+G: Ghostwriter, Tab: Accept Ghost)
   useEffect(() => {
@@ -472,17 +489,29 @@ export function SeleneEditor() {
 
   // Phase 5: Dual View & Whiteboard Handlers
   const handleSwapDualDocs = useCallback(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+    if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+
     const currentPrimary = activeDocId;
     const currentSecondary = secondaryDocId;
     const target = documents.find((d) => d.id === currentSecondary);
     if (target) {
+      isSwitchingDocRef.current = true;
+      activeDocIdRef.current = currentSecondary;
+      docTitleRef.current = target.title;
+
       setActiveDocId(currentSecondary);
       setDocTitle(target.title);
       setMarkdownContent(target.content);
       if (editor) {
-        editor.commands.setContent(target.content);
+        editor.commands.setContent(target.content, { emitUpdate: false });
       }
       loadRevisions(currentSecondary);
+
+      setTimeout(() => {
+        isSwitchingDocRef.current = false;
+      }, 100);
     }
     setSecondaryDocId(currentPrimary);
   }, [activeDocId, secondaryDocId, documents, editor, loadRevisions]);
@@ -557,20 +586,37 @@ export function SeleneEditor() {
 
   // Handle document selection
   const handleSelectDoc = (id: string) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+    if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+
     const target = documents.find((d) => d.id === id);
     if (!target) return;
+
+    isSwitchingDocRef.current = true;
+    activeDocIdRef.current = id;
+    docTitleRef.current = target.title;
+
     setActiveDocId(id);
     setDocTitle(target.title);
     setMarkdownContent(target.content);
     if (editor) {
-      editor.commands.setContent(target.content);
+      editor.commands.setContent(target.content, { emitUpdate: false });
     }
     loadRevisions(id);
+
+    setTimeout(() => {
+      isSwitchingDocRef.current = false;
+    }, 100);
   };
 
   // Handle document creation
   const handleCreateDoc = useCallback(
     async (folder = "documents") => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+      if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+
       const newDoc: DocumentItem = {
         id: `doc-${Date.now()}`,
         title: "Untitled Document",
@@ -581,6 +627,10 @@ export function SeleneEditor() {
         content: `# Untitled Technical Canvas\n\nType \`/\` to insert live sandboxes, diagrams, or math formulas.\n`,
       };
 
+      isSwitchingDocRef.current = true;
+      activeDocIdRef.current = newDoc.id;
+      docTitleRef.current = newDoc.title;
+
       setDocuments((prev) => {
         const nextDocs = [newDoc, ...prev];
         saveDocuments(nextDocs);
@@ -590,8 +640,12 @@ export function SeleneEditor() {
       setDocTitle(newDoc.title);
       setMarkdownContent(newDoc.content);
       if (editor) {
-        editor.commands.setContent(newDoc.content);
+        editor.commands.setContent(newDoc.content, { emitUpdate: false });
       }
+
+      setTimeout(() => {
+        isSwitchingDocRef.current = false;
+      }, 100);
 
       try {
         await apiFetch("/api/documents", {
@@ -609,6 +663,10 @@ export function SeleneEditor() {
   // Handle file import
   const handleImportDoc = useCallback(
     async (title: string, content: string, folder = "documents") => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+      if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+
       const newDoc: DocumentItem = {
         id: `doc-${Date.now()}`,
         title,
@@ -619,6 +677,10 @@ export function SeleneEditor() {
         content,
       };
 
+      isSwitchingDocRef.current = true;
+      activeDocIdRef.current = newDoc.id;
+      docTitleRef.current = title;
+
       setDocuments((prev) => {
         const nextDocs = [newDoc, ...prev];
         saveDocuments(nextDocs);
@@ -628,8 +690,12 @@ export function SeleneEditor() {
       setDocTitle(title);
       setMarkdownContent(content);
       if (editor) {
-        editor.commands.setContent(content);
+        editor.commands.setContent(content, { emitUpdate: false });
       }
+
+      setTimeout(() => {
+        isSwitchingDocRef.current = false;
+      }, 100);
 
       try {
         await apiFetch("/api/documents", {
@@ -796,11 +862,24 @@ export function SeleneEditor() {
     saveDocuments(nextDocs);
     if (activeDocId === id) {
       const nextActive = nextDocs[0];
-      setActiveDocId(nextActive.id);
-      setDocTitle(nextActive.title);
-      setMarkdownContent(nextActive.content);
-      if (editor) {
-        editor.commands.setContent(nextActive.content);
+      if (nextActive) {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+        if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+
+        isSwitchingDocRef.current = true;
+        activeDocIdRef.current = nextActive.id;
+        docTitleRef.current = nextActive.title;
+
+        setActiveDocId(nextActive.id);
+        setDocTitle(nextActive.title);
+        setMarkdownContent(nextActive.content);
+        if (editor) {
+          editor.commands.setContent(nextActive.content, { emitUpdate: false });
+        }
+        setTimeout(() => {
+          isSwitchingDocRef.current = false;
+        }, 100);
       }
     }
 
@@ -815,23 +894,37 @@ export function SeleneEditor() {
   const handleTitleChange = useCallback(
     (newTitle: string) => {
       setDocTitle(newTitle);
+      docTitleRef.current = newTitle;
+      const currentDocId = activeDocIdRef.current;
       setDocuments((prev) => {
         const updated = prev.map((d) =>
-          d.id === activeDocId ? { ...d, title: newTitle } : d
+          d.id === currentDocId ? { ...d, title: newTitle } : d
         );
         saveDocuments(updated);
         return updated;
       });
-      debounceDbSave(activeDocId, newTitle, markdownContent);
+      debounceDbSave(currentDocId, newTitle, markdownContent);
     },
-    [activeDocId, markdownContent, debounceDbSave]
+    [markdownContent, debounceDbSave]
   );
 
   // Handle version restore
   const handleRestoreRevision = (rev: RevisionItem) => {
     setMarkdownContent(rev.contentMarkdown);
+    const currentDocId = activeDocIdRef.current;
+    const currentTitle = docTitleRef.current;
+    setDocuments((prev) => {
+      const updated = prev.map((d) =>
+        d.id === currentDocId
+          ? { ...d, content: rev.contentMarkdown, updatedAt: Date.now() }
+          : d
+      );
+      saveDocuments(updated);
+      return updated;
+    });
+    debounceDbSave(currentDocId, currentTitle, rev.contentMarkdown);
     if (editor) {
-      editor.commands.setContent(rev.contentMarkdown);
+      editor.commands.setContent(rev.contentMarkdown, { emitUpdate: false });
     }
     setShowRevisions(false);
   };
@@ -839,25 +932,28 @@ export function SeleneEditor() {
   // ⏳ Chronos Time-Warp Restore
   const handleRestoreChronosSnapshot = useCallback(
     (restoredContent: string, restoredTitle?: string) => {
+      const currentDocId = activeDocIdRef.current;
+      const targetTitle = restoredTitle || docTitleRef.current;
       setMarkdownContent(restoredContent);
-      if (editor) {
-        editor.commands.setContent(restoredContent);
-      }
-      if (restoredTitle && restoredTitle !== docTitle) {
-        handleTitleChange(restoredTitle);
+      if (restoredTitle && restoredTitle !== docTitleRef.current) {
+        setDocTitle(restoredTitle);
+        docTitleRef.current = restoredTitle;
       }
       setDocuments((prev) => {
         const updated = prev.map((d) =>
-          d.id === activeDocId
-            ? { ...d, content: restoredContent, title: restoredTitle || d.title, updatedAt: Date.now() }
+          d.id === currentDocId
+            ? { ...d, content: restoredContent, title: targetTitle, updatedAt: Date.now() }
             : d
         );
         saveDocuments(updated);
         return updated;
       });
-      debounceDbSave(activeDocId, restoredTitle || docTitle, restoredContent);
+      debounceDbSave(currentDocId, targetTitle, restoredContent);
+      if (editor) {
+        editor.commands.setContent(restoredContent, { emitUpdate: false });
+      }
     },
-    [activeDocId, docTitle, editor, debounceDbSave, handleTitleChange]
+    [editor, debounceDbSave]
   );
 
   // 🪐 Orbit Link: Connect or Disconnect P2P WebRTC Session
@@ -1421,8 +1517,21 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                 onChange={(e) => {
                   const val = e.target.value;
                   setMarkdownContent(val);
+                  const currentDocId = activeDocIdRef.current;
+                  const currentTitle = docTitleRef.current;
+                  setDocuments((prev) => {
+                    const updated = prev.map((d) =>
+                      d.id === currentDocId
+                        ? { ...d, content: val, updatedAt: Date.now() }
+                        : d
+                    );
+                    saveDocuments(updated);
+                    return updated;
+                  });
+                  debounceDbSave(currentDocId, currentTitle, val);
+                  debounceChronosSave(currentDocId, currentTitle, val);
                   if (editor) {
-                    editor.commands.setContent(val);
+                    editor.commands.setContent(val, { emitUpdate: false });
                   }
                 }}
                 className="flex-1 p-6 bg-transparent font-mono text-xs text-slate-300 resize-none focus:outline-none leading-relaxed overflow-y-auto selection:bg-sky-500/30 min-h-0"

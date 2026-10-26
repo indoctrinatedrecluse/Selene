@@ -254,9 +254,25 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
   int _heexPing = 14;
   bool _swiftToggle = true;
   String _chartViewMode = 'bar'; // bar, line, metrics
+  String _watSelectedFunc = 'add'; // 'add', 'hypot_squared', 'fibonacci'
   int _watArgA = 24;
   int _watArgB = 18;
+  int _watHypotX = 3;
+  int _watHypotY = 4;
+  int _watFibN = 7;
   int? _watResult;
+
+  int _computeFibonacci(int n) {
+    if (n <= 0) return 0;
+    if (n == 1) return 1;
+    int a = 0, b = 1;
+    for (int i = 2; i <= n && i <= 30; i++) {
+      int temp = a + b;
+      a = b;
+      b = temp;
+    }
+    return b;
+  }
 
   // Phase 2 stateful properties
   double _rNoiseLevel = 0.0;
@@ -1956,45 +1972,147 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
             ],
           ),
           const SizedBox(height: 12),
+
+          // Function Selection Row
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'param \$a (i32)',
-                    labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    filled: true,
-                    fillColor: SeleneTheme.surfaceElevated,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 13, fontFamily: 'monospace'),
-                  controller: TextEditingController(text: '$_watArgA'),
-                  onChanged: (val) {
-                    _watArgA = int.tryParse(val) ?? 0;
-                  },
-                ),
-              ),
+              const Text('Func:', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11, fontFamily: 'monospace')),
               const SizedBox(width: 8),
               Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'param \$b (i32)',
-                    labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    filled: true,
-                    fillColor: SeleneTheme.surfaceElevated,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                child: Container(
+                  height: 32,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: SeleneTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: SeleneTheme.border),
                   ),
-                  style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 13, fontFamily: 'monospace'),
-                  controller: TextEditingController(text: '$_watArgB'),
-                  onChanged: (val) {
-                    _watArgB = int.tryParse(val) ?? 0;
-                  },
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _watSelectedFunc,
+                      dropdownColor: const Color(0xFF0F172A),
+                      isDense: true,
+                      style: const TextStyle(color: SeleneTheme.emeraldSuccess, fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                      items: const [
+                        DropdownMenuItem(value: 'add', child: Text('add(\$a: i32, \$b: i32) -> i32')),
+                        DropdownMenuItem(value: 'hypot_squared', child: Text('hypot_squared(\$x: i32, \$y: i32) -> i32')),
+                        DropdownMenuItem(value: 'fibonacci', child: Text('fibonacci(\$n: i32) -> i32')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _watSelectedFunc = val;
+                            _watResult = null;
+                          });
+                        }
+                      },
+                    ),
+                  ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Dynamic Parameter Input & Execute Button
+          Row(
+            children: [
+              if (_watSelectedFunc == 'add') ...[
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'param \$a (i32)',
+                      labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      filled: true,
+                      fillColor: SeleneTheme.surfaceElevated,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 12, fontFamily: 'monospace'),
+                    controller: TextEditingController(text: '$_watArgA'),
+                    onChanged: (val) {
+                      _watArgA = int.tryParse(val) ?? 0;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'param \$b (i32)',
+                      labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      filled: true,
+                      fillColor: SeleneTheme.surfaceElevated,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 12, fontFamily: 'monospace'),
+                    controller: TextEditingController(text: '$_watArgB'),
+                    onChanged: (val) {
+                      _watArgB = int.tryParse(val) ?? 0;
+                    },
+                  ),
+                ),
+              ] else if (_watSelectedFunc == 'hypot_squared') ...[
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'param \$x (i32)',
+                      labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      filled: true,
+                      fillColor: SeleneTheme.surfaceElevated,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 12, fontFamily: 'monospace'),
+                    controller: TextEditingController(text: '$_watHypotX'),
+                    onChanged: (val) {
+                      _watHypotX = int.tryParse(val) ?? 0;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'param \$y (i32)',
+                      labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      filled: true,
+                      fillColor: SeleneTheme.surfaceElevated,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 12, fontFamily: 'monospace'),
+                    controller: TextEditingController(text: '$_watHypotY'),
+                    onChanged: (val) {
+                      _watHypotY = int.tryParse(val) ?? 0;
+                    },
+                  ),
+                ),
+              ] else ...[
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'param \$n (i32)',
+                      labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      filled: true,
+                      fillColor: SeleneTheme.surfaceElevated,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 12, fontFamily: 'monospace'),
+                    controller: TextEditingController(text: '$_watFibN'),
+                    onChanged: (val) {
+                      _watFibN = int.tryParse(val) ?? 0;
+                    },
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
               ElevatedButton.icon(
                 icon: const Icon(Icons.bolt, size: 14),
@@ -2007,13 +2125,21 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
                 ),
                 onPressed: () {
                   setState(() {
-                    _watResult = _watArgA + _watArgB;
+                    if (_watSelectedFunc == 'add') {
+                      _watResult = _watArgA + _watArgB;
+                    } else if (_watSelectedFunc == 'hypot_squared') {
+                      _watResult = (_watHypotX * _watHypotX) + (_watHypotY * _watHypotY);
+                    } else {
+                      _watResult = _computeFibonacci(_watFibN);
+                    }
                   });
                 },
               ),
             ],
           ),
           const SizedBox(height: 10),
+
+          // Invocation Telemetry Box
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -2027,15 +2153,20 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _watResult != null
-                          ? 'Return: i32.const $_watResult'
-                          : 'Return: i32.const 42',
-                      style: const TextStyle(
-                        color: SeleneTheme.emeraldSuccess,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
-                        fontSize: 12.5,
+                    Flexible(
+                      child: Text(
+                        _watSelectedFunc == 'add'
+                            ? 'Return: add(\$a: $_watArgA, \$b: $_watArgB) => i32.const ${_watResult ?? (_watArgA + _watArgB)}'
+                            : _watSelectedFunc == 'hypot_squared'
+                                ? 'Return: hypot_squared(\$x: $_watHypotX, \$y: $_watHypotY) => i32.const ${_watResult ?? (_watHypotX * _watHypotX + _watHypotY * _watHypotY)}'
+                                : 'Return: fibonacci(\$n: $_watFibN) => i32.const ${_watResult ?? _computeFibonacci(_watFibN)}',
+                        style: const TextStyle(
+                          color: SeleneTheme.emeraldSuccess,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const Text('Telemetry: 0.012 ms • Exit: 0x0',
@@ -2043,9 +2174,13 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Stack: [local.get \$a] -> [local.get \$b] -> [i32.add] -> return',
-                  style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10, fontFamily: 'monospace'),
+                Text(
+                  _watSelectedFunc == 'add'
+                      ? 'Stack: [local.get \$a] -> [local.get \$b] -> [i32.add] -> return'
+                      : _watSelectedFunc == 'hypot_squared'
+                          ? 'Stack: [local.get \$x]^2 + [local.get \$y]^2 -> [i32.add] -> return'
+                          : 'Stack: [local.get \$n] -> [call \$fib(n-1)] + [call \$fib(n-2)] -> return',
+                  style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 10, fontFamily: 'monospace'),
                 ),
               ],
             ),
