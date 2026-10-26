@@ -963,7 +963,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
 
       {/* Top Navigation Bar */}
       {!isZenMode && (
-        <header className={`relative z-10 flex items-center justify-between px-4 py-2 ${currentTheme.headerBg} backdrop-blur-md shrink-0 transition-colors duration-500`}>
+        <header className={`relative z-40 flex items-center justify-between px-4 py-2 ${currentTheme.headerBg} backdrop-blur-md shrink-0 transition-colors duration-500`}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleOpenLore("myth")}

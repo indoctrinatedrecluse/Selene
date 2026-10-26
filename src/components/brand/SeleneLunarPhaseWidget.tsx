@@ -76,7 +76,7 @@ export function SeleneLunarPhaseWidget({
             className="fixed inset-0 z-40"
             onClick={() => setIsPopoverOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl border border-sky-500/30 bg-[#090d1d]/95 p-3.5 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-150 text-slate-200">
+          <div className="absolute left-0 top-full mt-2 z-50 w-72 rounded-xl border border-sky-500/30 bg-[#090d1d]/95 p-3.5 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-150 text-slate-200">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <span className="text-xl">{lunarInfo.icon}</span>

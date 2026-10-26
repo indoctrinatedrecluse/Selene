@@ -112,18 +112,58 @@ export function maskSecret(secret: string): string {
   return secret.slice(0, 4) + "••••••••••••" + secret.slice(-4);
 }
 
+let resolvedVaultDir: string | null = null;
+const inMemoryVaultStore: Record<string, string> = {};
+
+/**
+ * Returns a guaranteed writable directory for Selene Vault storage across environments.
+ */
+function getSafeVaultDir(): string {
+  if (resolvedVaultDir) return resolvedVaultDir;
+
+  const candidates: string[] = [
+    process.env.SELENE_DATA_DIR || "",
+    path.join(os.homedir(), ".selene"),
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "Selene") : "",
+    "/home/nextjs/.selene",
+    "/tmp/data/.selene",
+    path.join(os.tmpdir(), ".selene"),
+    path.join(process.cwd(), ".selene"),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      if (!fs.existsSync(candidate)) {
+        fs.mkdirSync(candidate, { recursive: true });
+      }
+      const testFile = path.join(candidate, `.write_probe_v_${process.pid}_${Date.now()}`);
+      fs.writeFileSync(testFile, "probe", "utf-8");
+      fs.unlinkSync(testFile);
+      resolvedVaultDir = candidate;
+      return candidate;
+    } catch {
+      // Try next candidate
+    }
+  }
+
+  try {
+    const tmpFallback = path.join(os.tmpdir(), "selene_vault");
+    if (!fs.existsSync(tmpFallback)) {
+      fs.mkdirSync(tmpFallback, { recursive: true });
+    }
+    resolvedVaultDir = tmpFallback;
+    return tmpFallback;
+  } catch {
+    resolvedVaultDir = os.tmpdir();
+    return resolvedVaultDir;
+  }
+}
+
 /**
  * Fallback JSON path for non-Windows environments.
  */
 function getNonWindowsVaultPath(): string {
-  const dir = path.join(os.homedir(), ".selene");
-  if (!fs.existsSync(dir)) {
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-    } catch {
-      // Ignore
-    }
-  }
+  const dir = getSafeVaultDir();
   return path.join(dir, "vault.json");
 }
 
@@ -131,6 +171,7 @@ function getNonWindowsVaultPath(): string {
  * Writes an encrypted key to the Windows Registry HKCU\Software\Selene\Vault.
  */
 export async function writeVaultRegistry(key: string, encryptedValue: string): Promise<void> {
+  inMemoryVaultStore[key] = encryptedValue;
   const isWindows = process.platform === "win32";
 
   if (isWindows) {
@@ -150,17 +191,25 @@ export async function writeVaultRegistry(key: string, encryptedValue: string): P
       console.error(`Failed to write vault key ${key}:`, err);
     }
   } else {
-    const filePath = getNonWindowsVaultPath();
-    let data: Record<string, string> = {};
-    if (fs.existsSync(filePath)) {
-      try {
-        data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-      } catch {
-        data = {};
+    try {
+      const filePath = getNonWindowsVaultPath();
+      const parent = path.dirname(filePath);
+      if (!fs.existsSync(parent)) {
+        fs.mkdirSync(parent, { recursive: true });
       }
+      let data: Record<string, string> = {};
+      if (fs.existsSync(filePath)) {
+        try {
+          data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+        } catch {
+          data = {};
+        }
+      }
+      data[key] = encryptedValue;
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+    } catch (err) {
+      console.warn("Vault file write skipped, cached in memory:", err);
     }
-    data[key] = encryptedValue;
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
   }
 }
 
@@ -182,21 +231,21 @@ export async function readVaultRegistry(key: string): Promise<string | null> {
       if (match && match[1]) {
         return match[1].trim();
       }
-      return null;
+      return inMemoryVaultStore[key] || null;
     } catch {
-      return null;
+      return inMemoryVaultStore[key] || null;
     }
   } else {
-    const filePath = getNonWindowsVaultPath();
-    if (fs.existsSync(filePath)) {
-      try {
+    try {
+      const filePath = getNonWindowsVaultPath();
+      if (fs.existsSync(filePath)) {
         const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-        return data[key] || null;
-      } catch {
-        return null;
+        return data[key] || inMemoryVaultStore[key] || null;
       }
+    } catch {
+      // Ignore
     }
-    return null;
+    return inMemoryVaultStore[key] || null;
   }
 }
 
@@ -204,6 +253,7 @@ export async function readVaultRegistry(key: string): Promise<string | null> {
  * Deletes a key from HKCU\Software\Selene\Vault.
  */
 export async function deleteVaultRegistry(key: string): Promise<void> {
+  delete inMemoryVaultStore[key];
   const isWindows = process.platform === "win32";
 
   if (isWindows) {
@@ -213,15 +263,15 @@ export async function deleteVaultRegistry(key: string): Promise<void> {
       // Key may not exist
     }
   } else {
-    const filePath = getNonWindowsVaultPath();
-    if (fs.existsSync(filePath)) {
-      try {
+    try {
+      const filePath = getNonWindowsVaultPath();
+      if (fs.existsSync(filePath)) {
         const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
         delete data[key];
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
-      } catch {
-        // Ignore
       }
+    } catch {
+      // Ignore
     }
   }
 }
@@ -337,18 +387,26 @@ export async function saveEncryptedLicenseKey(licenseKey: string): Promise<void>
       console.error("Failed to store encrypted license key:", err);
     }
   } else {
-    const fallbackPath = path.join(os.homedir(), ".selene", "registry.json");
-    let current: Record<string, string> = {};
-    if (fs.existsSync(fallbackPath)) {
-      try {
-        current = JSON.parse(fs.readFileSync(fallbackPath, "utf-8"));
-      } catch {
-        current = {};
+    try {
+      const fallbackPath = path.join(getSafeVaultDir(), "registry.json");
+      const parent = path.dirname(fallbackPath);
+      if (!fs.existsSync(parent)) {
+        fs.mkdirSync(parent, { recursive: true });
       }
+      let current: Record<string, string> = {};
+      if (fs.existsSync(fallbackPath)) {
+        try {
+          current = JSON.parse(fs.readFileSync(fallbackPath, "utf-8"));
+        } catch {
+          current = {};
+        }
+      }
+      current["EncryptedLicenseKey"] = encrypted;
+      delete current["LicenseKey"];
+      fs.writeFileSync(fallbackPath, JSON.stringify(current, null, 2), "utf-8");
+    } catch (err) {
+      console.warn("Failed to write encrypted license key to disk, kept in memory fallback:", err);
     }
-    current["EncryptedLicenseKey"] = encrypted;
-    delete current["LicenseKey"];
-    fs.writeFileSync(fallbackPath, JSON.stringify(current, null, 2), "utf-8");
   }
 }
 

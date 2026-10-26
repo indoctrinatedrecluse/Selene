@@ -9,6 +9,12 @@ class LunarDiademWidget extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: SeleneTheme.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: SeleneTheme.border),
+      ),
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),

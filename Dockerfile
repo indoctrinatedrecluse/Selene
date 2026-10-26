@@ -32,15 +32,15 @@ ENV HOSTNAME="0.0.0.0"
 
 # Security: Run as dedicated non-root user
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 --home /home/nextjs nextjs
+
+# Ensure home directory, /tmp/.selene, /tmp/data exist and are writable by nextjs
+RUN mkdir -p /home/nextjs/.selene /tmp/.selene /tmp/data && chown -R nextjs:nodejs /home/nextjs /tmp/.selene /tmp/data
 
 # Copy static assets and compiled standalone server
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Ensure /tmp/data exists and is writable for fallback SQLite persistence in container
-RUN mkdir -p /tmp/data && chown -R nextjs:nodejs /tmp/data
 
 USER nextjs
 

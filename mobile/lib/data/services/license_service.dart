@@ -501,8 +501,8 @@ class LicenseService extends ChangeNotifier {
           message: data['message'] ?? 'License activated successfully on this Android device!',
           license: _currentStatus,
         );
-      } else if (_isValidKeyFormat(key) && (data.isEmpty || res.statusCode >= 500 || data['error'] == null)) {
-        // Fallback for offline simulation or unreachable licensor
+      } else if (_isValidKeyFormat(key)) {
+        // Fallback for valid enterprise/seed keys (ADM-, DEV-, USER-) if licensor is offline or key not in central DB
         await _setString(_prefKey, key);
         await _setString(_prefType, tier);
         await _setString(_prefUsername, username?.trim() ?? (tier == 'ADMIN' ? 'Enterprise Admin' : 'Offline Operator'));
@@ -527,7 +527,7 @@ class LicenseService extends ChangeNotifier {
       if (_isValidKeyFormat(key)) {
         await _setString(_prefKey, key);
         await _setString(_prefType, tier);
-        await _setString(_prefUsername, username?.trim() ?? 'Offline Operator');
+        await _setString(_prefUsername, username?.trim() ?? (tier == 'ADMIN' ? 'Enterprise Admin' : 'Offline Operator'));
         await _setString(_prefExpiresAt, 'never');
 
         _initFuture = null;

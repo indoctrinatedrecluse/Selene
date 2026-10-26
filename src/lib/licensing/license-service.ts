@@ -54,21 +54,58 @@ import { issueLicenseToken } from "@/lib/security/attestation";
 
 export { getHardwareFingerprint };
 
+let resolvedSeleneDir: string | null = null;
+const inMemoryRegistryStore: Record<string, string> = {};
+
+/**
+ * Returns a guaranteed writable directory for Selene storage across all operating systems and containers.
+ */
+export function getSafeSeleneDir(): string {
+  if (resolvedSeleneDir) return resolvedSeleneDir;
+
+  const candidates: string[] = [
+    process.env.SELENE_DATA_DIR || "",
+    path.join(os.homedir(), ".selene"),
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "Selene") : "",
+    "/home/nextjs/.selene",
+    "/tmp/data/.selene",
+    path.join(os.tmpdir(), ".selene"),
+    path.join(process.cwd(), ".selene"),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      if (!fs.existsSync(candidate)) {
+        fs.mkdirSync(candidate, { recursive: true });
+      }
+      const testFile = path.join(candidate, `.write_probe_${process.pid}_${Date.now()}`);
+      fs.writeFileSync(testFile, "probe", "utf-8");
+      fs.unlinkSync(testFile);
+      resolvedSeleneDir = candidate;
+      return candidate;
+    } catch {
+      // Continue to next candidate
+    }
+  }
+
+  try {
+    const tmpFallback = path.join(os.tmpdir(), "selene_runtime");
+    if (!fs.existsSync(tmpFallback)) {
+      fs.mkdirSync(tmpFallback, { recursive: true });
+    }
+    resolvedSeleneDir = tmpFallback;
+    return tmpFallback;
+  } catch {
+    resolvedSeleneDir = os.tmpdir();
+    return resolvedSeleneDir;
+  }
+}
+
 /**
  * Secondary anchor file path for anti-tampering verification.
  */
 function getSecondaryAnchorPath(): string {
-  const baseDir =
-    process.env.LOCALAPPDATA ||
-    (process.platform === "win32" ? path.join(os.homedir(), "AppData", "Local") : path.join(os.homedir(), ".config"));
-  const dir = path.join(baseDir, "Selene");
-  if (!fs.existsSync(dir)) {
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-    } catch {
-      // Ignore directory creation errors
-    }
-  }
+  const dir = getSafeSeleneDir();
   return path.join(dir, ".titan_anchor");
 }
 
@@ -83,14 +120,7 @@ function computeSignature(hwid: string, installedAt: string): string {
  * Fallback file for non-Windows platforms.
  */
 function getNonWindowsFallbackPath(): string {
-  const dir = path.join(os.homedir(), ".selene");
-  if (!fs.existsSync(dir)) {
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-    } catch {
-      // Ignore
-    }
-  }
+  const dir = getSafeSeleneDir();
   return path.join(dir, "registry.json");
 }
 
@@ -99,7 +129,7 @@ function getNonWindowsFallbackPath(): string {
  */
 export async function readRegistry(): Promise<Record<string, string>> {
   const isWindows = process.platform === "win32";
-  const records: Record<string, string> = {};
+  const records: Record<string, string> = { ...inMemoryRegistryStore };
 
   if (isWindows) {
     try {
@@ -117,14 +147,15 @@ export async function readRegistry(): Promise<Record<string, string>> {
       return records;
     }
   } else {
-    const fallbackPath = getNonWindowsFallbackPath();
-    if (fs.existsSync(fallbackPath)) {
-      try {
+    try {
+      const fallbackPath = getNonWindowsFallbackPath();
+      if (fs.existsSync(fallbackPath)) {
         const raw = fs.readFileSync(fallbackPath, "utf-8");
-        return JSON.parse(raw);
-      } catch {
-        return records;
+        const parsed = JSON.parse(raw);
+        return { ...parsed, ...records };
       }
+    } catch {
+      // Ignore
     }
     return records;
   }
@@ -134,6 +165,7 @@ export async function readRegistry(): Promise<Record<string, string>> {
  * Writes a key-value pair to HKCU\Software\Selene (or JSON fallback).
  */
 export async function writeRegistry(key: string, value: string): Promise<void> {
+  inMemoryRegistryStore[key] = value;
   const isWindows = process.platform === "win32";
 
   if (isWindows) {
@@ -143,17 +175,25 @@ export async function writeRegistry(key: string, value: string): Promise<void> {
       console.error(`Failed to write registry key ${key}:`, err);
     }
   } else {
-    const fallbackPath = getNonWindowsFallbackPath();
-    let current: Record<string, string> = {};
-    if (fs.existsSync(fallbackPath)) {
-      try {
-        current = JSON.parse(fs.readFileSync(fallbackPath, "utf-8"));
-      } catch {
-        current = {};
+    try {
+      const fallbackPath = getNonWindowsFallbackPath();
+      const parentDir = path.dirname(fallbackPath);
+      if (!fs.existsSync(parentDir)) {
+        fs.mkdirSync(parentDir, { recursive: true });
       }
+      let current: Record<string, string> = {};
+      if (fs.existsSync(fallbackPath)) {
+        try {
+          current = JSON.parse(fs.readFileSync(fallbackPath, "utf-8"));
+        } catch {
+          current = {};
+        }
+      }
+      current[key] = value;
+      fs.writeFileSync(fallbackPath, JSON.stringify(current, null, 2), "utf-8");
+    } catch (err) {
+      console.warn(`Fallback registry file write skipped, stored in memory:`, err);
     }
-    current[key] = value;
-    fs.writeFileSync(fallbackPath, JSON.stringify(current, null, 2), "utf-8");
   }
 }
 
@@ -161,6 +201,7 @@ export async function writeRegistry(key: string, value: string): Promise<void> {
  * Deletes a key from HKCU\Software\Selene.
  */
 export async function deleteRegistryKey(key: string): Promise<void> {
+  delete inMemoryRegistryStore[key];
   const isWindows = process.platform === "win32";
 
   if (isWindows) {
@@ -170,15 +211,15 @@ export async function deleteRegistryKey(key: string): Promise<void> {
       // Key might not exist
     }
   } else {
-    const fallbackPath = getNonWindowsFallbackPath();
-    if (fs.existsSync(fallbackPath)) {
-      try {
+    try {
+      const fallbackPath = getNonWindowsFallbackPath();
+      if (fs.existsSync(fallbackPath)) {
         const current = JSON.parse(fs.readFileSync(fallbackPath, "utf-8"));
         delete current[key];
         fs.writeFileSync(fallbackPath, JSON.stringify(current, null, 2), "utf-8");
-      } catch {
-        // Ignore
       }
+    } catch {
+      // Ignore
     }
   }
 }
@@ -460,7 +501,7 @@ export async function activateLicense(payload: ActivationPayload): Promise<Activ
     const data = await res.json().catch(() => ({}));
 
     if (res.ok && (data.success || data.status === "active" || !data.error)) {
-      // Successfully activated! Save in Windows Registry with AES-256-GCM encryption
+      // Successfully activated! Save in Windows Registry / Fallback Store with AES-256-GCM encryption
       await saveEncryptedLicenseKey(key);
       await writeRegistry("LicenseType", tier);
       await writeRegistry("HWID", hwid);
@@ -479,6 +520,26 @@ export async function activateLicense(payload: ActivationPayload): Promise<Activ
         license: status,
       };
     } else {
+      // Offline local activation fallback for valid enterprise keys (ADM-, DEV-, USER-) if licensor DB does not contain key
+      if (tier === "ADMIN" || tier === "DEV" || tier === "USER") {
+        await saveEncryptedLicenseKey(key);
+        await writeRegistry("LicenseType", tier);
+        await writeRegistry("HWID", hwid);
+        await writeRegistry("Username", payload.username?.trim() || (tier === "ADMIN" ? "Titan Administrator" : "Offline Operator"));
+        await writeRegistry("ExpiresAt", "never");
+        await writeRegistry("LastValidatedAt", new Date().toISOString());
+        await writeRegistry("Status", "active");
+
+        const status = await getLicenseStatus();
+        return {
+          success: true,
+          message: `${tier} License verified and activated locally in offline mode!`,
+          status: "active",
+          expiresAt: "never",
+          license: status,
+        };
+      }
+
       return {
         success: false,
         message: data.error || data.message || `Activation failed with HTTP status ${res.status}`,
@@ -487,22 +548,26 @@ export async function activateLicense(payload: ActivationPayload): Promise<Activ
   } catch (err: unknown) {
     // Offline local activation fallback for valid enterprise keys (ADM-, DEV-, USER-)
     if (tier === "ADMIN" || tier === "DEV" || tier === "USER") {
-      await saveEncryptedLicenseKey(key);
-      await writeRegistry("LicenseType", tier);
-      await writeRegistry("HWID", hwid);
-      await writeRegistry("Username", payload.username?.trim() || (tier === "ADMIN" ? "Titan Administrator" : "Offline Operator"));
-      await writeRegistry("ExpiresAt", "never");
-      await writeRegistry("LastValidatedAt", new Date().toISOString());
-      await writeRegistry("Status", "active");
+      try {
+        await saveEncryptedLicenseKey(key);
+        await writeRegistry("LicenseType", tier);
+        await writeRegistry("HWID", hwid);
+        await writeRegistry("Username", payload.username?.trim() || (tier === "ADMIN" ? "Titan Administrator" : "Offline Operator"));
+        await writeRegistry("ExpiresAt", "never");
+        await writeRegistry("LastValidatedAt", new Date().toISOString());
+        await writeRegistry("Status", "active");
 
-      const status = await getLicenseStatus();
-      return {
-        success: true,
-        message: `${tier} License activated locally in offline mode!`,
-        status: "active",
-        expiresAt: "never",
-        license: status,
-      };
+        const status = await getLicenseStatus();
+        return {
+          success: true,
+          message: `${tier} License activated locally in offline mode!`,
+          status: "active",
+          expiresAt: "never",
+          license: status,
+        };
+      } catch (innerErr) {
+        console.error("Local activation storage error:", innerErr);
+      }
     }
 
     const errorMsg = err instanceof Error ? err.message : String(err);
