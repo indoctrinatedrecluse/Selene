@@ -241,6 +241,9 @@ class _InteractiveCodeSandboxCard extends StatefulWidget {
 class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard> {
   late bool _showOutput;
   bool _isExecuting = false;
+  late String _currentCode;
+  late TextEditingController _codeController;
+  bool _isEditing = false;
 
   // Stateful interactive sandbox properties
   int _reactCounter = 42;
@@ -265,8 +268,25 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
   @override
   void initState() {
     super.initState();
+    _currentCode = widget.code;
+    _codeController = TextEditingController(text: _currentCode);
     // Visual non-code formats (charts, diagrams, math, shaders) are displayed by default!
     _showOutput = _isVisualFormat;
+  }
+
+  @override
+  void didUpdateWidget(covariant _InteractiveCodeSandboxCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.code != widget.code && !_isEditing) {
+      _currentCode = widget.code;
+      _codeController.text = _currentCode;
+    }
+  }
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
   }
 
   void _triggerRun() async {
@@ -390,10 +410,52 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
                     ),
                     const SizedBox(width: 8),
 
+                    // In-Situ Code Editor Toggle
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _isEditing = !_isEditing;
+                          if (_isEditing) {
+                            _codeController.text = _currentCode;
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _isEditing ? SeleneTheme.goldAccent.withValues(alpha: 0.2) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: _isEditing ? SeleneTheme.goldAccent : SeleneTheme.border,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _isEditing ? Icons.check_circle_outline : Icons.edit_note,
+                              size: 13,
+                              color: _isEditing ? SeleneTheme.goldAccent : SeleneTheme.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _isEditing ? 'Editing' : 'Edit',
+                              style: TextStyle(
+                                color: _isEditing ? SeleneTheme.goldAccent : SeleneTheme.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
                     // Copy Code
                     InkWell(
                       onTap: () {
-                        Clipboard.setData(ClipboardData(text: widget.code));
+                        Clipboard.setData(ClipboardData(text: _currentCode));
                         ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -424,21 +486,105 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
             ),
           ),
 
-          // Code Body (HighlightView)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(12),
-            child: HighlightView(
-              widget.code.trimRight(),
-              language: widget.language,
-              theme: atomOneDarkTheme,
-              textStyle: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12.5,
-                height: 1.45,
+          // Code Body (HighlightView OR In-Situ Monospace Scratchpad)
+          if (_isEditing) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              color: const Color(0xFF070B12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.code, size: 14, color: SeleneTheme.goldAccent),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'In-Situ Code Scratchpad',
+                        style: TextStyle(color: SeleneTheme.goldAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      if (_currentCode != widget.code)
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _currentCode = widget.code;
+                              _codeController.text = widget.code;
+                            });
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Text('Reset to Sample', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10)),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _codeController,
+                    maxLines: null,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12.5,
+                      color: SeleneTheme.textPrimary,
+                      height: 1.45,
+                    ),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFF0F172A),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: SeleneTheme.borderHighlight),
+                      ),
+                      contentPadding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => setState(() => _isEditing = false),
+                        child: const Text('Cancel', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.play_arrow, size: 14),
+                        label: const Text('Apply & Run'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: SeleneTheme.emeraldSuccess,
+                          foregroundColor: SeleneTheme.background,
+                          visualDensity: VisualDensity.compact,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _currentCode = _codeController.text;
+                            _isEditing = false;
+                          });
+                          _triggerRun();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
+          ] else ...[
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.all(12),
+              child: HighlightView(
+                _currentCode.trimRight(),
+                language: widget.language,
+                theme: atomOneDarkTheme,
+                textStyle: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+            ),
+          ],
 
           // Executed Sandbox or Rendered Visual View
           if (_showOutput) ...[
@@ -1053,7 +1199,7 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
 
     // 18. Python Data Science & Matplotlib / Pandas / Monte Carlo (Sample 04)
     if (lang == 'python' || lang == 'py') {
-      if (widget.code.contains('matplotlib') || widget.code.contains('plt.')) {
+      if (_currentCode.contains('matplotlib') || _currentCode.contains('plt.')) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1079,13 +1225,13 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
           ],
         );
       }
-      if (widget.code.contains('Monte Carlo') || widget.code.contains('pi_estimate')) {
+      if (_currentCode.contains('Monte Carlo') || _currentCode.contains('pi_estimate')) {
         return const SelectableText(
           '==================================================\n  Selene Computational Mathematics Kernel        \n==================================================\nSimulation Samples  : 200,000\nEstimated Value of π : 3.141852\nTrue Value of π      : 3.141593\nRelative Error       : 0.0082%\nCrater Density Score : 157,092 impacts within lunar disk',
           style: TextStyle(fontFamily: 'monospace', color: SeleneTheme.emeraldSuccess, fontSize: 11),
         );
       }
-      if (widget.code.contains('telemetry') || widget.code.contains('DataFrame')) {
+      if (_currentCode.contains('telemetry') || _currentCode.contains('DataFrame')) {
         return const SelectableText(
           '=== LUNAR ROVER ARTEMIS IV TELEMETRY LOG ===\n                     Regolith Temp (°C)  Solar Array (Watts)  Radiation (mSv/h)  Battery SoC (%) Rover Subsystem\n2026-10-18 00:00:00               -123.4                452.0              0.038               98           Core\n2026-10-18 00:10:00               -118.2                465.0              0.041               95            Nav\n2026-10-18 00:20:00               -127.1                438.0              0.029               91          Drill\n2026-10-18 00:30:00               -115.8                472.0              0.044               88          Radio\n2026-10-18 00:40:00               -121.6                449.0              0.033               86         Camera\n2026-10-18 00:50:00               -119.5                458.0              0.036               82        Spectro',
           style: TextStyle(fontFamily: 'monospace', color: SeleneTheme.emeraldSuccess, fontSize: 10),
@@ -1145,7 +1291,7 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
     ];
 
     try {
-      final parsed = jsonDecode(widget.code);
+      final parsed = jsonDecode(_currentCode);
       if (parsed is Map) {
         if (parsed['title'] != null) chartTitle = parsed['title'].toString();
         if (parsed['type'] != null) {
@@ -1298,8 +1444,8 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
   }
 
   Widget _buildMermaidWidget() {
-    final lines = widget.code.split('\n');
-    final isSequence = widget.code.toLowerCase().contains('sequencediagram');
+    final lines = _currentCode.split('\n');
+    final isSequence = _currentCode.toLowerCase().contains('sequencediagram');
     List<Map<String, String>> parsedNodes = [];
 
     if (isSequence) {
@@ -1319,7 +1465,7 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
       }
     } else {
       final re = RegExp(r'(\w+)\[([^\]]+)\]');
-      for (final match in re.allMatches(widget.code)) {
+      for (final match in re.allMatches(_currentCode)) {
         parsedNodes.add({'title': match.group(1)!, 'subtitle': match.group(2)!});
       }
     }
@@ -1434,10 +1580,10 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Math.tex(
-              widget.code.trim(),
+              _currentCode.trim(),
               textStyle: const TextStyle(color: Colors.white, fontSize: 18),
               onErrorFallback: (err) => Text(
-                widget.code.trim(),
+                _currentCode.trim(),
                 style: const TextStyle(fontFamily: 'monospace', color: SeleneTheme.goldAccent, fontSize: 14),
               ),
             ),

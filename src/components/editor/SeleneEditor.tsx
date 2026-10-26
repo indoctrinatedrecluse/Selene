@@ -107,11 +107,15 @@ import {
   PenTool,
   Lightbulb,
   Link2,
+  Share2,
+  Music,
 } from "lucide-react";
 import { AthenaTipsModal } from "@/components/guidance/AthenaTipsModal";
 import { CollapsibleCommandRunner } from "@/components/terminal/CollapsibleCommandRunner";
 import { PaperToCanvasModal } from "@/components/ai/PaperToCanvasModal";
 import { WhiteboardOverlay } from "@/components/whiteboard/WhiteboardOverlay";
+import { MnemosyneKnowledgeGraphModal } from "@/components/mesh/MnemosyneKnowledgeGraphModal";
+import { ApollosLyreAudioModal } from "@/components/audio/ApollosLyreAudioModal";
 import { SecondaryDocumentViewer } from "./SecondaryDocumentViewer";
 import {
   openLocalDocument,
@@ -217,6 +221,8 @@ export function SeleneEditor() {
   const editorScrollRef = useRef<HTMLDivElement | null>(null);
   const splitMarkdownRef = useRef<HTMLTextAreaElement | null>(null);
   const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
+  const [isMeshModalOpen, setIsMeshModalOpen] = useState(false);
+  const [isLyreModalOpen, setIsLyreModalOpen] = useState(false);
 
   // Fetch License Status from Registry Authority on mount
   useEffect(() => {
@@ -1101,6 +1107,26 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
               <span className="hidden sm:inline">Tips</span>
             </button>
 
+            {/* 🌌 Mnemosyne Knowledge Mesh (Bi-Directional Wiki Graph) */}
+            <button
+              onClick={() => setIsMeshModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-medium transition-all cursor-pointer shadow-sm"
+              title="🌌 Mnemosyne Knowledge Mesh — Bi-Directional Wiki Graph & Transclusions"
+            >
+              <Share2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Mesh</span>
+            </button>
+
+            {/* 🎵 Apollo's Lyre Harmonic Audio Telemetry */}
+            <button
+              onClick={() => setIsLyreModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-white border border-amber-500/30 text-xs font-medium transition-all cursor-pointer shadow-sm"
+              title="🎵 Apollo's Lyre — Harmonic Audio Telemetry & 432 Hz Drone"
+            >
+              <Music className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Lyre</span>
+            </button>
+
             {/* Lunar Ambiance & Lore Toggle */}
             <button
               onClick={() => setIsLoreModalOpen(true)}
@@ -1440,6 +1466,21 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         currentRoomKey={orbitRoomKey}
         onToggleConnect={handleOrbitToggleConnect}
         onUpdateUser={handleUpdateCollabUser}
+      />
+
+      {/* 🌌 Mnemosyne Knowledge Mesh (Bi-Directional Wiki Graph Modal) */}
+      <MnemosyneKnowledgeGraphModal
+        isOpen={isMeshModalOpen}
+        onClose={() => setIsMeshModalOpen(false)}
+        currentDocId={activeDocId}
+        onOpenDocument={(id) => handleSelectDoc(id)}
+      />
+
+      {/* 🎵 Apollo's Lyre & Harmonic Data Sonifier Modal */}
+      <ApollosLyreAudioModal
+        isOpen={isLyreModalOpen}
+        onClose={() => setIsLyreModalOpen(false)}
+        activeContextText={markdownContent}
       />
 
       {/* Legacy Revision History Drawer Fallback */}

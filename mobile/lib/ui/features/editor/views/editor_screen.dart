@@ -12,6 +12,11 @@ import 'package:selene_mobile/ui/features/lunar/lunar_diadem_widget.dart';
 import 'package:selene_mobile/ui/features/oracle/delphic_oracle_sheet.dart';
 import 'package:selene_mobile/ui/features/timeline/chronos_timeline_sheet.dart';
 import 'package:selene_mobile/ui/features/wisdom/athena_wisdom_sheet.dart';
+import 'package:selene_mobile/ui/features/audio/apollos_lyre_sheet.dart';
+import 'package:selene_mobile/ui/features/collaboration/orbit_link_sheet.dart';
+import 'package:selene_mobile/ui/features/export/hermes_courier_sheet.dart';
+import 'package:selene_mobile/ui/features/mesh/mnemosyne_mesh_sheet.dart';
+import 'package:selene_mobile/ui/features/oracle/athena_neural_copilot_sheet.dart';
 import 'package:selene_mobile/ui/features/editor/widgets/keyboard_accessory_bar.dart';
 import 'package:selene_mobile/ui/features/editor/widgets/markdown_canvas.dart';
 
@@ -139,6 +144,67 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
       context: context,
       isScrollControlled: true,
       builder: (context) => const AthenaWisdomSheet(),
+    );
+  }
+
+  void _showAthenaCopilotSheet() {
+    final repo = context.read<DocumentRepository>();
+    AthenaNeuralCopilotSheet.show(
+      context,
+      apiClient: repo.apiClient,
+      activeContext: _textController.text,
+      onInsert: (text) {
+        final current = _textController.text;
+        _textController.text = '$current\n\n$text\n';
+        _flushActiveDocument();
+      },
+    );
+  }
+
+  void _showOrbitLinkSheet() {
+    final doc = context.read<DocumentRepository>().activeDocument;
+    OrbitLinkSheet.show(
+      context,
+      activeDocTitle: doc?.title ?? 'Selene Scroll',
+      activeDocContent: _textController.text,
+      onSyncContent: (newContent) {
+        _textController.text = newContent;
+        _flushActiveDocument();
+      },
+    );
+  }
+
+  void _showHermesCourierSheet() {
+    final repo = context.read<DocumentRepository>();
+    final doc = repo.activeDocument;
+    if (doc == null) return;
+    HermesCourierSheet.show(context, doc, repo);
+  }
+
+  void _showMnemosyneMeshSheet() {
+    final repo = context.read<DocumentRepository>();
+    MnemosyneMeshSheet.show(
+      context,
+      repository: repo,
+      onSelectDocument: (docId, title, content) async {
+        setState(() {
+          _loadedDocId = docId;
+          _textController.text = content;
+        });
+        await repo.openOrImportSample(docId, title, content);
+      },
+      onInsertTransclusion: (wikilink) {
+        final current = _textController.text;
+        _textController.text = '$current\n\n$wikilink\n';
+        _flushActiveDocument();
+      },
+    );
+  }
+
+  void _showApollosLyreSheet() {
+    ApollosLyreSheet.show(
+      context,
+      activeContext: _textController.text,
     );
   }
 
@@ -339,6 +405,11 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
             ),
             onSelected: (val) {
               if (val == 'license') _showLicenseSheet();
+              if (val == 'orbit') _showOrbitLinkSheet();
+              if (val == 'hermes') _showHermesCourierSheet();
+              if (val == 'athena') _showAthenaCopilotSheet();
+              if (val == 'mesh') _showMnemosyneMeshSheet();
+              if (val == 'lyre') _showApollosLyreSheet();
               if (val == 'chronos') _showTimelineSheet();
               if (val == 'share') _shareCloudGist();
               if (val == 'sparkle') setState(() => _sparklesEnabled = !_sparklesEnabled);
@@ -362,6 +433,56 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                           : 'License: ${licenseStatus.type.name.toUpperCase()}',
                       style: const TextStyle(fontSize: 13, color: SeleneTheme.textPrimary),
                     ),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'orbit',
+                child: Row(
+                  children: [
+                    Icon(Icons.hub_outlined, size: 16, color: SeleneTheme.lunarCyan),
+                    SizedBox(width: 10),
+                    Text('Orbit Link P2P Sync', style: TextStyle(fontSize: 13, color: SeleneTheme.textPrimary)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'hermes',
+                child: Row(
+                  children: [
+                    Icon(Icons.send_to_mobile, size: 16, color: SeleneTheme.goldAccent),
+                    SizedBox(width: 10),
+                    Text('Hermes Courier Exporter', style: TextStyle(fontSize: 13, color: SeleneTheme.textPrimary)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'athena',
+                child: Row(
+                  children: [
+                    Icon(Icons.psychology_outlined, size: 16, color: SeleneTheme.purpleMystic),
+                    SizedBox(width: 10),
+                    Text("Athena's Neural Co-Pilot", style: TextStyle(fontSize: 13, color: SeleneTheme.textPrimary)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'mesh',
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_stories, size: 16, color: SeleneTheme.lunarCyan),
+                    SizedBox(width: 10),
+                    Text('Mnemosyne Knowledge Mesh', style: TextStyle(fontSize: 13, color: SeleneTheme.textPrimary)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'lyre',
+                child: Row(
+                  children: [
+                    Icon(Icons.music_note_outlined, size: 16, color: SeleneTheme.goldAccent),
+                    SizedBox(width: 10),
+                    Text("Apollo's Lyre & Sonifier", style: TextStyle(fontSize: 13, color: SeleneTheme.textPrimary)),
                   ],
                 ),
               ),
@@ -473,6 +594,21 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                         ),
                       ),
                       const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.psychology_outlined, color: SeleneTheme.purpleMystic, size: 20),
+                        tooltip: "Athena's Neural Co-Pilot",
+                        onPressed: _showAthenaCopilotSheet,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.hub_outlined, color: SeleneTheme.lunarCyan, size: 20),
+                        tooltip: 'Mnemosyne Knowledge Mesh',
+                        onPressed: _showMnemosyneMeshSheet,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.music_note_outlined, color: SeleneTheme.goldAccent, size: 20),
+                        tooltip: "Apollo's Lyre & Data Sonifier",
+                        onPressed: _showApollosLyreSheet,
+                      ),
                       IconButton(
                         icon: Icon(
                           _isWhiteboardActive ? Icons.brush : Icons.brush_outlined,
@@ -874,6 +1010,56 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                         letterSpacing: 0.8,
                       ),
                     ),
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.hub_outlined, size: 18, color: SeleneTheme.lunarCyan),
+                    title: const Text('Orbit Link P2P Sync', style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13)),
+                    subtitle: const Text('Real-time QR pairing & WebRTC peer collaboration', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showOrbitLinkSheet();
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.send_to_mobile, size: 18, color: SeleneTheme.goldAccent),
+                    title: const Text('Hermes Courier Exporter', style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13)),
+                    subtitle: const Text('Offline HTML, Android share sheet & Gists', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showHermesCourierSheet();
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.psychology_outlined, size: 18, color: SeleneTheme.purpleMystic),
+                    title: const Text("Athena's Neural Co-Pilot", style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13)),
+                    subtitle: const Text('KaTeX tutor, code sandbox doctor & diagram generator', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showAthenaCopilotSheet();
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.auto_stories, size: 18, color: SeleneTheme.lunarCyan),
+                    title: const Text('Mnemosyne Knowledge Mesh', style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13)),
+                    subtitle: const Text('2D Constellation graph & block transclusions', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showMnemosyneMeshSheet();
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.music_note_outlined, size: 18, color: SeleneTheme.goldAccent),
+                    title: const Text("Apollo's Lyre & Data Sonifier", style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13)),
+                    subtitle: const Text('432Hz focus drone & audio telemetry scan', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showApollosLyreSheet();
+                    },
                   ),
                   ListTile(
                     dense: true,

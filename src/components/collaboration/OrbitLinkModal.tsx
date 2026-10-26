@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   Wifi,
   WifiOff,
+  QrCode,
+  Smartphone,
 } from "lucide-react";
 import {
   CollabUser,
@@ -59,6 +61,7 @@ export function OrbitLinkModal({
     return CELESTIAL_PERSONAS[0];
   });
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showMobileQr, setShowMobileQr] = useState(false);
 
   if (!isOpen) return null;
 
@@ -196,12 +199,60 @@ export function OrbitLinkModal({
                 )}
                 <button
                   onClick={handleCopyInviteLink}
-                  className="flex items-center gap-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 px-3.5 py-2 text-xs font-semibold text-sky-300 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 px-3.5 py-2 text-xs font-semibold text-sky-300 transition-colors cursor-pointer"
                 >
                   {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                   <span>{copiedLink ? "Copied" : "Copy Link"}</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileQr(!showMobileQr)}
+                  className="flex items-center gap-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 px-3 py-2 text-xs font-semibold text-purple-300 transition-colors cursor-pointer"
+                  title="Display pairing QR code for Selene Mobile"
+                >
+                  <QrCode className="h-3.5 w-3.5 text-purple-400" />
+                  <span>{showMobileQr ? "Hide QR" : "Pair Mobile"}</span>
+                </button>
               </div>
+
+              {/* Mobile QR Pairing Card */}
+              {showMobileQr && (
+                <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30 flex items-center gap-4 animate-in fade-in duration-150">
+                  <div className="w-24 h-24 rounded-xl bg-white p-2 flex items-center justify-center shrink-0 shadow-lg shadow-purple-950/50">
+                    <svg viewBox="0 0 100 100" className="w-full h-full text-slate-900 fill-current">
+                      <rect x="5" y="5" width="25" height="25" rx="3" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <rect x="11" y="11" width="13" height="13" />
+                      <rect x="70" y="5" width="25" height="25" rx="3" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <rect x="76" y="11" width="13" height="13" />
+                      <rect x="5" y="70" width="25" height="25" rx="3" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <rect x="11" y="76" width="13" height="13" />
+                      <rect x="42" y="10" width="16" height="6" />
+                      <rect x="42" y="24" width="16" height="6" />
+                      <rect x="10" y="42" width="6" height="16" />
+                      <rect x="24" y="42" width="6" height="16" />
+                      <rect x="40" y="40" width="20" height="20" rx="2" />
+                      <circle cx="50" cy="50" r="4" fill="white" />
+                      <rect x="68" y="42" width="22" height="6" />
+                      <rect x="42" y="70" width="14" height="8" />
+                      <rect x="66" y="66" width="10" height="10" />
+                      <rect x="80" y="80" width="10" height="10" />
+                    </svg>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center gap-1.5 text-purple-300 font-bold">
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>Selene Mobile Pairing</span>
+                    </div>
+                    <p className="text-slate-300">
+                      Open <strong>Orbit Link</strong> on Selene Mobile and enter room code:
+                    </p>
+                    <div className="font-mono bg-slate-900/80 px-2.5 py-1 rounded-lg border border-purple-500/40 text-purple-200 inline-block text-[11px] font-semibold select-all">
+                      {roomKey}
+                    </div>
+                    <p className="text-[10px] text-slate-400">Direct peer-to-peer WebRTC encrypted mesh</p>
+                  </div>
+                </div>
+              )}
 
               {/* End-to-End Encryption Key */}
               <div className="flex items-center gap-2 pt-1">
