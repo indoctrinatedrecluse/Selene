@@ -1,0 +1,17 @@
+# .gcloudignore for Selene Google Cloud Run deployment
+.gcloudignore
+.git
+.gitignore
+.github
+node_modules/
+.next/
+mobile/
+src-tauri/
+desktop-dist/
+electron/
+data/
+*.log
+*.zip
+.system_generated/
+tests/
+__tests__/
