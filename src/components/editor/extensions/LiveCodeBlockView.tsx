@@ -19,6 +19,9 @@ import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRen
 import { PhoenixLiveViewRenderer } from "@/components/render-engine/PhoenixLiveViewRenderer";
 import { SwiftUiRenderer } from "@/components/render-engine/SwiftUiRenderer";
 import { HermesRelayRenderer } from "@/components/render-engine/HermesRelayRenderer";
+import { WaveDromRenderer } from "@/components/render-engine/WaveDromRenderer";
+import { D2DiagramRenderer } from "@/components/render-engine/D2DiagramRenderer";
+import { WatBytecodeRenderer } from "@/components/render-engine/WatBytecodeRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -48,6 +51,9 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isPhoenixLiveView = language === "heex" || language === "liveview" || language === "elixir" || language === "phoenix";
   const isSwiftUi = language === "swift" || language === "swiftui";
   const isHermesRelay = language === "http" || language === "rest" || language === "curl" || language === "graphql";
+  const isWaveDrom = language === "wavedrom" || language === "waveform" || language === "regview";
+  const isD2 = language === "d2" || language === "d2lang";
+  const isWat = language === "wat" || language === "wast";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(rawCode);
@@ -288,6 +294,45 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's a WaveDrom digital timing or register bitfield block
+  if (isWaveDrom && showLiveRender) {
+    return (
+      <NodeViewWrapper className="wavedrom-block my-4">
+        <WaveDromRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a D2 Architecture Diagram block
+  if (isD2 && showLiveRender) {
+    return (
+      <NodeViewWrapper className="d2-block my-4">
+        <D2DiagramRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's a WebAssembly Text (WAT) bytecode block
+  if (isWat && showLiveRender) {
+    return (
+      <NodeViewWrapper className="wat-block my-4">
+        <WatBytecodeRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // Standard high-performance code block
   return (
     <NodeViewWrapper className="relative my-4 rounded-xl border border-slate-800 bg-slate-950/90 overflow-hidden shadow-xl">
@@ -306,6 +351,10 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="rest">rest (Hermes Relay)</option>
             <option value="curl">curl (Hermes Relay)</option>
             <option value="graphql">graphql (Hermes Relay)</option>
+            <option value="wavedrom">wavedrom (digital timing)</option>
+            <option value="regview">regview (register bits)</option>
+            <option value="d2">d2 (architecture DAG)</option>
+            <option value="wat">wat (webassembly text)</option>
             <option value="chart">chart (declarative)</option>
             <option value="plot">plot (declarative)</option>
             <option value="duckdb">duckdb (live OLAP)</option>

@@ -5,8 +5,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('SampleService Tests', () {
-    test('Contains exactly 20 canonical showcase samples', () {
-      expect(SampleService.allSamples.length, equals(20));
+    test('Contains exactly 21 canonical showcase samples', () {
+      expect(SampleService.allSamples.length, equals(21));
     });
 
     test('All samples have valid filenames, titles, and icons', () {

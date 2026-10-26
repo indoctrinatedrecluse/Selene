@@ -254,6 +254,9 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
   int _heexPing = 14;
   bool _swiftToggle = true;
   String _chartViewMode = 'bar'; // bar, line, metrics
+  int _watArgA = 24;
+  int _watArgB = 18;
+  int? _watResult;
 
   bool get _isVisualFormat {
     final l = widget.language.toLowerCase();
@@ -262,6 +265,8 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
       'mermaid',
       'math', 'katex', 'latex',
       'glsl', 'shader', 'wgsl',
+      'wavedrom', 'waveform', 'regview',
+      'd2', 'd2lang',
     ].contains(l);
   }
 
@@ -726,12 +731,37 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
       case 'graphql':
       case 'rest':
         return 'HERMES RELAY GATEWAY • 200 OK • 18ms';
+      case 'wavedrom':
+      case 'waveform':
+      case 'regview':
+        return 'WAVEDROM DIGITAL TIMING & REGISTER ENGINE';
+      case 'd2':
+      case 'd2lang':
+        return 'D2 MODERN ARCHITECTURE DAG ENGINE';
+      case 'wat':
+      case 'wast':
+        return 'WASM32 TEXT BYTECODE STACK RUNNER • 0.01ms';
       default:
         return '${lang.toUpperCase()} EXECUTION SANDBOX • 0.9ms';
     }
   }
 
   Widget _buildEngineResult(String lang) {
+    // WaveDrom Digital Timing / Register View
+    if (lang == 'wavedrom' || lang == 'waveform' || lang == 'regview') {
+      return _buildWaveDromWidget();
+    }
+
+    // D2 Architecture Diagram
+    if (lang == 'd2' || lang == 'd2lang') {
+      return _buildD2Widget();
+    }
+
+    // WebAssembly Text Bytecode (WAT)
+    if (lang == 'wat' || lang == 'wast') {
+      return _buildWatWidget();
+    }
+
     // 1. Declarative Vector Charts (Sample 13)
     if (lang == 'chart' || lang == 'vega' || lang == 'vegalite') {
       return _buildChartWidget();
@@ -1626,6 +1656,535 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
       ),
     );
   }
+
+  Widget _buildWaveDromWidget() {
+    bool isReg = _currentCode.contains('"reg"') || _currentCode.contains("'reg'");
+    
+    if (isReg) {
+      final fieldMatches = RegExp(r'\{[^{}]*\}').allMatches(_currentCode);
+      final fields = <Map<String, dynamic>>[];
+      int totalBits = 32;
+      
+      for (final m in fieldMatches) {
+        final text = m.group(0) ?? '';
+        final nameMatch = RegExp(r'["\x27]name["\x27]\s*:\s*["\x27]([^"\x27]+)["\x27]').firstMatch(text);
+        final bitsMatch = RegExp(r'["\x27]bits["\x27]\s*:\s*(\d+)').firstMatch(text);
+        final attrMatch = RegExp(r'["\x27]attr["\x27]\s*:\s*["\x27]([^"\x27]+)["\x27]').firstMatch(text);
+        if (bitsMatch != null) {
+          final bits = int.tryParse(bitsMatch.group(1) ?? '1') ?? 1;
+          final name = nameMatch?.group(1) ?? 'RESERVED';
+          final attr = attrMatch?.group(1) ?? (name == 'RESERVED' ? '—' : 'RW');
+          fields.add({'name': name, 'bits': bits, 'attr': attr});
+        }
+      }
+      if (fields.isEmpty) {
+        fields.addAll([
+          {'name': 'ENABLE', 'bits': 1, 'attr': 'RW'},
+          {'name': 'MODE', 'bits': 3, 'attr': 'RW'},
+          {'name': 'RESERVED', 'bits': 4, 'attr': '—'},
+          {'name': 'STATUS', 'bits': 8, 'attr': 'RO'},
+          {'name': 'DIVIDER', 'bits': 16, 'attr': 'RW'},
+        ]);
+      }
+      
+      final colors = [
+        SeleneTheme.lunarCyan,
+        const Color(0xFF818CF8),
+        SeleneTheme.emeraldSuccess,
+        const Color(0xFFF472B6),
+        SeleneTheme.goldAccent,
+      ];
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF090D18),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: SeleneTheme.lunarCyan.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.memory, size: 16, color: SeleneTheme.lunarCyan),
+                const SizedBox(width: 8),
+                Text('$totalBits-Bit Register Bitfield Map',
+                    style: const TextStyle(color: SeleneTheme.lunarCyan, fontWeight: FontWeight.bold, fontSize: 13)),
+                const Spacer(),
+                const Text('WaveDrom RegView', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10.5)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SeleneTheme.borderHighlight),
+              ),
+              child: Row(
+                children: [
+                  for (int i = 0; i < fields.length; i++) ...[
+                    Expanded(
+                      flex: fields[i]['bits'] as int,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colors[i % colors.length].withValues(alpha: 0.18),
+                          border: Border(
+                            right: i < fields.length - 1
+                                ? BorderSide(color: colors[i % colors.length].withValues(alpha: 0.5))
+                                : BorderSide.none,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              fields[i]['name'] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors[i % colors.length],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10.5,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                            Text(
+                              '${fields[i]['bits']}b • ${fields[i]['attr']}',
+                              style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 8.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final signalMatches = RegExp(r'\{[^{}]*\}').allMatches(_currentCode);
+    final sigs = <Map<String, String>>[];
+    for (final m in signalMatches) {
+      final text = m.group(0) ?? '';
+      final nameMatch = RegExp(r'["\x27]name["\x27]\s*:\s*["\x27]([^"\x27]+)["\x27]').firstMatch(text);
+      final waveMatch = RegExp(r'["\x27]wave["\x27]\s*:\s*["\x27]([^"\x27]+)["\x27]').firstMatch(text);
+      if (nameMatch != null && waveMatch != null) {
+        sigs.add({'name': nameMatch.group(1)!, 'wave': waveMatch.group(1)!});
+      }
+    }
+    if (sigs.isEmpty) {
+      sigs.addAll([
+        {'name': 'CLK', 'wave': 'p.......|...'},
+        {'name': 'CS#', 'wave': '10......|..1'},
+        {'name': 'MOSI', 'wave': 'x3.4.5..|..x'},
+        {'name': 'MISO', 'wave': 'z...6.7.|.z.'},
+        {'name': 'READY', 'wave': '0...1...|0..'},
+      ]);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF090D18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SeleneTheme.lunarCyan.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.show_chart, size: 16, color: SeleneTheme.lunarCyan),
+              SizedBox(width: 8),
+              Text('WaveDrom Digital Timing Waveform',
+                  style: TextStyle(color: SeleneTheme.lunarCyan, fontWeight: FontWeight.bold, fontSize: 13)),
+              Spacer(),
+              Text('Vector Clock Pulses', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10.5)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: math.max(380.0, sigs.first['wave']!.length * 36.0 + 90.0),
+              height: sigs.length * 32.0 + 30.0,
+              child: CustomPaint(
+                painter: _WaveDromPainter(signals: sigs),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildD2Widget() {
+    final lines = _currentCode.split('\n');
+    final nodes = <String, String>{};
+    final conns = <Map<String, String>>[];
+
+    for (var l in lines) {
+      l = l.trim();
+      if (l.isEmpty || l.startsWith('#')) continue;
+      if (l.contains('->') || l.contains('<->') || l.contains('--')) {
+        final parts = l.split(RegExp(r'->|<->|--'));
+        if (parts.length >= 2) {
+          final from = parts[0].trim();
+          final rightPart = parts[1].split(':');
+          final to = rightPart[0].trim();
+          final label = rightPart.length > 1 ? rightPart[1].trim() : '';
+          conns.add({'from': from, 'to': to, 'label': label});
+        }
+      } else if (l.contains(':')) {
+        final parts = l.split(':');
+        final id = parts[0].trim();
+        final label = parts[1].replaceAll('{', '').trim();
+        if (id != 'direction' && id != 'style.fill' && id != 'shape') {
+          nodes[id] = label.isNotEmpty ? label : id;
+        }
+      }
+    }
+
+    if (nodes.isEmpty) {
+      nodes.addAll({
+        'client': 'Client App (Web & Mobile)',
+        'gateway': 'Selene API Gateway',
+        'engine': 'Computation Engine',
+        'db': 'Primary Aurora DB',
+      });
+      conns.addAll([
+        {'from': 'client', 'to': 'gateway', 'label': 'HTTPS'},
+        {'from': 'gateway', 'to': 'engine', 'label': 'gRPC'},
+        {'from': 'engine', 'to': 'db', 'label': 'SQL Query'},
+      ]);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF090E1E),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF818CF8).withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.hub_outlined, size: 16, color: Color(0xFF818CF8)),
+              const SizedBox(width: 8),
+              const Text('D2 Modern Architecture DAG',
+                  style: TextStyle(color: Color(0xFF818CF8), fontWeight: FontWeight.bold, fontSize: 13)),
+              const Spacer(),
+              Text('${nodes.length} Nodes • ${conns.length} Edges',
+                  style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 10.5)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 180,
+            child: CustomPaint(
+              painter: _D2Painter(nodes: nodes, connections: conns),
+              size: Size.infinite,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWatWidget() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF08140F),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SeleneTheme.emeraldSuccess.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.data_object, size: 16, color: SeleneTheme.emeraldSuccess),
+              SizedBox(width: 8),
+              Text('WebAssembly Text (WAT) Stack Evaluator',
+                  style: TextStyle(color: SeleneTheme.emeraldSuccess, fontWeight: FontWeight.bold, fontSize: 13)),
+              Spacer(),
+              Text('WASM32 Stack', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10.5)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'param \$a (i32)',
+                    labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    filled: true,
+                    fillColor: SeleneTheme.surfaceElevated,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 13, fontFamily: 'monospace'),
+                  controller: TextEditingController(text: '$_watArgA'),
+                  onChanged: (val) {
+                    _watArgA = int.tryParse(val) ?? 0;
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'param \$b (i32)',
+                    labelStyle: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    filled: true,
+                    fillColor: SeleneTheme.surfaceElevated,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 13, fontFamily: 'monospace'),
+                  controller: TextEditingController(text: '$_watArgB'),
+                  onChanged: (val) {
+                    _watArgB = int.tryParse(val) ?? 0;
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.bolt, size: 14),
+                label: const Text('Call WASM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SeleneTheme.emeraldSuccess,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _watResult = _watArgA + _watArgB;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF030A06),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: SeleneTheme.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _watResult != null
+                          ? 'Return: i32.const $_watResult'
+                          : 'Return: i32.const 42',
+                      style: const TextStyle(
+                        color: SeleneTheme.emeraldSuccess,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    const Text('Telemetry: 0.012 ms • Exit: 0x0',
+                        style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10, fontFamily: 'monospace')),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Stack: [local.get \$a] -> [local.get \$b] -> [i32.add] -> return',
+                  style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10, fontFamily: 'monospace'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WaveDromPainter extends CustomPainter {
+  final List<Map<String, String>> signals;
+
+  _WaveDromPainter({required this.signals});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const labelW = 60.0;
+    const stepW = 34.0;
+    const rowH = 30.0;
+
+    final linePaint = Paint()
+      ..color = SeleneTheme.lunarCyan
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+
+    final clockPaint = Paint()
+      ..color = SeleneTheme.goldAccent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+
+    final gridPaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..strokeWidth = 0.8;
+
+    int maxLen = 0;
+    for (final s in signals) {
+      maxLen = math.max(maxLen, s['wave']!.length);
+    }
+
+    for (int c = 0; c < maxLen; c++) {
+      final x = labelW + c * stepW;
+      canvas.drawLine(Offset(x, 18), Offset(x, size.height), gridPaint);
+
+      final tp = TextPainter(
+        text: TextSpan(text: 'T$c', style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 9, fontFamily: 'monospace')),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(x + stepW / 2 - tp.width / 2, 4));
+    }
+
+    for (int i = 0; i < signals.length; i++) {
+      final sig = signals[i];
+      final yTop = 24.0 + i * rowH;
+      final yMid = yTop + rowH / 2;
+      final yHigh = yTop + 4.0;
+      final yLow = yTop + rowH - 6.0;
+
+      final tp = TextPainter(
+        text: TextSpan(text: sig['name']!, style: const TextStyle(color: SeleneTheme.textPrimary, fontSize: 10.5, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(labelW - tp.width - 8, yMid - tp.height / 2));
+
+      final wave = sig['wave']!;
+      for (int c = 0; c < wave.length; c++) {
+        final x1 = labelW + c * stepW;
+        final x2 = x1 + stepW;
+        final char = wave[c];
+
+        if (char == 'p' || char == 'P') {
+          final midX = x1 + stepW / 2;
+          final path = Path()
+            ..moveTo(x1, yLow)
+            ..lineTo(x1, yHigh)
+            ..lineTo(midX, yHigh)
+            ..lineTo(midX, yLow)
+            ..lineTo(x2, yLow);
+          canvas.drawPath(path, clockPaint);
+        } else if (char == '1' || char == 'h' || char == 'H') {
+          canvas.drawLine(Offset(x1, yHigh), Offset(x2, yHigh), linePaint);
+        } else if (char == '0' || char == 'l' || char == 'L') {
+          canvas.drawLine(Offset(x1, yLow), Offset(x2, yLow), linePaint);
+        } else if (char == 'z' || char == 'Z') {
+          canvas.drawLine(Offset(x1, yMid), Offset(x2, yMid), Paint()..color = const Color(0xFF64748B)..strokeWidth = 1.0);
+        } else {
+          final busPath = Path()
+            ..moveTo(x1, yMid)
+            ..lineTo(x1 + 4, yHigh)
+            ..lineTo(x2 - 4, yHigh)
+            ..lineTo(x2, yMid)
+            ..lineTo(x2 - 4, yLow)
+            ..lineTo(x1 + 4, yLow)
+            ..close();
+          canvas.drawPath(busPath, Paint()..color = SeleneTheme.purpleMystic.withValues(alpha: 0.2)..style = PaintingStyle.fill);
+          canvas.drawPath(busPath, Paint()..color = SeleneTheme.purpleMystic..style = PaintingStyle.stroke..strokeWidth = 1.2);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _D2Painter extends CustomPainter {
+  final Map<String, String> nodes;
+  final List<Map<String, String>> connections;
+
+  _D2Painter({required this.nodes, required this.connections});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (nodes.isEmpty) return;
+
+    final nodeKeys = nodes.keys.toList();
+    final nodeCount = nodeKeys.length;
+    final nodePositions = <String, Rect>{};
+
+    final nodeW = math.min(130.0, (size.width - 40) / math.max(1, (nodeCount / 2).ceil()));
+    final nodeH = 46.0;
+
+    for (int i = 0; i < nodeCount; i++) {
+      final key = nodeKeys[i];
+      final col = i % 2;
+      final row = i ~/ 2;
+      final x = 20.0 + col * (size.width / 2.0);
+      final y = 20.0 + row * 80.0;
+      nodePositions[key] = Rect.fromLTWH(x, y, nodeW, nodeH);
+    }
+
+    final edgePaint = Paint()
+      ..color = const Color(0xFF818CF8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+
+    for (final conn in connections) {
+      final fromR = nodePositions[conn['from']];
+      final toR = nodePositions[conn['to']];
+      if (fromR != null && toR != null) {
+        final p1 = Offset(fromR.right, fromR.top + fromR.height / 2);
+        final p2 = Offset(toR.left, toR.top + toR.height / 2);
+
+        final path = Path()
+          ..moveTo(p1.dx, p1.dy)
+          ..cubicTo((p1.dx + p2.dx) / 2, p1.dy, (p1.dx + p2.dx) / 2, p2.dy, p2.dx, p2.dy);
+        canvas.drawPath(path, edgePaint);
+      }
+    }
+
+    for (int i = 0; i < nodeCount; i++) {
+      final key = nodeKeys[i];
+      final rect = nodePositions[key]!;
+      final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(8));
+
+      canvas.drawRRect(rrect, Paint()..color = const Color(0xFF0F172A));
+      canvas.drawRRect(rrect, Paint()..color = const Color(0xFF818CF8)..style = PaintingStyle.stroke..strokeWidth = 1.4);
+
+      final label = nodes[key]!;
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+        maxLines: 2,
+        ellipsis: '...',
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: rect.width - 12);
+      tp.paint(canvas, Offset(rect.left + 6, rect.top + (rect.height - tp.height) / 2));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _VectorChartPainter extends CustomPainter {

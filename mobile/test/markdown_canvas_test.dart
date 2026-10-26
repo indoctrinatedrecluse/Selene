@@ -72,5 +72,49 @@ export default function Card() { return <div>Live</div>; }
       // After running, button transitions to Re-Run
       expect(find.text('Re-Run'), findsOneWidget);
     });
+
+    testWidgets('Phase 1 systems formats (wavedrom, d2, wat) render properly', (tester) async {
+      tester.view.physicalSize = const Size(1000, 3000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const markdown = '''
+# Systems
+```wavedrom
+{ "signal": [{ "name": "CLK", "wave": "p..." }] }
+```
+
+```d2
+direction: right
+a -> b: Link
+```
+
+```wat
+(module (func \$add (param \$a i32) (param \$b i32) (result i32) local.get \$a local.get \$b i32.add) (export "add" (func \$add)))
+```
+''';
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: MarkdownCanvas(content: markdown),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('WAVEDROM'), findsOneWidget);
+      expect(find.text('D2'), findsOneWidget);
+      expect(find.text('WAT'), findsOneWidget);
+
+      // WAT is an executable stack engine, tap Run Engine to reveal interactive stack evaluator
+      await tester.tap(find.text('Run Engine'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Call WASM'), findsOneWidget);
+    });
   });
 }

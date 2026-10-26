@@ -28,6 +28,9 @@ import { SqlDataStudioRenderer } from "@/components/render-engine/SqlDataStudioR
 import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRenderer";
 import { DeclarativeChartRenderer } from "@/components/render-engine/DeclarativeChartRenderer";
 import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRenderer";
+import { WaveDromRenderer } from "@/components/render-engine/WaveDromRenderer";
+import { D2DiagramRenderer } from "@/components/render-engine/D2DiagramRenderer";
+import { WatBytecodeRenderer } from "@/components/render-engine/WatBytecodeRenderer";
 
 export interface SlideData {
   id: string;
@@ -363,6 +366,12 @@ export function SlideDeckViewer({
                   <DeclarativeChartRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
                 ) : ["glsl", "shader"].includes(currentSlide.codeBlock.lang) ? (
                   <ShaderCanvasRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["wavedrom", "waveform", "regview"].includes(currentSlide.codeBlock.lang) ? (
+                  <WaveDromRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["d2", "d2lang"].includes(currentSlide.codeBlock.lang) ? (
+                  <D2DiagramRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["wat", "wast"].includes(currentSlide.codeBlock.lang) ? (
+                  <WatBytecodeRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
                 ) : (
                   <LiveSandboxRenderer
                     initialCode={currentSlide.codeBlock.code}

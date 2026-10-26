@@ -182,6 +182,14 @@ class SampleService {
       icon: '🛰️',
       category: 'Collaboration',
     ),
+    SampleItem(
+      id: 'sample-21',
+      filename: '21_wavedrom_d2_and_wat_systems_showcase.md',
+      title: 'WaveDrom, D2 & WASM (WAT)',
+      subtitle: 'Timing pulses, architecture DAGs & bytecode',
+      icon: '⚡',
+      category: 'Systems & Hardware',
+    ),
   ];
 
   static final Map<String, String> _cache = {};
