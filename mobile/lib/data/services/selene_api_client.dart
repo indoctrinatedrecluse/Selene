@@ -163,6 +163,9 @@ class SeleneApiClient {
       final res = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 10));
       if (res.statusCode == 200 || res.statusCode == 201) {
         final data = json.decode(res.body);
+        if (data['url'] != null && (data['url'] as String).isNotEmpty) {
+          return data['url'] as String;
+        }
         final shareId = data['id'] ?? data['shareId'];
         if (shareId != null) {
           return '$baseUrl/share/$shareId';

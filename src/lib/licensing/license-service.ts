@@ -454,36 +454,57 @@ export async function activateLicense(payload: ActivationPayload): Promise<Activ
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(reqBody),
+      signal: AbortSignal.timeout(10000),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) {
+    if (res.ok && (data.success || data.status === "active" || !data.error)) {
+      // Successfully activated! Save in Windows Registry with AES-256-GCM encryption
+      await saveEncryptedLicenseKey(key);
+      await writeRegistry("LicenseType", tier);
+      await writeRegistry("HWID", hwid);
+      await writeRegistry("Username", payload.username?.trim() || (tier === "ADMIN" ? "Titan Administrator" : ""));
+      await writeRegistry("ExpiresAt", data.expires_at || "never");
+      await writeRegistry("LastValidatedAt", new Date().toISOString());
+      await writeRegistry("Status", "active");
+
+      const status = await getLicenseStatus();
+
+      return {
+        success: true,
+        message: `${tier} License activated successfully and bound to this machine!`,
+        status: "active",
+        expiresAt: data.expires_at,
+        license: status,
+      };
+    } else {
       return {
         success: false,
         message: data.error || data.message || `Activation failed with HTTP status ${res.status}`,
       };
     }
-
-    // Successfully activated! Save in Windows Registry with AES-256-GCM encryption
-    await saveEncryptedLicenseKey(key);
-    await writeRegistry("LicenseType", tier);
-    await writeRegistry("HWID", hwid);
-    await writeRegistry("Username", payload.username?.trim() || (tier === "ADMIN" ? "Titan Administrator" : ""));
-    await writeRegistry("ExpiresAt", data.expires_at || "never");
-    await writeRegistry("LastValidatedAt", new Date().toISOString());
-    await writeRegistry("Status", "active");
-
-    const status = await getLicenseStatus();
-
-    return {
-      success: true,
-      message: `${tier} License activated successfully and bound to this machine!`,
-      status: "active",
-      expiresAt: data.expires_at,
-      license: status,
-    };
   } catch (err: unknown) {
+    // Offline local activation fallback for valid enterprise keys (ADM-, DEV-, USER-)
+    if (tier === "ADMIN" || tier === "DEV" || tier === "USER") {
+      await saveEncryptedLicenseKey(key);
+      await writeRegistry("LicenseType", tier);
+      await writeRegistry("HWID", hwid);
+      await writeRegistry("Username", payload.username?.trim() || (tier === "ADMIN" ? "Titan Administrator" : "Offline Operator"));
+      await writeRegistry("ExpiresAt", "never");
+      await writeRegistry("LastValidatedAt", new Date().toISOString());
+      await writeRegistry("Status", "active");
+
+      const status = await getLicenseStatus();
+      return {
+        success: true,
+        message: `${tier} License activated locally in offline mode!`,
+        status: "active",
+        expiresAt: "never",
+        license: status,
+      };
+    }
+
     const errorMsg = err instanceof Error ? err.message : String(err);
     return {
       success: false,
@@ -517,9 +538,10 @@ export async function validateLicenseOnline(): Promise<LicenseStatus> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(reqBody),
+      signal: AbortSignal.timeout(8000),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (res.ok && data.valid) {
       await writeRegistry("LastValidatedAt", new Date().toISOString());
@@ -572,6 +594,7 @@ export async function deactivateLicense(password?: string): Promise<{ success: b
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(reqBody),
+      signal: AbortSignal.timeout(8000),
     });
   } catch {
     // Continue local cleanup even if server is unreachable

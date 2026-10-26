@@ -35,6 +35,7 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
   bool _isWhiteboardActive = false;
   bool _sparklesEnabled = true;
   String? _loadedDocId;
+  bool _isProgrammaticUpdate = false;
 
   Timer? _autoSaveDebounceTimer;
   Timer? _periodicAutoSaveTimer;
@@ -85,6 +86,7 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
   }
 
   void _onTextChanged() {
+    if (_isProgrammaticUpdate) return;
     final repo = context.read<DocumentRepository>();
     final doc = repo.activeDocument;
     if (doc != null && doc.content != _textController.text) {
@@ -103,8 +105,10 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
     final repo = context.read<DocumentRepository>();
     final doc = repo.activeDocument;
     if (doc != null && doc.id != _loadedDocId) {
+      _isProgrammaticUpdate = true;
       _loadedDocId = doc.id;
       _textController.text = doc.content;
+      _isProgrammaticUpdate = false;
     }
   }
 
@@ -334,8 +338,10 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
 
     // 5. Update UI immediately
     setState(() {
+      _isProgrammaticUpdate = true;
       _loadedDocId = sample.id;
       _textController.text = content;
+      _isProgrammaticUpdate = false;
     });
 
     // 6. Save in document repository
@@ -634,6 +640,9 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                   child: _buildMainView(isTablet),
                 ),
 
+                // Live Document Telemetry Footer (Word Count, Character Density & Read Time)
+                _buildTelemetryFooter(),
+
                 // Keyboard accessory in edit mode
                 if (_viewMode == CanvasViewMode.edit)
                   KeyboardAccessoryBar(controller: _textController),
@@ -770,6 +779,44 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
           contentPadding: EdgeInsets.all(16),
           border: InputBorder.none,
         ),
+      ),
+    );
+  }
+
+  Widget _buildTelemetryFooter() {
+    final text = _textController.text;
+    final words = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final chars = text.length;
+    final readTimeMinutes = (words / 200).ceil();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      decoration: const BoxDecoration(
+        color: Color(0xFF070B14),
+        border: Border(top: BorderSide(color: SeleneTheme.border)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.analytics_outlined, size: 12, color: SeleneTheme.lunarCyan),
+          const SizedBox(width: 6),
+          Text(
+            '$words words • $chars chars',
+            style: const TextStyle(
+              color: SeleneTheme.textMuted,
+              fontSize: 10.5,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const Spacer(),
+          Text(
+            '~${readTimeMinutes < 1 ? 1 : readTimeMinutes} min read',
+            style: const TextStyle(
+              color: SeleneTheme.lunarCyan,
+              fontSize: 10.5,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -940,13 +987,34 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                           icon: const Icon(Icons.delete_outline, size: 18, color: SeleneTheme.textMuted),
                           tooltip: 'Delete Note',
                           onPressed: () async {
-                            await repo.deleteDocument(doc.id);
+                            _autoSaveDebounceTimer?.cancel();
+                            final deletedTitle = doc.title;
+                            final deletedContent = doc.content;
+                            final deletedId = doc.id;
+                            await repo.deleteDocument(deletedId);
                             if (mounted) {
                               final active = repo.activeDocument;
                               setState(() {
+                                _isProgrammaticUpdate = true;
                                 _loadedDocId = active?.id;
                                 _textController.text = active?.content ?? '';
+                                _isProgrammaticUpdate = false;
                               });
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('🗑️ Removed "$deletedTitle"'),
+                                  duration: const Duration(seconds: 3),
+                                  behavior: SnackBarBehavior.floating,
+                                  action: SnackBarAction(
+                                    label: 'UNDO',
+                                    textColor: SeleneTheme.lunarCyan,
+                                    onPressed: () {
+                                      repo.openOrImportSample(deletedId, deletedTitle, deletedContent);
+                                    },
+                                  ),
+                                ),
+                              );
                             }
                           },
                         ),
@@ -961,7 +1029,7 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
 
                   const Divider(color: SeleneTheme.border, height: 20),
 
-                  // SECTION 2: Canonical Samples Folder (20 Showcases)
+                  // SECTION 2: Canonical Samples Folder (Showcases)
                   Theme(
                     data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                     child: ExpansionTile(
@@ -970,9 +1038,9 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                         'Imperial Showcases (samples/)',
                         style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13.5, fontWeight: FontWeight.w600),
                       ),
-                      subtitle: const Text(
-                        '20 Canonical multiplatform templates',
-                        style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                      subtitle: Text(
+                        '${SampleService.allSamples.length} Canonical multiplatform templates',
+                        style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
                       ),
                       children: SampleService.allSamples.map((sample) {
                         return ListTile(
