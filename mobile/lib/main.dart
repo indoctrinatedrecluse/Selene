@@ -8,25 +8,39 @@ import 'ui/features/editor/views/editor_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const SeleneMobileApp());
+  final licenseService = LicenseService();
+  await licenseService.initialize();
+  runApp(SeleneMobileApp(licenseService: licenseService));
 }
 
-class SeleneMobileApp extends StatelessWidget {
+class SeleneMobileApp extends StatefulWidget {
   final DocumentRepository? repository;
   final LicenseService? licenseService;
 
   const SeleneMobileApp({super.key, this.repository, this.licenseService});
 
   @override
-  Widget build(BuildContext context) {
-    final license = licenseService ?? LicenseService();
-    final apiClient = SeleneApiClient(licenseService: license);
-    final repo = repository ?? DocumentRepository(apiClient: apiClient);
+  State<SeleneMobileApp> createState() => _SeleneMobileAppState();
+}
 
+class _SeleneMobileAppState extends State<SeleneMobileApp> {
+  late final LicenseService _licenseService;
+  late final DocumentRepository _repository;
+
+  @override
+  void initState() {
+    super.initState();
+    _licenseService = widget.licenseService ?? LicenseService();
+    final apiClient = SeleneApiClient(licenseService: _licenseService);
+    _repository = widget.repository ?? DocumentRepository(apiClient: apiClient);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<LicenseService>.value(value: license),
-        ChangeNotifierProvider<DocumentRepository>.value(value: repo),
+        ChangeNotifierProvider<LicenseService>.value(value: _licenseService),
+        ChangeNotifierProvider<DocumentRepository>.value(value: _repository),
       ],
       child: MaterialApp(
         title: 'Selene Mobile',

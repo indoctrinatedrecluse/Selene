@@ -110,11 +110,51 @@ a -> b: Link
       expect(find.text('D2'), findsOneWidget);
       expect(find.text('WAT'), findsOneWidget);
 
-      // WAT is an executable stack engine, tap Run Engine to reveal interactive stack evaluator
-      await tester.tap(find.text('Run Engine'));
+      // WAT is auto-rendered by default as a visual systems format
+      expect(find.text('Call WASM'), findsOneWidget);
+    });
+
+    testWidgets('Phase 2 scientific & 3D formats (typst, r, openscad) render properly', (tester) async {
+      tester.view.physicalSize = const Size(1000, 3000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const markdown = '''
+# Scientific & 3D
+```typst
+= Orbital Mechanics
+== Selene Working Paper
+```
+
+```r
+altitude <- c(100, 200)
+attenuation <- c(10, 20)
+model <- lm(attenuation ~ altitude)
+```
+
+```openscad
+cube([40, 40, 40], center=true);
+```
+''';
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: MarkdownCanvas(content: markdown),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
-      expect(find.text('Call WASM'), findsOneWidget);
+      expect(find.text('TYPST'), findsOneWidget);
+      expect(find.text('R'), findsOneWidget);
+      expect(find.text('OPENSCAD'), findsOneWidget);
+      expect(find.text('ATHENA ACADEMIC TYPESETTER'), findsOneWidget);
+      expect(find.text('APOLLO WEBR / R 4.4'), findsOneWidget);
+      expect(find.text('DAEDALUS 3D OPENSCAD CSG'), findsOneWidget);
     });
   });
 }

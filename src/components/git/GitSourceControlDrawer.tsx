@@ -65,7 +65,7 @@ export function GitSourceControlDrawer({
       newContent: `const STORAGE_KEY = "selene_documents_v12";\n// Added Declarative Chart & DuckDB starter templates`,
     },
     {
-      path: "docs/architecture-v0.4.0.md",
+      path: "docs/architecture-v0.5.0.md",
       status: "untracked",
       staged: false,
       oldContent: "",

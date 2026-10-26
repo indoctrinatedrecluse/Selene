@@ -3,7 +3,7 @@
 > **The Hypermodern Technical Document & Polyglot Code Canvas**  
 > *Where literate technical authoring meets 20 real-time execution sandboxes, peer-to-peer collaborative harmony, and the timeless elegance of Greek mythology.* 🚀✨
 
-[![Release](https://img.shields.io/badge/Release-v0.4.0_(Titan_Edition)-sky?style=for-the-badge&logo=rocket)](https://github.com/indoctrinatedrecluse/Selene/releases)
+[![Release](https://img.shields.io/badge/Release-v0.5.0_(Titan_Edition)-sky?style=for-the-badge&logo=rocket)](https://github.com/indoctrinatedrecluse/Selene/releases)
 [![Cloud Run Live](https://img.shields.io/badge/Google_Cloud_Run-Production_Live-4285F4?style=for-the-badge&logo=googlecloud)](https://selene-h5zdysrkqa-uc.a.run.app)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.x_(Turbopack)-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React 19](https://img.shields.io/badge/React-19.x-blue?style=for-the-badge&logo=react)](https://react.dev/)
@@ -19,7 +19,7 @@
 
 - [✨ Overview & Product Brief](#-overview--product-brief)
 - [🏛️ Mythological Origins: Selene & The Pan-Hellenic Pantheon](#-mythological-origins-selene--the-pan-hellenic-pantheon)
-- [💎 Strategic Pillars Delivered (Pan-Hellenic Titan Edition v0.4.0)](#-strategic-pillars-delivered-pan-hellenic-titan-edition-v040)
+- [💎 Strategic Pillars Delivered (Pan-Hellenic Titan Edition v0.5.0)](#-strategic-pillars-delivered-pan-hellenic-titan-edition-v050)
   - [1. ⚡ 20 Polyglot Living Sandboxes & Visual Tweak Props Inspector](#1--20-polyglot-living-sandboxes--visual-tweak-props-inspector)
   - [2. ⏳ Chronos Timeline: Semantic Revisions & Visual Diff Engine](#2--chronos-timeline-semantic-revisions--visual-diff-engine)
   - [3. 🪐 Orbit Link: Zero-Setup P2P WebRTC Real-Time Collaboration](#3--orbit-link-zero-setup-p2p-webrtc-real-time-collaboration)
@@ -77,7 +77,7 @@ Selene is named in homage to **Selene (Σελήνη)**, the primordial Greek Tit
 
 ---
 
-## 💎 Strategic Pillars Delivered (Pan-Hellenic Titan Edition v0.4.0)
+## 💎 Strategic Pillars Delivered (Pan-Hellenic Titan Edition v0.5.0)
 
 ### 1. ⚡ 20 Polyglot Living Sandboxes & Visual Tweak Props Inspector
 
@@ -386,11 +386,11 @@ git status
 # 2. Synchronize all version strings across the repository
 node tools/scripts/version-sync.js
 
-# 3. Create a semantic version tag (e.g., v0.4.0)
-git tag -a v0.4.0 -m "Release v0.4.0 — Pan-Hellenic Titan Edition"
+# 3. Create a semantic version tag (e.g., v0.5.0)
+git tag -a v0.5.0 -m "Release v0.5.0 — Pan-Hellenic Titan Edition"
 
 # 4. Push tag to GitHub
-git push origin v0.4.0
+git push origin v0.5.0
 ```
 
 GitHub Actions will automatically:

@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-10-26
+
+### 🌌 The Systems & Scientific Multiplatform Edition: WaveDrom, D2, WebAssembly (WAT), Typst, WebR (R), OpenSCAD 3D, Mobile Dual-Vault License Persistence, and Automated Multiplatform CI/CD
+
+This major milestone completes both Phase 1 and Phase 2 of Selene's expanded multi-language live rendering engines across desktop and mobile, resolves mobile license persistence across app updates and restarts, unifies native Android APK releases into the automated GitHub Actions CI/CD matrix, and achieves complete cross-platform parity:
+
+#### ⚡ 1. Phase 1: Systems, Hardware & Architecture Engines
+- **WaveDrom Hardware Waveforms & Register Bitfield Maps (`wavedrom` / `regview`)**: High-precision vector rendering of digital clock cycles, bus transitions, signal states (`1`, `0`, `x`, `z`), cycle grids, protocol timings, and MMIO register bitfield maps with permission flags (`RO`, `RW`, `WO`). Vector SVG on PC and high-performance custom `_WaveDromPainter` on Flutter mobile.
+- **D2 Modern Architecture DSL (`d2` / `d2lang`)**: Cloud microservices, system architectures, network dataflow DAGs, nested containers, and custom geometric node rendering (`cylinder`, `hexagon`, `circle`, `package`, `queue`, `rectangle`) with smooth orthogonal/bezier edge routing.
+- **WebAssembly Text Format Stack Evaluator (`wat` / `wast`)**: Bytecode S-expression parser, interactive stack input runner (`$a`, `$b`), step-by-step instruction trace, and linear memory hex inspector on both desktop and mobile.
+- **Showcase Sample**: `samples/21_wavedrom_d2_and_wat_systems_showcase.md`.
+
+#### 🔬 2. Phase 2: Scientific, Statistical & 3D Parametric Engines
+- **Athena's Academic Typesetter (`typst`)**: Publication-grade technical paper authoring with sub-20ms rendering, mathematical formula layout, academic parchment styling, theorem callouts, parameter matrix tables, and font scale controls on PC (`TypstRenderer.tsx`) and mobile canvas.
+- **Apollo's Empirical Observatory (`r` / `webr`)**: Ordinary Least Squares (OLS) linear regression modeling, ANOVA variance decomposition, interactive stochastic noise simulation, 95% confidence interval bands, and authentic `summary(lm)` console readouts on PC (`RStatisticalRenderer.tsx`) and mobile canvas (`_RScatterPlotPainter`).
+- **Daedalus's 3D Parametric Forge (`openscad` / `scad`)**: Constructive Solid Geometry (CSG) parametric CAD modeling with real-time 3D rotation, pitch/yaw touch drag gestures, directional celestial lighting, wireframe mode, and boolean cut/union AST inspection on PC (`OpenScadRenderer.tsx`) and mobile canvas (`_OpenScad3DPainter`).
+- **Showcase Sample**: `samples/22_typst_webr_and_openscad_scientific_showcase.md`.
+
+#### 📱 3. Mobile License Dual-Vault Persistence & App Update Retention
+- **Dual-Vault Architecture**: Implemented redundant multi-tier storage in `LicenseService` leveraging both `SharedPreferences` and physical disk anchor vaults (`.selene_license_vault.json`) in application support and documents directories.
+- **Auto-Recovery on Launch**: If SharedPreferences is wiped during APK update or reinstallation, all license metadata (`HWID`, `licenseKey`, `licenseType`, `username`, `expiresAt`, `trialInstalledAt`, and cryptographic HMAC signatures) are auto-recovered immediately from the disk anchor vault.
+- **OS Auto-Backup Enablement**: Enabled `android:allowBackup="true"` and `android:fullBackupContent="true"` in `AndroidManifest.xml` to preserve application storage across updates.
+- **Race Condition Prevention**: Instantiated and initialized `LicenseService` synchronously before `runApp()` to guarantee zero state flicker or unmounted access on app reopen.
+
+#### 🚀 4. Automated CI/CD Android APK Release Workflow & Parity
+- **Automated GitHub Actions Android APK Builds**: CI/CD release workflow builds `selene-v0.5.0-android.apk` with Flutter and Java 21, publishing it directly to GitHub Releases alongside desktop distributions.
+- **Live Document Telemetry Footer**: Real-time Word Count, Character Count, and Reading Time metrics on mobile canvas.
+- **Scriptorium Note Deletion & Autosave Resilience**: Fixed deletion race conditions with programmatic update guards and added 1-tap `UNDO` action.
+- **22 Canonical Showcase Samples**: Full parity with 22 canonical samples accessible across desktop and mobile.
+
+---
+
 ## [0.4.0] - 2026-10-20
 
 ### 🏛️ The Pan-Hellenic & Selene Lunar Titan Release: Polyglot LiveView & SwiftUI, Hermes Relay, Chronos Epoch Timeline, Orbit Link P2P, and Athena's Wisdom Suite

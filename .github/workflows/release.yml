@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version tag (e.g. v0.4.0)'
+        description: 'Release version tag (e.g. v0.5.0)'
         required: true
-        default: 'v0.4.0'
+        default: 'v0.5.0'
 
 permissions:
   contents: write
@@ -147,7 +147,7 @@ jobs:
         run: |
           VERSION="${{ github.event.inputs.version || github.ref_name }}"
           if [ -z "$VERSION" ]; then
-            VERSION="v0.4.0"
+            VERSION="v0.5.0"
           fi
           mkdir -p dist-mobile
           cp mobile/build/app/outputs/flutter-apk/app-release.apk dist-mobile/selene-${VERSION}-android.apk

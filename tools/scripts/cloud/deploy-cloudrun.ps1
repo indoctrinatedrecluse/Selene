@@ -63,7 +63,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..\..\..")).Path
 
 $PkgPath = Join-Path $ProjectRoot "package.json"
-$AppVersion = "0.4.0"
+$AppVersion = "0.5.0"
 if (Test-Path $PkgPath) {
     try {
         $pkgJson = Get-Content $PkgPath -Raw | ConvertFrom-Json

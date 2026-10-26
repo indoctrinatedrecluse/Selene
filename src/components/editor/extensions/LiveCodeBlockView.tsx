@@ -22,6 +22,9 @@ import { HermesRelayRenderer } from "@/components/render-engine/HermesRelayRende
 import { WaveDromRenderer } from "@/components/render-engine/WaveDromRenderer";
 import { D2DiagramRenderer } from "@/components/render-engine/D2DiagramRenderer";
 import { WatBytecodeRenderer } from "@/components/render-engine/WatBytecodeRenderer";
+import { TypstRenderer } from "@/components/render-engine/TypstRenderer";
+import { RStatisticalRenderer } from "@/components/render-engine/RStatisticalRenderer";
+import { OpenScadRenderer } from "@/components/render-engine/OpenScadRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
@@ -54,6 +57,9 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isWaveDrom = language === "wavedrom" || language === "waveform" || language === "regview";
   const isD2 = language === "d2" || language === "d2lang";
   const isWat = language === "wat" || language === "wast";
+  const isTypst = language === "typst";
+  const isR = language === "r" || language === "webr";
+  const isOpenScad = language === "openscad" || language === "scad";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(rawCode);
@@ -333,6 +339,45 @@ export function LiveCodeBlockView(props: NodeViewProps) {
     );
   }
 
+  // If it's a Typst academic typeset document block
+  if (isTypst && showLiveRender) {
+    return (
+      <NodeViewWrapper className="typst-block my-4">
+        <TypstRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's an R statistical / WebR block
+  if (isR && showLiveRender) {
+    return (
+      <NodeViewWrapper className="r-block my-4">
+        <RStatisticalRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
+  // If it's an OpenSCAD 3D parametric CAD block
+  if (isOpenScad && showLiveRender) {
+    return (
+      <NodeViewWrapper className="openscad-block my-4">
+        <OpenScadRenderer
+          initialCode={rawCode}
+          className="shadow-2xl"
+          onCodeChange={handleCodeChange}
+        />
+      </NodeViewWrapper>
+    );
+  }
+
   // Standard high-performance code block
   return (
     <NodeViewWrapper className="relative my-4 rounded-xl border border-slate-800 bg-slate-950/90 overflow-hidden shadow-xl">
@@ -355,6 +400,9 @@ export function LiveCodeBlockView(props: NodeViewProps) {
             <option value="regview">regview (register bits)</option>
             <option value="d2">d2 (architecture DAG)</option>
             <option value="wat">wat (webassembly text)</option>
+            <option value="typst">typst (academic typeset)</option>
+            <option value="r">r (WebR statistical)</option>
+            <option value="openscad">openscad (3D parametric CAD)</option>
             <option value="chart">chart (declarative)</option>
             <option value="plot">plot (declarative)</option>
             <option value="duckdb">duckdb (live OLAP)</option>

@@ -190,6 +190,14 @@ class SampleService {
       icon: '⚡',
       category: 'Systems & Hardware',
     ),
+    SampleItem(
+      id: 'sample-22',
+      filename: '22_typst_webr_and_openscad_scientific_showcase.md',
+      title: 'Typst, WebR & OpenSCAD',
+      subtitle: 'Academic typeset, statistical OLS & 3D CAD',
+      icon: '🔬',
+      category: 'Scientific & Math',
+    ),
   ];
 
   static final Map<String, String> _cache = {};

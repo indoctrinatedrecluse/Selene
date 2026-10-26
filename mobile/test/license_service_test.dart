@@ -44,5 +44,20 @@ void main() {
       expect(service.currentStatus.isLocked, true);
       expect(service.currentStatus.status, 'tampered');
     });
+
+    test('Offline activation persists and updates license tier correctly', () async {
+      final service = LicenseService();
+      await service.initialize();
+
+      final result = await service.activateLicense(
+        licenseKey: 'ADM-44PW-TP7Y-BHC2',
+      );
+
+      expect(result.success, true);
+      expect(service.currentStatus.type, LicenseTier.admin);
+      expect(service.currentStatus.status, 'active');
+      expect(service.currentStatus.isLocked, false);
+      expect(service.currentStatus.key, 'ADM-44PW-TP7Y-BHC2');
+    });
   });
 }

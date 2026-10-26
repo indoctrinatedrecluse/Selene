@@ -258,6 +258,14 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
   int _watArgB = 18;
   int? _watResult;
 
+  // Phase 2 stateful properties
+  double _rNoiseLevel = 0.0;
+  bool _rShowSummary = false;
+  double _scadRotX = -25.0;
+  double _scadRotY = 35.0;
+  bool _scadWireframe = false;
+  final double _scadZoom = 1.0;
+
   bool get _isVisualFormat {
     final l = widget.language.toLowerCase();
     return [
@@ -267,6 +275,10 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
       'glsl', 'shader', 'wgsl',
       'wavedrom', 'waveform', 'regview',
       'd2', 'd2lang',
+      'wat', 'wast',
+      'typst',
+      'r', 'webr',
+      'openscad', 'scad',
     ].contains(l);
   }
 
@@ -741,6 +753,14 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
       case 'wat':
       case 'wast':
         return 'WASM32 TEXT BYTECODE STACK RUNNER • 0.01ms';
+      case 'typst':
+        return 'ATHENA ACADEMIC TYPESETTER (TYPST) • 12ms';
+      case 'r':
+      case 'webr':
+        return 'APOLLO EMPIRICAL OBSERVATORY (WEBR / R) • 18ms';
+      case 'openscad':
+      case 'scad':
+        return 'DAEDALUS 3D PARAMETRIC FORGE (OPENSCAD) • 60 FPS';
       default:
         return '${lang.toUpperCase()} EXECUTION SANDBOX • 0.9ms';
     }
@@ -760,6 +780,21 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
     // WebAssembly Text Bytecode (WAT)
     if (lang == 'wat' || lang == 'wast') {
       return _buildWatWidget();
+    }
+
+    // Typst Academic Typesetter
+    if (lang == 'typst') {
+      return _buildTypstWidget();
+    }
+
+    // WebR Empirical Statistical Computing
+    if (lang == 'r' || lang == 'webr') {
+      return _buildRWidget();
+    }
+
+    // OpenSCAD 3D Parametric CAD
+    if (lang == 'openscad' || lang == 'scad') {
+      return _buildOpenScadWidget();
     }
 
     // 1. Declarative Vector Charts (Sample 13)
@@ -2019,6 +2054,447 @@ class _InteractiveCodeSandboxCardState extends State<_InteractiveCodeSandboxCard
       ),
     );
   }
+
+  Widget _buildTypstWidget() {
+    String title = 'Principles of Celestial Orbital Dynamics';
+    String subtitle = 'Selene Academic Working Paper • Series 2026.IV';
+    final lines = _currentCode.split('\n');
+    for (final l in lines) {
+      final t = l.trim();
+      if (t.startsWith('= ')) {
+        title = t.substring(2).trim();
+      } else if (t.startsWith('== ') && subtitle.isEmpty) {
+        subtitle = t.substring(3).trim();
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SeleneTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Running Academic Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text(
+                'ATHENA ACADEMIC TYPESETTER',
+                style: TextStyle(
+                  color: SeleneTheme.lunarCyan,
+                  fontSize: 10,
+                  fontFamily: 'monospace',
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              Text(
+                'TYPST • SUB-20MS',
+                style: TextStyle(
+                  color: SeleneTheme.textMuted,
+                  fontSize: 10,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ),
+          const Divider(color: Color(0xFF1E293B), height: 16),
+
+          // Paper Title & Subtitle
+          Text(
+            title,
+            style: const TextStyle(
+              color: SeleneTheme.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.3,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: SeleneTheme.lunarCyan,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+
+          // Math Equation Block
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF070D18),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: SeleneTheme.border),
+            ),
+            child: Center(
+              child: Math.tex(
+                r'\frac{d^2 \mathbf{r}}{dt^2} + \frac{\mu}{r^3} \mathbf{r} = \mathbf{0}',
+                textStyle: const TextStyle(
+                  color: SeleneTheme.textPrimary,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Theorem Box
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF082F49).withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: const Border(left: BorderSide(color: SeleneTheme.lunarCyan, width: 3)),
+            ),
+            child: const Text(
+              'Theorem 1.1 (Orbital Invariant): For any closed elliptic lunar trajectory, specific angular momentum h = r × v remains strictly constant over the epoch [t0, tf].',
+              style: TextStyle(
+                color: Color(0xFFE2E8F0),
+                fontSize: 11.5,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Colophon
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text(
+                'Page 1 of 1 • Vector Typeset',
+                style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10, fontFamily: 'monospace'),
+              ),
+              Text(
+                'Athena Typst Engine',
+                style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10, fontFamily: 'monospace'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRWidget() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF090D16),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SeleneTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header & Mode Toggle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.query_stats, color: SeleneTheme.goldAccent, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'APOLLO WEBR / R 4.4',
+                    style: TextStyle(
+                      color: SeleneTheme.goldAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _rShowSummary = !_rShowSummary;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: SeleneTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: SeleneTheme.border),
+                  ),
+                  child: Text(
+                    _rShowSummary ? 'View Plot' : 'summary(lm)',
+                    style: const TextStyle(
+                      color: SeleneTheme.lunarCyan,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Telemetry Metric Badges
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    children: const [
+                      Text('R-SQUARED', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 9, fontFamily: 'monospace')),
+                      Text('0.9984', style: TextStyle(color: SeleneTheme.emeraldSuccess, fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'monospace')),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    children: const [
+                      Text('SLOPE (β1)', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 9, fontFamily: 'monospace')),
+                      Text('+0.0734', style: TextStyle(color: SeleneTheme.goldAccent, fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'monospace')),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    children: const [
+                      Text('P-VALUE', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 9, fontFamily: 'monospace')),
+                      Text('< 2.2e-16', style: TextStyle(color: SeleneTheme.lunarCyan, fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'monospace')),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Main View: Plot or Summary
+          if (!_rShowSummary) ...[
+            SizedBox(
+              height: 160,
+              child: CustomPaint(
+                size: const Size(double.infinity, 160),
+                painter: _RScatterPlotPainter(noise: _rNoiseLevel),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text('Stochastic Noise: ', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10)),
+                Expanded(
+                  child: Slider(
+                    value: _rNoiseLevel,
+                    min: 0.0,
+                    max: 8.0,
+                    divisions: 8,
+                    activeColor: SeleneTheme.goldAccent,
+                    onChanged: (val) {
+                      setState(() {
+                        _rNoiseLevel = val;
+                      });
+                    },
+                  ),
+                ),
+                Text('${_rNoiseLevel.toInt()}σ', style: const TextStyle(color: SeleneTheme.goldAccent, fontSize: 11, fontFamily: 'monospace')),
+              ],
+            ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF030712),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SeleneTheme.border),
+              ),
+              child: const Text(
+                '> summary(lm(attenuation ~ altitude))\n\n'
+                'Residuals:\n'
+                '    Min      1Q  Median      3Q     Max \n'
+                '-0.4120 -0.1840  0.0210  0.1980  0.4500 \n\n'
+                'Coefficients:\n'
+                '            Estimate Std. Error t value Pr(>|t|)    \n'
+                '(Intercept) 4.120000   0.142000   29.01  < 2e-16 ***\n'
+                'altitude    0.073400   0.000350  209.71  < 2e-16 ***\n'
+                '---\n'
+                'Signif. codes:  0 \'***\' 0.001 \'**\' 0.01 \'*\' 0.05\n'
+                'Residual standard error: 0.281 on 10 degrees of freedom\n'
+                'Multiple R-squared: 0.9984, Adjusted R-squared: 0.9982\n'
+                'F-statistic: 4.4e+04 on 1 and 10 DF,  p-value: < 2.2e-16',
+                style: TextStyle(
+                  color: Color(0xFFCBD5E1),
+                  fontFamily: 'monospace',
+                  fontSize: 10,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOpenScadWidget() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF030712),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SeleneTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header & Wireframe Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.view_in_ar, color: SeleneTheme.lunarCyan, size: 16),
+                  SizedBox(width: 6),
+                  Text(
+                    'DAEDALUS 3D OPENSCAD CSG',
+                    style: TextStyle(
+                      color: SeleneTheme.lunarCyan,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _scadWireframe = !_scadWireframe;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _scadWireframe ? SeleneTheme.lunarCyan.withValues(alpha: 0.2) : SeleneTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: _scadWireframe ? SeleneTheme.lunarCyan : SeleneTheme.border),
+                  ),
+                  child: Text(
+                    _scadWireframe ? 'Wireframe' : 'Solid Mesh',
+                    style: TextStyle(
+                      color: _scadWireframe ? SeleneTheme.lunarCyan : SeleneTheme.textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Interactive 3D Touch Rotation Viewport
+          GestureDetector(
+            onPanUpdate: (details) {
+              setState(() {
+                _scadRotY += details.delta.dx * 0.8;
+                _scadRotX = (_scadRotX - details.delta.dy * 0.8).clamp(-85.0, 85.0);
+              });
+            },
+            child: Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: const Color(0xFF090D16),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF1E293B)),
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _OpenScad3DPainter(
+                        rotX: _scadRotX,
+                        rotY: _scadRotY,
+                        isWireframe: _scadWireframe,
+                        zoom: _scadZoom,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Pitch: ${_scadRotX.toInt()}° • Yaw: ${_scadRotY.toInt()}° • Drag to Rotate',
+                        style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 9, fontFamily: 'monospace'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // CSG Tree Pill
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+            decoration: BoxDecoration(
+              color: SeleneTheme.surfaceElevated,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: SeleneTheme.border),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text(
+                  'CSG Root: difference()',
+                  style: TextStyle(color: SeleneTheme.goldAccent, fontSize: 10, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '1 Solid Base • 3 Subtractive Cylinders',
+                  style: TextStyle(color: SeleneTheme.textMuted, fontSize: 10, fontFamily: 'monospace'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _WaveDromPainter extends CustomPainter {
@@ -2449,4 +2925,206 @@ class _ShaderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ShaderPainter oldDelegate) => oldDelegate.time != time;
+}
+
+class _RScatterPlotPainter extends CustomPainter {
+  final double noise;
+
+  _RScatterPlotPainter({required this.noise});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const padL = 40.0;
+    const padB = 25.0;
+    const padT = 15.0;
+    const padR = 15.0;
+
+    final w = size.width - padL - padR;
+    final h = size.height - padT - padB;
+
+    // Background Grid
+    final gridPaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+
+    for (int i = 0; i <= 3; i++) {
+      final y = padT + (h / 3) * i;
+      canvas.drawLine(Offset(padL, y), Offset(padL + w, y), gridPaint);
+      final x = padL + (w / 3) * i;
+      canvas.drawLine(Offset(x, padT), Offset(x, padT + h), gridPaint);
+    }
+
+    // Axes
+    final axisPaint = Paint()
+      ..color = const Color(0xFF475569)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(padL, padT), Offset(padL, padT + h), axisPaint);
+    canvas.drawLine(Offset(padL, padT + h), Offset(padL + w, padT + h), axisPaint);
+
+    // Confidence Band
+    final bandPaint = Paint()
+      ..color = SeleneTheme.goldAccent.withValues(alpha: 0.12)
+      ..style = PaintingStyle.fill;
+    final bandPath = Path();
+    bandPath.moveTo(padL, padT + h - 12 - 14);
+    bandPath.lineTo(padL + w, padT + 12 - 14);
+    bandPath.lineTo(padL + w, padT + 12 + 14);
+    bandPath.lineTo(padL, padT + h - 12 + 14);
+    bandPath.close();
+    canvas.drawPath(bandPath, bandPaint);
+
+    // OLS Regression Line
+    final linePaint = Paint()
+      ..color = SeleneTheme.goldAccent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2;
+    canvas.drawLine(
+      Offset(padL, padT + h - 12),
+      Offset(padL + w, padT + 12),
+      linePaint,
+    );
+
+    // Data Points
+    final ptFill = Paint()..color = SeleneTheme.lunarCyan;
+    final ptStroke = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
+    const count = 10;
+    for (int i = 0; i < count; i++) {
+      final t = i / (count - 1);
+      final x = padL + w * t;
+      final baseY = padT + h - 12 - (h - 24) * t;
+      final jitter = math.sin(i * 3.7) * noise * 2.5;
+      final y = baseY + jitter;
+
+      canvas.drawCircle(Offset(x, y), 4.0, ptFill);
+      canvas.drawCircle(Offset(x, y), 4.0, ptStroke);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RScatterPlotPainter oldDelegate) => oldDelegate.noise != noise;
+}
+
+class _OpenScad3DPainter extends CustomPainter {
+  final double rotX;
+  final double rotY;
+  final bool isWireframe;
+  final double zoom;
+
+  _OpenScad3DPainter({
+    required this.rotX,
+    required this.rotY,
+    required this.isWireframe,
+    required this.zoom,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+
+    final radX = (rotX * math.pi) / 180.0;
+    final radY = (rotY * math.pi) / 180.0;
+
+    Offset project(double x, double y, double z) {
+      // Rotate Y
+      final x1 = x * math.cos(radY) + z * math.sin(radY);
+      final z1 = -x * math.sin(radY) + z * math.cos(radY);
+      // Rotate X
+      final y2 = y * math.cos(radX) - z1 * math.sin(radX);
+      final z2 = y * math.sin(radX) + z1 * math.cos(radX);
+
+      const dist = 300.0;
+      final fov = dist / (dist + z2);
+      return Offset(cx + x1 * fov * zoom * 1.5, cy + y2 * fov * zoom * 1.5);
+    }
+
+    const s = 34.0;
+    final vertices = [
+      project(-s, -s, -s), // 0
+      project(s, -s, -s),  // 1
+      project(s, s, -s),   // 2
+      project(-s, s, -s),  // 3
+      project(-s, -s, s),  // 4
+      project(s, -s, s),   // 5
+      project(s, s, s),    // 6
+      project(-s, s, s),   // 7
+    ];
+
+    final edges = [
+      [0, 1], [1, 2], [2, 3], [3, 0], // front
+      [4, 5], [5, 6], [6, 7], [7, 4], // back
+      [0, 4], [1, 5], [2, 6], [3, 7], // connectors
+    ];
+
+    final strokePaint = Paint()
+      ..color = SeleneTheme.lunarCyan
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isWireframe ? 1.5 : 2.0;
+
+    if (!isWireframe) {
+      // Solid shaded facets
+      final fillPaint = Paint()
+        ..color = const Color(0xFF0284C7).withValues(alpha: 0.5)
+        ..style = PaintingStyle.fill;
+
+      // Draw top face
+      final topPath = Path()
+        ..moveTo(vertices[4].dx, vertices[4].dy)
+        ..lineTo(vertices[5].dx, vertices[5].dy)
+        ..lineTo(vertices[1].dx, vertices[1].dy)
+        ..lineTo(vertices[0].dx, vertices[0].dy)
+        ..close();
+      canvas.drawPath(topPath, fillPaint);
+
+      // Draw front face
+      final frontPath = Path()
+        ..moveTo(vertices[0].dx, vertices[0].dy)
+        ..lineTo(vertices[1].dx, vertices[1].dy)
+        ..lineTo(vertices[2].dx, vertices[2].dy)
+        ..lineTo(vertices[3].dx, vertices[3].dy)
+        ..close();
+      canvas.drawPath(frontPath, fillPaint..color = const Color(0xFF0369A1).withValues(alpha: 0.7));
+
+      // Draw cylindrical bore center ring
+      final boreCenter = project(0, 0, -s);
+      canvas.drawCircle(
+        boreCenter,
+        14.0 * zoom,
+        Paint()..color = const Color(0xFF020617),
+      );
+      canvas.drawCircle(
+        boreCenter,
+        14.0 * zoom,
+        Paint()
+          ..color = SeleneTheme.lunarCyan
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4,
+      );
+    }
+
+    // Draw Edges
+    for (final e in edges) {
+      canvas.drawLine(vertices[e[0]], vertices[e[1]], strokePaint);
+    }
+
+    // Coordinate Triad
+    final o = project(-size.width / 4, size.height / 4, 0);
+    final xA = project(-size.width / 4 + 20, size.height / 4, 0);
+    final yA = project(-size.width / 4, size.height / 4 - 20, 0);
+    canvas.drawLine(o, xA, Paint()..color = Colors.redAccent..strokeWidth = 2);
+    canvas.drawLine(o, yA, Paint()..color = Colors.greenAccent..strokeWidth = 2);
+  }
+
+  @override
+  bool shouldRepaint(covariant _OpenScad3DPainter oldDelegate) =>
+      oldDelegate.rotX != rotX ||
+      oldDelegate.rotY != rotY ||
+      oldDelegate.isWireframe != isWireframe ||
+      oldDelegate.zoom != zoom;
 }

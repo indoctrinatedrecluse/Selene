@@ -13,7 +13,7 @@ interface SeleneVersionBadgeProps {
  * Selene Universal Version Badge
  * 
  * Centralized display component that guarantees the active semantic version
- * (e.g. v0.4.0) is consistently formatted and displayed across loading screens,
+ * (e.g. v0.5.0) is consistently formatted and displayed across loading screens,
  * splash screens, modals, footers, and headers from a single source of truth.
  */
 export function SeleneVersionBadge({

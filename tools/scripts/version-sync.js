@@ -44,7 +44,7 @@ USAGE:
   node tools/scripts/version-sync.js [VERSION] [FLAGS]
 
 ARGUMENTS:
-  [VERSION]           Target semantic version (e.g. 0.4.0 or v0.4.0).
+  [VERSION]           Target semantic version (e.g. 0.5.0 or v0.5.0).
                       If omitted, reads current version from package.json.
 
 FLAGS:
@@ -398,6 +398,134 @@ try {
   }
 } catch (err) {
   recordResult('Electron Main', 'electron/main.js', 'FAILED', 'unknown', targetVersion, err.message);
+}
+
+// -----------------------------------------------------------------------------
+// 11. mobile/pubspec.yaml
+// -----------------------------------------------------------------------------
+try {
+  const pubspecPath = path.join(rootDir, 'mobile/pubspec.yaml');
+  if (fs.existsSync(pubspecPath)) {
+    let pubspec = fs.readFileSync(pubspecPath, 'utf8');
+    const match = pubspec.match(/version:\s*([0-9.]+)\+(\d+)/);
+    const prev = match ? match[1] : 'unknown';
+    const buildNum = match ? match[2] : '1';
+    if (prev !== targetVersion) {
+      pubspec = pubspec.replace(
+        /version:\s*[0-9.]+\+\d+/,
+        `version: ${targetVersion}+${buildNum}`
+      );
+      if (!isDryRun) {
+        fs.writeFileSync(pubspecPath, pubspec, 'utf8');
+      }
+      recordResult('Mobile pubspec', 'mobile/pubspec.yaml', 'UPDATED', prev, targetVersion, 'Flutter application version');
+    } else {
+      recordResult('Mobile pubspec', 'mobile/pubspec.yaml', 'IN_SYNC', prev, prev, 'Matches target version');
+    }
+  } else {
+    recordResult('Mobile pubspec', 'mobile/pubspec.yaml', 'SKIPPED', 'N/A', 'N/A', 'File not found');
+  }
+} catch (err) {
+  recordResult('Mobile pubspec', 'mobile/pubspec.yaml', 'FAILED', 'unknown', targetVersion, err.message);
+}
+
+// -----------------------------------------------------------------------------
+// 12. mobile/lib/data/services/license_service.dart
+// -----------------------------------------------------------------------------
+try {
+  const mobileLicensePath = path.join(rootDir, 'mobile/lib/data/services/license_service.dart');
+  if (fs.existsSync(mobileLicensePath)) {
+    let content = fs.readFileSync(mobileLicensePath, 'utf8');
+    const match = content.match(/'app_version':\s*'([^']+)'/);
+    const prev = match ? match[1] : 'unknown';
+    if (prev !== targetVersion) {
+      content = content.replace(/'app_version':\s*'[^']+'/, `'app_version': '${targetVersion}'`);
+      if (!isDryRun) {
+        fs.writeFileSync(mobileLicensePath, content, 'utf8');
+      }
+      recordResult('Mobile License', 'mobile/lib/data/services/license_service.dart', 'UPDATED', prev, targetVersion, 'License service app version telemetry');
+    } else {
+      recordResult('Mobile License', 'mobile/lib/data/services/license_service.dart', 'IN_SYNC', prev, prev, 'Matches target version');
+    }
+  } else {
+    recordResult('Mobile License', 'mobile/lib/data/services/license_service.dart', 'SKIPPED', 'N/A', 'N/A', 'File not found');
+  }
+} catch (err) {
+  recordResult('Mobile License', 'mobile/lib/data/services/license_service.dart', 'FAILED', 'unknown', targetVersion, err.message);
+}
+
+// -----------------------------------------------------------------------------
+// 13. mobile/lib/ui/features/editor/views/editor_screen.dart
+// -----------------------------------------------------------------------------
+try {
+  const mobileEditorPath = path.join(rootDir, 'mobile/lib/ui/features/editor/views/editor_screen.dart');
+  if (fs.existsSync(mobileEditorPath)) {
+    let content = fs.readFileSync(mobileEditorPath, 'utf8');
+    const match = content.match(/'Selene v([^ ]+) • Titan Edition'/);
+    const prev = match ? match[1] : 'unknown';
+    if (prev !== targetVersion) {
+      content = content.replace(/'Selene v[^ ]+ • Titan Edition'/, `'Selene v${targetVersion} • Titan Edition'`);
+      if (!isDryRun) {
+        fs.writeFileSync(mobileEditorPath, content, 'utf8');
+      }
+      recordResult('Mobile Drawer', 'mobile/lib/ui/features/editor/views/editor_screen.dart', 'UPDATED', prev, targetVersion, 'Scriptorium drawer version footer');
+    } else {
+      recordResult('Mobile Drawer', 'mobile/lib/ui/features/editor/views/editor_screen.dart', 'IN_SYNC', prev, prev, 'Matches target version');
+    }
+  } else {
+    recordResult('Mobile Drawer', 'mobile/lib/ui/features/editor/views/editor_screen.dart', 'SKIPPED', 'N/A', 'N/A', 'File not found');
+  }
+} catch (err) {
+  recordResult('Mobile Drawer', 'mobile/lib/ui/features/editor/views/editor_screen.dart', 'FAILED', 'unknown', targetVersion, err.message);
+}
+
+// -----------------------------------------------------------------------------
+// 14. Automation & Deployment Scripts (tools/scripts/**)
+// -----------------------------------------------------------------------------
+const scriptFiles = [
+  'tools/scripts/build/build.ps1',
+  'tools/scripts/build/build.sh',
+  'tools/scripts/cloud/deploy-cloudrun.ps1',
+  'tools/scripts/cloud/deploy-cloudrun.sh',
+  'tools/scripts/desktop/package-desktop.ps1',
+  'tools/scripts/desktop/package-desktop.sh',
+  'tools/scripts/desktop/run-desktop.ps1',
+  'tools/scripts/desktop/run-desktop.sh',
+  'tools/scripts/run/run.ps1',
+  'tools/scripts/run/run.sh',
+];
+
+for (const relScript of scriptFiles) {
+  try {
+    const fullPath = path.join(rootDir, relScript);
+    if (fs.existsSync(fullPath)) {
+      let content = fs.readFileSync(fullPath, 'utf8');
+      let changed = false;
+      const psMatch = content.match(/\$AppVersion\s*=\s*"([^"]+)"/);
+      const shMatch = content.match(/APP_VERSION="([^"]+)"/);
+      const prev = psMatch ? psMatch[1] : shMatch ? shMatch[1] : 'unknown';
+
+      if (psMatch && psMatch[1] !== targetVersion) {
+        content = content.replace(/\$AppVersion\s*=\s*"[^"]+"/, `\$AppVersion = "${targetVersion}"`);
+        changed = true;
+      }
+      if (shMatch && shMatch[1] !== targetVersion) {
+        content = content.replace(/APP_VERSION="[^"]+"/, `APP_VERSION="${targetVersion}"`);
+        changed = true;
+      }
+
+      if (changed) {
+        if (!isDryRun) {
+          fs.writeFileSync(fullPath, content, 'utf8');
+        }
+        recordResult('Script', relScript, 'UPDATED', prev, targetVersion, 'Automation script default version');
+      } else {
+        recordResult('Script', relScript, 'IN_SYNC', prev, prev, 'Matches target version');
+      }
+    }
+  } catch (err) {
+    recordResult('Script', relScript, 'FAILED', 'unknown', targetVersion, err.message);
+  }
 }
 
 // -----------------------------------------------------------------------------

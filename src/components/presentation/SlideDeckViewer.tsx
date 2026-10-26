@@ -31,6 +31,9 @@ import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRen
 import { WaveDromRenderer } from "@/components/render-engine/WaveDromRenderer";
 import { D2DiagramRenderer } from "@/components/render-engine/D2DiagramRenderer";
 import { WatBytecodeRenderer } from "@/components/render-engine/WatBytecodeRenderer";
+import { TypstRenderer } from "@/components/render-engine/TypstRenderer";
+import { RStatisticalRenderer } from "@/components/render-engine/RStatisticalRenderer";
+import { OpenScadRenderer } from "@/components/render-engine/OpenScadRenderer";
 
 export interface SlideData {
   id: string;
@@ -372,6 +375,12 @@ export function SlideDeckViewer({
                   <D2DiagramRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
                 ) : ["wat", "wast"].includes(currentSlide.codeBlock.lang) ? (
                   <WatBytecodeRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["typst"].includes(currentSlide.codeBlock.lang) ? (
+                  <TypstRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["r", "webr"].includes(currentSlide.codeBlock.lang) ? (
+                  <RStatisticalRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
+                ) : ["openscad", "scad"].includes(currentSlide.codeBlock.lang) ? (
+                  <OpenScadRenderer initialCode={currentSlide.codeBlock.code} className="!my-0" />
                 ) : (
                   <LiveSandboxRenderer
                     initialCode={currentSlide.codeBlock.code}

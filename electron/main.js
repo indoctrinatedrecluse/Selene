@@ -58,7 +58,7 @@ function createMainWindow() {
   if (fs.existsSync(splashPath)) {
     mainWindow.loadFile(splashPath);
     mainWindow.webContents.once("did-finish-load", () => {
-      const ver = app.getVersion() || "0.4.0";
+      const ver = app.getVersion() || "0.5.0";
       mainWindow.webContents.executeJavaScript(`
         const span = document.querySelector('h1 span');
         if (span) span.textContent = 'v${ver}';
@@ -186,7 +186,7 @@ function buildMenu() {
               type: "info",
               title: "About Selene",
               message: "🌙 Selene — Live Code Document Canvas",
-              detail: `Titan Edition v${app.getVersion() || "0.4.0"}\nProprietary License © 2026 Abhishek Mitra\nDesktop Shell: Electron ${process.versions.electron}\nRuntime: Node.js ${process.versions.node}\nChromium: ${process.versions.chrome}`,
+              detail: `Titan Edition v${app.getVersion() || "0.5.0"}\nProprietary License © 2026 Abhishek Mitra\nDesktop Shell: Electron ${process.versions.electron}\nRuntime: Node.js ${process.versions.node}\nChromium: ${process.versions.chrome}`,
             });
           },
         },
