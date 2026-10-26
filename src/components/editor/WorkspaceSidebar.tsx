@@ -200,7 +200,7 @@ export function WorkspaceSidebar({
   // Collapsed Sidebar View
   if (isCollapsed) {
     return (
-      <div className="w-12 min-w-[3rem] max-w-[3rem] h-full min-h-0 border-r border-slate-800 bg-[#070b16] relative z-20 flex flex-col items-center py-3 gap-3 shrink-0 select-none">
+      <div className="w-12 min-w-[3rem] max-w-[3rem] h-full min-h-0 border-r border-slate-800 bg-[#070b16] relative z-10 flex flex-col items-center py-3 gap-3 shrink-0 select-none">
         <SeleneTitanLogo size="xs" glow={true} className="mb-0.5" />
         <button
           onClick={onToggleCollapse}
@@ -242,7 +242,7 @@ export function WorkspaceSidebar({
   }
 
   return (
-    <aside className="w-72 min-w-[18rem] max-w-[18rem] h-full min-h-0 border-r border-slate-800 bg-[#070b16] relative z-20 flex flex-col shrink-0 select-none">
+    <aside className="w-72 min-w-[18rem] max-w-[18rem] h-full min-h-0 border-r border-slate-800 bg-[#070b16] relative z-10 flex flex-col shrink-0 select-none">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
