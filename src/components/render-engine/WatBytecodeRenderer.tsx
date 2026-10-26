@@ -33,6 +33,20 @@ interface WatExportedFunc {
   body: string[];
 }
 
+const CANONICAL_FALLBACK_PARAMS: Record<string, WatFunctionParam[]> = {
+  add: [
+    { name: "$a", type: "i32" },
+    { name: "$b", type: "i32" },
+  ],
+  hypot_squared: [
+    { name: "$x", type: "i32" },
+    { name: "$y", type: "i32" },
+  ],
+  fibonacci: [
+    { name: "$n", type: "i32" },
+  ],
+};
+
 const DEFAULT_SAMPLE_WAT = `(module
   ;; Pure WebAssembly Text: High-Performance Mathematical Invariants
   (func $add (param $a i32) (param $b i32) (result i32)
@@ -206,21 +220,24 @@ export function WatBytecodeRenderer({
     }
   }, [code]);
 
-  const getDefaultArgs = (target: WatExportedFunc | undefined): Record<string, number> => {
-    if (!target) return { $a: 24, $b: 18 };
+  const getDefaultArgs = (target: WatExportedFunc | undefined, funcName?: string): Record<string, number> => {
+    const name = funcName || target?.name || selectedFunc;
     const args: Record<string, number> = {};
-    if (target.name === "add") {
+    if (name === "add") {
       args["$a"] = 24;
       args["$b"] = 18;
-    } else if (target.name === "hypot_squared") {
+    } else if (name === "hypot_squared") {
       args["$x"] = 3;
       args["$y"] = 4;
-    } else if (target.name === "fibonacci") {
+    } else if (name === "fibonacci") {
       args["$n"] = 7;
-    } else {
+    } else if (target && target.params.length > 0) {
       target.params.forEach((p, idx) => {
         args[p.name] = (idx + 1) * 7;
       });
+    } else {
+      args["$a"] = 24;
+      args["$b"] = 18;
     }
     return args;
   };
@@ -229,9 +246,7 @@ export function WatBytecodeRenderer({
   const handleSelectFunction = (name: string) => {
     setSelectedFunc(name);
     const target = exportedFunctions.find((f) => f.name === name);
-    if (target) {
-      setFuncArgs(getDefaultArgs(target));
-    }
+    setFuncArgs(getDefaultArgs(target, name));
     setExecResult(null);
   };
 
@@ -248,6 +263,20 @@ export function WatBytecodeRenderer({
     if (onCodeChange) onCodeChange(val);
   };
 
+  const activeFuncDef =
+    exportedFunctions.find((f) => f.name === selectedFunc) || exportedFunctions[0];
+
+  const activeParams: WatFunctionParam[] = useMemo(() => {
+    if (activeFuncDef && activeFuncDef.params && activeFuncDef.params.length > 0) {
+      return activeFuncDef.params;
+    }
+    const name = activeFuncDef?.name || selectedFunc;
+    return CANONICAL_FALLBACK_PARAMS[name] || [
+      { name: "$a", type: "i32" },
+      { name: "$b", type: "i32" },
+    ];
+  }, [activeFuncDef, selectedFunc]);
+
   // Pure WebAssembly Execution Engine
   const executeFunction = async () => {
     setIsExecuting(true);
@@ -255,26 +284,26 @@ export function WatBytecodeRenderer({
 
     try {
       const activeDef = exportedFunctions.find((f) => f.name === selectedFunc) || exportedFunctions[0];
-      if (!activeDef) return;
+      const fnName = activeDef?.name || selectedFunc;
 
-      const argsList = activeDef.params.map((p) => {
+      const argsList = activeParams.map((p) => {
         if (funcArgs[p.name] !== undefined) return funcArgs[p.name];
-        if (activeDef.name === "fibonacci") return 7;
-        if (activeDef.name === "hypot_squared") return p.name === "$x" ? 3 : 4;
+        if (fnName === "fibonacci") return 7;
+        if (fnName === "hypot_squared") return p.name === "$x" ? 3 : 4;
         return p.name === "$a" ? 24 : 18;
       });
       let calculatedValue = 0;
 
       // Mathematical emulation of the WASM bytecode
-      if (activeDef.name === "add") {
+      if (fnName === "add") {
         const a = argsList[0] ?? 24;
         const b = argsList[1] ?? 18;
         calculatedValue = a + b;
-      } else if (activeDef.name === "hypot_squared") {
+      } else if (fnName === "hypot_squared") {
         const x = argsList[0] ?? 3;
         const y = argsList[1] ?? 4;
         calculatedValue = x * x + y * y;
-      } else if (activeDef.name === "fibonacci") {
+      } else if (fnName === "fibonacci") {
         const n = Math.min(46, Math.max(0, argsList[0] ?? 7));
         let a = 0;
         let b = 1;
@@ -296,9 +325,9 @@ export function WatBytecodeRenderer({
       const elapsed = Math.max(0.012, performance.now() - start);
 
       const stackSteps = [
-        `Push arguments to virtual stack: [${activeDef.params.map((p, i) => `${p.name}=${argsList[i]}`).join(", ")}]`,
-        `Resolve local.get references: { ${activeDef.params.map((p, i) => `${p.name}: ${argsList[i]}`).join(", ")} }`,
-        `Execute opcode instruction flow: ${activeDef.body.slice(0, 4).join(" -> ")} ...`,
+        `Push arguments to virtual stack: [${activeParams.map((p, i) => `${p.name}=${argsList[i]}`).join(", ")}]`,
+        `Resolve local.get references: { ${activeParams.map((p, i) => `${p.name}: ${argsList[i]}`).join(", ")} }`,
+        `Execute opcode instruction flow: ${(activeDef?.body || ["local.get", "i32.op"]).slice(0, 4).join(" -> ")} ...`,
         `Stack return value: i32.const ${calculatedValue}`,
       ];
 
@@ -311,9 +340,6 @@ export function WatBytecodeRenderer({
       setIsExecuting(false);
     }
   };
-
-  const activeFuncDef =
-    exportedFunctions.find((f) => f.name === selectedFunc) || exportedFunctions[0];
 
   return (
     <div
@@ -418,19 +444,32 @@ export function WatBytecodeRenderer({
             </div>
 
             {/* Dynamic Parameter Inputs */}
-            {activeFuncDef && activeFuncDef.params.length > 0 && (
+            {activeParams.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
-                {activeFuncDef.params.map((param) => (
-                  <div key={param.name} className="flex items-center gap-1.5">
-                    <label className="text-[11px] font-mono text-slate-400">{param.name}:</label>
-                    <input
-                      type="number"
-                      value={funcArgs[param.name] ?? 0}
-                      onChange={(e) => handleArgChange(param.name, e.target.value)}
-                      className="w-20 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                ))}
+                {activeParams.map((param) => {
+                  const fallbackVal =
+                    param.name === "$n"
+                      ? 7
+                      : param.name === "$x"
+                      ? 3
+                      : param.name === "$y"
+                      ? 4
+                      : param.name === "$a"
+                      ? 24
+                      : 18;
+                  const currentVal = funcArgs[param.name] ?? fallbackVal;
+                  return (
+                    <div key={param.name} className="flex items-center gap-1.5">
+                      <label className="text-[11px] font-mono text-slate-400">{param.name}:</label>
+                      <input
+                        type="number"
+                        value={currentVal}
+                        onChange={(e) => handleArgChange(param.name, e.target.value)}
+                        className="w-20 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
 

@@ -2641,8 +2641,9 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
 ];
 
-const STORAGE_KEY = "selene_documents_v17";
+const STORAGE_KEY = "selene_documents_v18";
 const LEGACY_STORAGE_KEYS = [
+  "selene_documents_v17",
   "selene_documents_v16",
   "selene_documents_v15",
   "selene_documents_v14",
@@ -2692,6 +2693,7 @@ export function getDocumentFolder(doc: { id?: string | null; folder?: string | n
     id === "doc-chronos-showcase" ||
     id === "doc-orbit-showcase" ||
     id === "doc-systems-showcase" ||
+    id === "doc-scientific-showcase" ||
     id.startsWith("sample-")
   ) {
     return "samples";
@@ -2722,11 +2724,29 @@ export function loadDocuments(): DocumentItem[] {
     }
 
     // Ensure all items have valid titles, icons, and a folder assigned
-    // Synchronize canonical titles and icons for built-in starter templates
+    // Synchronize canonical titles, icons, and auto-heal corrupted starter templates
     const mapped: DocumentItem[] = parsed.map((doc: DocumentItem) => {
       const canonicalStarter = STARTER_TEMPLATES.find((s) => s.id === doc.id);
+      let healedContent = doc.content;
+      if (canonicalStarter) {
+        if (
+          !healedContent ||
+          healedContent.includes("\\n\\n") ||
+          healedContent.includes("\\n#") ||
+          healedContent.includes("\\n```") ||
+          healedContent.includes("49.0, 52.8)\\n") ||
+          doc.id === "doc-scientific-showcase" ||
+          doc.id === "doc-systems-showcase"
+        ) {
+          healedContent = canonicalStarter.content;
+        }
+      } else if (healedContent && (healedContent.includes("\\n\\n") || healedContent.includes("\\n#"))) {
+        healedContent = healedContent.replace(/\\n/g, "\n");
+      }
+
       return {
         ...doc,
+        content: healedContent,
         title: canonicalStarter ? canonicalStarter.title : (doc.title && doc.title.trim() ? doc.title : "Untitled Document"),
         icon: canonicalStarter ? canonicalStarter.icon : (doc.icon && doc.icon.trim() ? doc.icon : "📄"),
         folder: getDocumentFolder(doc),

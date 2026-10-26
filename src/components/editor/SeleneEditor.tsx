@@ -286,15 +286,34 @@ export function SeleneEditor() {
                 folder?: string | null;
                 createdAt: number;
                 updatedAt: number;
-              }) => ({
-                id: d.id,
-                title: d.title,
-                content: d.contentMarkdown,
-                icon: d.icon || "📄",
-                folder: getDocumentFolder(d),
-                createdAt: d.createdAt,
-                updatedAt: d.updatedAt,
-              })
+              }) => {
+                const canonicalStarter = STARTER_TEMPLATES.find((s) => s.id === d.id);
+                let content = d.contentMarkdown;
+                if (canonicalStarter) {
+                  if (
+                    !content ||
+                    content.includes("\\n\\n") ||
+                    content.includes("\\n#") ||
+                    content.includes("\\n```") ||
+                    content.includes("49.0, 52.8)\\n") ||
+                    d.id === "doc-scientific-showcase" ||
+                    d.id === "doc-systems-showcase"
+                  ) {
+                    content = canonicalStarter.content;
+                  }
+                } else if (content && (content.includes("\\n\\n") || content.includes("\\n#"))) {
+                  content = content.replace(/\\n/g, "\n");
+                }
+                return {
+                  id: d.id,
+                  title: canonicalStarter ? canonicalStarter.title : d.title,
+                  content,
+                  icon: canonicalStarter ? canonicalStarter.icon : (d.icon || "📄"),
+                  folder: getDocumentFolder(d),
+                  createdAt: d.createdAt,
+                  updatedAt: d.updatedAt,
+                };
+              }
             );
             setDocuments(mapped);
             saveDocuments(mapped);
@@ -398,27 +417,33 @@ export function SeleneEditor() {
     onUpdate: ({ editor }) => {
       if (isSwitchingDocRef.current) return;
       const md = (editor.storage as { markdown?: { getMarkdown: () => string } }).markdown?.getMarkdown();
-      if (md) {
-        setMarkdownContent(md);
-        const currentDocId = activeDocIdRef.current;
-        const currentTitle = docTitleRef.current;
+      if (!md) return;
 
-        // Auto-save to local state
-        setDocuments((prev) => {
-          const updated = prev.map((d) =>
-            d.id === currentDocId
-              ? { ...d, content: md, updatedAt: Date.now() }
-              : d
-          );
-          saveDocuments(updated);
-          return updated;
-        });
+      const currentDocId = activeDocIdRef.current;
+      const currentTitle = docTitleRef.current;
 
-        // Trigger debounced cloud save
-        debounceDbSave(currentDocId, currentTitle, md);
+      // Guard against saving if content has not actually changed
+      const currentDoc = documents.find((d) => d.id === currentDocId);
+      if (currentDoc && currentDoc.content === md) return;
 
-        // Trigger debounced Chronos historical checkpoint
-        debounceChronosSave(currentDocId, currentTitle, md);
+      setMarkdownContent(md);
+
+      // Auto-save to local state
+      setDocuments((prev) => {
+        const updated = prev.map((d) =>
+          d.id === currentDocId
+            ? { ...d, content: md, updatedAt: Date.now() }
+            : d
+        );
+        saveDocuments(updated);
+        return updated;
+      });
+
+      // Trigger debounced cloud save
+      debounceDbSave(currentDocId, currentTitle, md);
+
+      // Trigger debounced Chronos historical checkpoint
+      debounceChronosSave(currentDocId, currentTitle, md);
 
         // Trigger debounced AI ghostwriter
         if (isGhostwritingEnabled) {
@@ -447,7 +472,6 @@ export function SeleneEditor() {
             }
           }, 650);
         }
-      }
     },
     immediatelyRender: false,
   });
@@ -593,21 +617,49 @@ export function SeleneEditor() {
     const target = documents.find((d) => d.id === id);
     if (!target) return;
 
+    // Check and auto-heal corrupted or escaped sample contents
+    let cleanContent = target.content;
+    const canonicalStarter = STARTER_TEMPLATES.find((s) => s.id === id);
+    if (canonicalStarter) {
+      if (
+        !cleanContent ||
+        cleanContent.includes("\\n\\n") ||
+        cleanContent.includes("\\n#") ||
+        cleanContent.includes("\\n```") ||
+        cleanContent.includes("49.0, 52.8)\\n") ||
+        id === "doc-scientific-showcase" ||
+        id === "doc-systems-showcase"
+      ) {
+        cleanContent = canonicalStarter.content;
+      }
+    } else if (cleanContent && (cleanContent.includes("\\n\\n") || cleanContent.includes("\\n#"))) {
+      cleanContent = cleanContent.replace(/\\n/g, "\n");
+    }
+
+    if (cleanContent !== target.content) {
+      target.content = cleanContent;
+      setDocuments((prev) => {
+        const updated = prev.map((d) => (d.id === id ? { ...d, content: cleanContent } : d));
+        saveDocuments(updated);
+        return updated;
+      });
+    }
+
     isSwitchingDocRef.current = true;
     activeDocIdRef.current = id;
     docTitleRef.current = target.title;
 
     setActiveDocId(id);
     setDocTitle(target.title);
-    setMarkdownContent(target.content);
+    setMarkdownContent(cleanContent);
     if (editor) {
-      editor.commands.setContent(target.content, { emitUpdate: false });
+      editor.commands.setContent(cleanContent, { emitUpdate: false });
     }
     loadRevisions(id);
 
     setTimeout(() => {
       isSwitchingDocRef.current = false;
-    }, 100);
+    }, 250);
   };
 
   // Handle document creation
@@ -747,7 +799,17 @@ export function SeleneEditor() {
       saveDocuments(nextDocs);
       return nextDocs;
     });
-  }, []);
+
+    // If currently active doc is a starter template, immediately reload its canonical content in editor
+    const currentActiveStarter = STARTER_TEMPLATES.find((s) => s.id === activeDocIdRef.current);
+    if (currentActiveStarter) {
+      setMarkdownContent(currentActiveStarter.content);
+      setDocTitle(currentActiveStarter.title);
+      if (editor) {
+        editor.commands.setContent(currentActiveStarter.content, { emitUpdate: false });
+      }
+    }
+  }, [editor]);
 
   // Desktop File I/O Handlers
   const handleDesktopOpen = useCallback(async () => {
