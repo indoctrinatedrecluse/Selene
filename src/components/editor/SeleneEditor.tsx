@@ -1645,6 +1645,7 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         onClose={() => setIsMeshModalOpen(false)}
         currentDocId={activeDocId}
         onOpenDocument={(id) => handleSelectDoc(id)}
+        documents={documents}
       />
 
       {/* 🎵 Apollo's Lyre & Harmonic Data Sonifier Modal */}

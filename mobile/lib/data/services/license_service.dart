@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
 enum LicenseTier { admin, dev, user, trial }
 
@@ -249,7 +248,10 @@ class LicenseService extends ChangeNotifier {
       await _setString(_prefHwid, hwidVal);
     }
     if (hwidVal.isEmpty) {
-      hwidVal = 'SELENE-AND-${const Uuid().v4().substring(0, 13).toUpperCase()}';
+      // Derive a deterministic platform fingerprint to prevent license forfeiture on reinstall/data reset
+      final seed = 'SELENE:${Platform.operatingSystem}:${Platform.numberOfProcessors}:${Platform.localeName}';
+      final digest = md5.convert(utf8.encode(seed)).toString().substring(0, 12).toUpperCase();
+      hwidVal = 'SELENE-AND-$digest';
       await _setString(_prefHwid, hwidVal);
     }
 

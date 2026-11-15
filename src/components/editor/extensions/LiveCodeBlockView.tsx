@@ -1,31 +1,113 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { NodeViewWrapper, NodeViewProps } from "@tiptap/react";
-import { LiveSandboxRenderer } from "@/components/render-engine/LiveSandboxRenderer";
-import { MermaidRenderer } from "@/components/render-engine/MermaidRenderer";
-import { MathRenderer } from "@/components/render-engine/MathRenderer";
-import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRenderer";
-import { PythonNotebookRenderer } from "@/components/render-engine/PythonNotebookRenderer";
-import { PhpLaravelRenderer } from "@/components/render-engine/PhpLaravelRenderer";
-import { RubyRailsRenderer } from "@/components/render-engine/RubyRailsRenderer";
-import { GoTemplateRenderer } from "@/components/render-engine/GoTemplateRenderer";
-import { DjangoJinjaRenderer } from "@/components/render-engine/DjangoJinjaRenderer";
-import { RustWasmRenderer } from "@/components/render-engine/RustWasmRenderer";
-import { SqlDataStudioRenderer } from "@/components/render-engine/SqlDataStudioRenderer";
-import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRenderer";
-import { DeclarativeChartRenderer } from "@/components/render-engine/DeclarativeChartRenderer";
-import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRenderer";
-import { PhoenixLiveViewRenderer } from "@/components/render-engine/PhoenixLiveViewRenderer";
-import { SwiftUiRenderer } from "@/components/render-engine/SwiftUiRenderer";
-import { HermesRelayRenderer } from "@/components/render-engine/HermesRelayRenderer";
-import { WaveDromRenderer } from "@/components/render-engine/WaveDromRenderer";
-import { D2DiagramRenderer } from "@/components/render-engine/D2DiagramRenderer";
-import { WatBytecodeRenderer } from "@/components/render-engine/WatBytecodeRenderer";
-import { TypstRenderer } from "@/components/render-engine/TypstRenderer";
-import { RStatisticalRenderer } from "@/components/render-engine/RStatisticalRenderer";
-import { OpenScadRenderer } from "@/components/render-engine/OpenScadRenderer";
 import { Check, Copy, Terminal, Eye } from "lucide-react";
+
+// Celestial loading skeleton for lazily loaded engines
+function RendererSkeleton({ name }: { name?: string }) {
+  return (
+    <div className="my-4 rounded-xl border border-slate-800 bg-slate-950/80 p-6 flex items-center justify-center space-x-3 text-slate-400 text-xs font-mono animate-pulse">
+      <div className="w-2.5 h-2.5 rounded-full bg-sky-400/80 animate-ping" />
+      <span>Illuminating {name || "Polymorphic"} engine...</span>
+    </div>
+  );
+}
+
+// Dynamically split heavy render engines to reduce initial client bundle
+const LiveSandboxRenderer = dynamic(
+  () => import("@/components/render-engine/LiveSandboxRenderer").then((m) => m.LiveSandboxRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Live Sandbox" /> }
+);
+const MermaidRenderer = dynamic(
+  () => import("@/components/render-engine/MermaidRenderer").then((m) => m.MermaidRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Mermaid Diagram" /> }
+);
+const MathRenderer = dynamic(
+  () => import("@/components/render-engine/MathRenderer").then((m) => m.MathRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="KaTeX Math" /> }
+);
+const FlutterWebRenderer = dynamic(
+  () => import("@/components/render-engine/FlutterWebRenderer").then((m) => m.FlutterWebRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Flutter Web" /> }
+);
+const PythonNotebookRenderer = dynamic(
+  () => import("@/components/render-engine/PythonNotebookRenderer").then((m) => m.PythonNotebookRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Pyodide WASM" /> }
+);
+const PhpLaravelRenderer = dynamic(
+  () => import("@/components/render-engine/PhpLaravelRenderer").then((m) => m.PhpLaravelRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="PHP Laravel" /> }
+);
+const RubyRailsRenderer = dynamic(
+  () => import("@/components/render-engine/RubyRailsRenderer").then((m) => m.RubyRailsRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Ruby on Rails" /> }
+);
+const GoTemplateRenderer = dynamic(
+  () => import("@/components/render-engine/GoTemplateRenderer").then((m) => m.GoTemplateRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Go Hugo Template" /> }
+);
+const DjangoJinjaRenderer = dynamic(
+  () => import("@/components/render-engine/DjangoJinjaRenderer").then((m) => m.DjangoJinjaRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Django Jinja" /> }
+);
+const RustWasmRenderer = dynamic(
+  () => import("@/components/render-engine/RustWasmRenderer").then((m) => m.RustWasmRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Rust WASM" /> }
+);
+const SqlDataStudioRenderer = dynamic(
+  () => import("@/components/render-engine/SqlDataStudioRenderer").then((m) => m.SqlDataStudioRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="SQL Studio" /> }
+);
+const ShaderCanvasRenderer = dynamic(
+  () => import("@/components/render-engine/ShaderCanvasRenderer").then((m) => m.ShaderCanvasRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="GLSL Raymarching" /> }
+);
+const DeclarativeChartRenderer = dynamic(
+  () => import("@/components/render-engine/DeclarativeChartRenderer").then((m) => m.DeclarativeChartRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Declarative Chart" /> }
+);
+const DuckDbStudioRenderer = dynamic(
+  () => import("@/components/render-engine/DuckDbStudioRenderer").then((m) => m.DuckDbStudioRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="DuckDB OLAP" /> }
+);
+const PhoenixLiveViewRenderer = dynamic(
+  () => import("@/components/render-engine/PhoenixLiveViewRenderer").then((m) => m.PhoenixLiveViewRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Phoenix LiveView" /> }
+);
+const SwiftUiRenderer = dynamic(
+  () => import("@/components/render-engine/SwiftUiRenderer").then((m) => m.SwiftUiRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="SwiftUI Canvas" /> }
+);
+const HermesRelayRenderer = dynamic(
+  () => import("@/components/render-engine/HermesRelayRenderer").then((m) => m.HermesRelayRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Hermes Relay API" /> }
+);
+const WaveDromRenderer = dynamic(
+  () => import("@/components/render-engine/WaveDromRenderer").then((m) => m.WaveDromRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="WaveDrom Timing" /> }
+);
+const D2DiagramRenderer = dynamic(
+  () => import("@/components/render-engine/D2DiagramRenderer").then((m) => m.D2DiagramRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="D2 Modern DAG" /> }
+);
+const WatBytecodeRenderer = dynamic(
+  () => import("@/components/render-engine/WatBytecodeRenderer").then((m) => m.WatBytecodeRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="WASM32 Stack" /> }
+);
+const TypstRenderer = dynamic(
+  () => import("@/components/render-engine/TypstRenderer").then((m) => m.TypstRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="Typst Typesetter" /> }
+);
+const RStatisticalRenderer = dynamic(
+  () => import("@/components/render-engine/RStatisticalRenderer").then((m) => m.RStatisticalRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="WebR Statistical" /> }
+);
+const OpenScadRenderer = dynamic(
+  () => import("@/components/render-engine/OpenScadRenderer").then((m) => m.OpenScadRenderer),
+  { ssr: false, loading: () => <RendererSkeleton name="OpenSCAD 3D CSG" /> }
+);
 
 const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
 

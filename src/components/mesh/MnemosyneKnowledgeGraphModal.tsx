@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import type { DocumentItem } from "@/lib/workspace-store";
 import {
   X,
   Share2,
@@ -26,6 +27,7 @@ interface MnemosyneKnowledgeGraphModalProps {
   onClose: () => void;
   onOpenDocument?: (docId: string) => void;
   currentDocId?: string;
+  documents?: DocumentItem[];
 }
 
 export function MnemosyneKnowledgeGraphModal({
@@ -33,14 +35,70 @@ export function MnemosyneKnowledgeGraphModal({
   onClose,
   onOpenDocument,
   currentDocId = "sample-01",
+  documents,
 }: MnemosyneKnowledgeGraphModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNode, setSelectedNode] = useState<MeshNode | null>(null);
 
-  // Initial celestial constellation nodes
-  const initialNodes: MeshNode[] = useMemo(
-    () => [
+  // Initial celestial constellation nodes dynamically derived from documents or fallback
+  const initialNodes: MeshNode[] = useMemo(() => {
+    if (documents && documents.length > 0) {
+      const titleToId = new Map<string, string>();
+      documents.forEach((d) => {
+        titleToId.set(d.id.toLowerCase(), d.id);
+        titleToId.set(d.title.toLowerCase(), d.id);
+        const cleanTitle = d.title.replace(/\.md$/i, "").toLowerCase();
+        titleToId.set(cleanTitle, d.id);
+      });
+
+      return documents.map((doc, idx) => {
+        // Extract wikilinks from content: [[Page]]
+        const wikilinkMatches = [...doc.content.matchAll(/\[\[(.*?)\]\]/g)].map((m) => m[1].trim());
+        const resolvedLinks: string[] = [];
+        wikilinkMatches.forEach((targetName) => {
+          const lower = targetName.toLowerCase();
+          const targetId = titleToId.get(lower) || titleToId.get(lower.replace(/\.md$/i, ""));
+          if (targetId && targetId !== doc.id && !resolvedLinks.includes(targetId)) {
+            resolvedLinks.push(targetId);
+          }
+        });
+
+        // Spiral constellation placement
+        const count = documents.length;
+        const angle = (idx / Math.max(1, count)) * 2 * Math.PI;
+        const radius = 120 + ((idx * 41) % 110);
+        const x = 360 + radius * Math.cos(angle);
+        const y = 260 + radius * Math.sin(angle);
+
+        let category = "Document";
+        let color = "#38bdf8"; // sky blue
+        if (doc.folder === "samples") {
+          category = "Sample";
+          color = "#818cf8"; // indigo
+        } else if (doc.folder === "archive") {
+          category = "Archive";
+          color = "#64748b"; // slate
+        } else if (resolvedLinks.length >= 2) {
+          category = "Mesh Hub";
+          color = "#10b981"; // emerald
+        }
+
+        return {
+          id: doc.id,
+          title: doc.title,
+          category,
+          color,
+          links: resolvedLinks,
+          x,
+          y,
+          vx: 0,
+          vy: 0,
+        };
+      });
+    }
+
+    return [
       {
         id: "sample-01",
         title: "Selene Architecture & Live Canvas",
@@ -184,11 +242,15 @@ export function MnemosyneKnowledgeGraphModal({
         vx: 0,
         vy: 0,
       },
-    ],
-    []
-  );
+    ];
+  }, [documents]);
 
   const [nodes, setNodes] = useState<MeshNode[]>(initialNodes);
+
+  // Keep state in sync with updated documents
+  useEffect(() => {
+    setNodes(initialNodes);
+  }, [initialNodes]);
 
   // Force-directed celestial physics simulation
   useEffect(() => {

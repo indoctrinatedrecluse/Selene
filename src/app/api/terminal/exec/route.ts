@@ -2,6 +2,20 @@ import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import os from "os";
 
+// Disallowed patterns to protect container secrets and system stability
+const RESTRICTED_PATTERNS = [
+  /\b(env|printenv|export|set)\b/i,
+  /\/proc\//i,
+  /\/etc\/(shadow|passwd|group|gcp)/i,
+  /\b(service-account|credentials?|token|secret)\b/i,
+  /:\(\)\s*\{/i, // fork-bomb
+  /\brm\s+-[rf]{1,2}\s+(\/|\*)/i, // dangerous deletions
+  /\b(shutdown|reboot|halt|poweroff|init\s+0)\b/i,
+  /\b(mkfs|dd\s+if=)/i,
+  /\b(nc|ncat|netcat)\b.*(-e|-c|\/bin)/i, // reverse shells
+  /\/dev\/tcp/i,
+];
+
 export async function POST(req: Request) {
   const startTime = performance.now();
   try {
@@ -17,10 +31,21 @@ export async function POST(req: Request) {
       });
     }
 
-    // High-level simulated fallbacks for environment-agnostic commands
+    // Security Gate: Check for restricted patterns
+    for (const pattern of RESTRICTED_PATTERNS) {
+      if (pattern.test(command)) {
+        return NextResponse.json({
+          stdout: "",
+          stderr: "🛡️ Security Sandbox: Command blocked. Inspection of environment secrets, process memory, or destructive operations is prohibited in the Forge of Hephaestus.",
+          exitCode: 126,
+          durationMs: Number((performance.now() - startTime).toFixed(1)),
+        });
+      }
+    }
+
     const isWindows = os.platform() === "win32";
 
-    // Handle "ir list" or "ir" (Olympian Interactive Runtimes)
+    // Built-in Olympian Interactive Runtimes query
     if (command === "ir list" || command === "ir" || command === "ir --list") {
       const output = [
         "🔥 Olympian Interactive Runtimes (IR Kernel Registry):",
@@ -43,22 +68,54 @@ export async function POST(req: Request) {
       });
     }
 
+    // Help banner
+    if (command === "help" || command === "--help" || command === "forge --help") {
+      const output = [
+        "⚡ Forge of Hephaestus — Terminal Environment",
+        "Commands:",
+        "  ir list                 List active Olympian Interactive Runtimes",
+        "  git status              Inspect repository version control status",
+        "  node -v / npm -v        Display Node.js toolchain versions",
+        "  python3 --version       Display Python runtime status",
+        "  dir / ls                List workspace files and directories",
+        "  cat <file> / type <file> Display file contents safely",
+      ].join("\n");
+
+      return NextResponse.json({
+        stdout: output,
+        stderr: "",
+        exitCode: 0,
+        durationMs: Number((performance.now() - startTime).toFixed(1)),
+      });
+    }
+
     // Normalizing dir / ls across Linux container and Windows host
     let execCmd = command;
     if (!isWindows && command === "dir") {
       execCmd = "ls -la";
     }
 
+    // Sanitized environment: strip all server secrets, DB connection strings, and cloud credentials
+    const safeEnv: NodeJS.ProcessEnv = {
+      PATH: process.env.PATH || "/usr/local/bin:/usr/bin:/bin",
+      HOME: process.env.HOME || (isWindows ? "C:\\Users\\Default" : "/root"),
+      LANG: process.env.LANG || "en_US.UTF-8",
+      TERM: "xterm-256color",
+      NODE_ENV: "production",
+      SELENE_SANDBOX: "active",
+    };
+
     const result = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(
       (resolve) => {
         exec(
           execCmd,
           {
-            timeout: 15000,
-            maxBuffer: 5 * 1024 * 1024,
+            timeout: 10000,
+            maxBuffer: 2 * 1024 * 1024,
             shell: isWindows ? "cmd.exe" : "/bin/sh",
+            env: safeEnv,
           },
-          (error, stdout, stderr) => {
+          (error: (Error & { code?: number }) | null, stdout: string, stderr: string) => {
             if (error) {
               resolve({
                 stdout: stdout || "",

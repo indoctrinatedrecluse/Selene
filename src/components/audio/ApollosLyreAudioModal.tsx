@@ -291,7 +291,58 @@ export function ApollosLyreAudioModal({
     };
   }, [isOpen]);
 
-  // Cleanup on modal close or unmount
+  // Cleanup and stop all audio playback immediately when modal closes or unmounts
+  useEffect(() => {
+    if (!isOpen) {
+      if (sonifyTimeoutRef.current) {
+        clearTimeout(sonifyTimeoutRef.current);
+        sonifyTimeoutRef.current = null;
+      }
+      setIsSonifying(false);
+
+      if (isPlayingDrone) {
+        setIsPlayingDrone(false);
+      }
+
+      if (droneGainRef.current && audioCtxRef.current) {
+        try {
+          droneGainRef.current.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
+        } catch {
+          // ignore
+        }
+      }
+
+      if (droneOsc1Ref.current) {
+        try {
+          droneOsc1Ref.current.stop();
+          droneOsc1Ref.current.disconnect();
+        } catch {
+          // ignore
+        }
+        droneOsc1Ref.current = null;
+      }
+
+      if (droneOsc2Ref.current) {
+        try {
+          droneOsc2Ref.current.stop();
+          droneOsc2Ref.current.disconnect();
+        } catch {
+          // ignore
+        }
+        droneOsc2Ref.current = null;
+      }
+
+      if (masterGainRef.current && audioCtxRef.current) {
+        try {
+          masterGainRef.current.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, [isOpen, isPlayingDrone]);
+
+  // General unmount cleanup
   useEffect(() => {
     return () => {
       if (sonifyTimeoutRef.current) clearTimeout(sonifyTimeoutRef.current);

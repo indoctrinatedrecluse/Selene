@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,29 +12,108 @@ import {
   Sparkles,
   LayoutGrid,
 } from "lucide-react";
-import { LiveSandboxRenderer } from "@/components/render-engine/LiveSandboxRenderer";
-import { FlutterWebRenderer } from "@/components/render-engine/FlutterWebRenderer";
-import { PythonNotebookRenderer } from "@/components/render-engine/PythonNotebookRenderer";
-import { MermaidRenderer } from "@/components/render-engine/MermaidRenderer";
-import { MathRenderer } from "@/components/render-engine/MathRenderer";
-import { PhoenixLiveViewRenderer } from "@/components/render-engine/PhoenixLiveViewRenderer";
-import { SwiftUiRenderer } from "@/components/render-engine/SwiftUiRenderer";
-import { HermesRelayRenderer } from "@/components/render-engine/HermesRelayRenderer";
-import { PhpLaravelRenderer } from "@/components/render-engine/PhpLaravelRenderer";
-import { RubyRailsRenderer } from "@/components/render-engine/RubyRailsRenderer";
-import { GoTemplateRenderer } from "@/components/render-engine/GoTemplateRenderer";
-import { DjangoJinjaRenderer } from "@/components/render-engine/DjangoJinjaRenderer";
-import { RustWasmRenderer } from "@/components/render-engine/RustWasmRenderer";
-import { SqlDataStudioRenderer } from "@/components/render-engine/SqlDataStudioRenderer";
-import { DuckDbStudioRenderer } from "@/components/render-engine/DuckDbStudioRenderer";
-import { DeclarativeChartRenderer } from "@/components/render-engine/DeclarativeChartRenderer";
-import { ShaderCanvasRenderer } from "@/components/render-engine/ShaderCanvasRenderer";
-import { WaveDromRenderer } from "@/components/render-engine/WaveDromRenderer";
-import { D2DiagramRenderer } from "@/components/render-engine/D2DiagramRenderer";
-import { WatBytecodeRenderer } from "@/components/render-engine/WatBytecodeRenderer";
-import { TypstRenderer } from "@/components/render-engine/TypstRenderer";
-import { RStatisticalRenderer } from "@/components/render-engine/RStatisticalRenderer";
-import { OpenScadRenderer } from "@/components/render-engine/OpenScadRenderer";
+
+function SlideSkeleton({ name }: { name?: string }) {
+  return (
+    <div className="w-full h-64 rounded-xl border border-slate-800 bg-slate-950/80 p-6 flex items-center justify-center space-x-3 text-slate-400 text-xs font-mono animate-pulse">
+      <div className="w-2.5 h-2.5 rounded-full bg-sky-400/80 animate-ping" />
+      <span>Projecting {name || "Slide Engine"}...</span>
+    </div>
+  );
+}
+
+const LiveSandboxRenderer = dynamic(
+  () => import("@/components/render-engine/LiveSandboxRenderer").then((m) => m.LiveSandboxRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Live Sandbox" /> }
+);
+const FlutterWebRenderer = dynamic(
+  () => import("@/components/render-engine/FlutterWebRenderer").then((m) => m.FlutterWebRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Flutter Web" /> }
+);
+const PythonNotebookRenderer = dynamic(
+  () => import("@/components/render-engine/PythonNotebookRenderer").then((m) => m.PythonNotebookRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Python WASM" /> }
+);
+const MermaidRenderer = dynamic(
+  () => import("@/components/render-engine/MermaidRenderer").then((m) => m.MermaidRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Mermaid Diagram" /> }
+);
+const MathRenderer = dynamic(
+  () => import("@/components/render-engine/MathRenderer").then((m) => m.MathRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="KaTeX Math" /> }
+);
+const PhoenixLiveViewRenderer = dynamic(
+  () => import("@/components/render-engine/PhoenixLiveViewRenderer").then((m) => m.PhoenixLiveViewRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Phoenix LiveView" /> }
+);
+const SwiftUiRenderer = dynamic(
+  () => import("@/components/render-engine/SwiftUiRenderer").then((m) => m.SwiftUiRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="SwiftUI" /> }
+);
+const HermesRelayRenderer = dynamic(
+  () => import("@/components/render-engine/HermesRelayRenderer").then((m) => m.HermesRelayRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Hermes Relay API" /> }
+);
+const PhpLaravelRenderer = dynamic(
+  () => import("@/components/render-engine/PhpLaravelRenderer").then((m) => m.PhpLaravelRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="PHP Laravel" /> }
+);
+const RubyRailsRenderer = dynamic(
+  () => import("@/components/render-engine/RubyRailsRenderer").then((m) => m.RubyRailsRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Ruby on Rails" /> }
+);
+const GoTemplateRenderer = dynamic(
+  () => import("@/components/render-engine/GoTemplateRenderer").then((m) => m.GoTemplateRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Go Template" /> }
+);
+const DjangoJinjaRenderer = dynamic(
+  () => import("@/components/render-engine/DjangoJinjaRenderer").then((m) => m.DjangoJinjaRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Django Jinja" /> }
+);
+const RustWasmRenderer = dynamic(
+  () => import("@/components/render-engine/RustWasmRenderer").then((m) => m.RustWasmRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Rust WASM" /> }
+);
+const SqlDataStudioRenderer = dynamic(
+  () => import("@/components/render-engine/SqlDataStudioRenderer").then((m) => m.SqlDataStudioRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="SQL Studio" /> }
+);
+const DuckDbStudioRenderer = dynamic(
+  () => import("@/components/render-engine/DuckDbStudioRenderer").then((m) => m.DuckDbStudioRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="DuckDB OLAP" /> }
+);
+const DeclarativeChartRenderer = dynamic(
+  () => import("@/components/render-engine/DeclarativeChartRenderer").then((m) => m.DeclarativeChartRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Declarative Chart" /> }
+);
+const ShaderCanvasRenderer = dynamic(
+  () => import("@/components/render-engine/ShaderCanvasRenderer").then((m) => m.ShaderCanvasRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="GLSL Shader" /> }
+);
+const WaveDromRenderer = dynamic(
+  () => import("@/components/render-engine/WaveDromRenderer").then((m) => m.WaveDromRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="WaveDrom" /> }
+);
+const D2DiagramRenderer = dynamic(
+  () => import("@/components/render-engine/D2DiagramRenderer").then((m) => m.D2DiagramRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="D2 Diagram" /> }
+);
+const WatBytecodeRenderer = dynamic(
+  () => import("@/components/render-engine/WatBytecodeRenderer").then((m) => m.WatBytecodeRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="WASM32 Stack" /> }
+);
+const TypstRenderer = dynamic(
+  () => import("@/components/render-engine/TypstRenderer").then((m) => m.TypstRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="Typst Typesetter" /> }
+);
+const RStatisticalRenderer = dynamic(
+  () => import("@/components/render-engine/RStatisticalRenderer").then((m) => m.RStatisticalRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="WebR Statistical" /> }
+);
+const OpenScadRenderer = dynamic(
+  () => import("@/components/render-engine/OpenScadRenderer").then((m) => m.OpenScadRenderer),
+  { ssr: false, loading: () => <SlideSkeleton name="OpenSCAD 3D" /> }
+);
 
 export interface SlideData {
   id: string;
