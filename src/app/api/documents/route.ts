@@ -20,6 +20,7 @@ export async function GET() {
           title: t.title,
           contentMarkdown: t.content,
           icon: t.icon || "📄",
+          folder: t.folder || "documents",
           createdAt: t.createdAt,
           updatedAt: t.updatedAt,
         });
@@ -50,6 +51,7 @@ export async function POST(req: Request) {
       body.content ||
       `# Untitled Technical Canvas\n\nType \`/\` to insert live sandboxes, diagrams, or math formulas.\n`;
     const icon = body.icon || "📄";
+    const folder = body.folder || "documents";
     const now = Date.now();
 
     await db.insert(documents).values({
@@ -57,6 +59,7 @@ export async function POST(req: Request) {
       title,
       contentMarkdown: content,
       icon,
+      folder,
       createdAt: now,
       updatedAt: now,
     });

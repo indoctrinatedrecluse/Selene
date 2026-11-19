@@ -332,6 +332,17 @@ export function SeleneEditor() {
   const isSwitchingDocRef = useRef(false);
   const activeDocIdRef = useRef(activeDocId);
   const docTitleRef = useRef(docTitle);
+  const docSwitchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastLoadedContentRef = useRef<string>(activeDoc?.content || "");
+
+  useEffect(() => {
+    return () => {
+      if (docSwitchTimeoutRef.current) clearTimeout(docSwitchTimeoutRef.current);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
+      if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     activeDocIdRef.current = activeDocId;
@@ -414,8 +425,9 @@ export function SeleneEditor() {
         class: "focus:outline-none min-h-[500px] px-8 py-6 prose prose-invert max-w-none text-slate-200",
       },
     },
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor, transaction }) => {
       if (isSwitchingDocRef.current) return;
+      if (transaction && !transaction.docChanged) return;
       const md = (editor.storage as { markdown?: { getMarkdown: () => string } }).markdown?.getMarkdown();
       if (!md) return;
 
@@ -423,9 +435,11 @@ export function SeleneEditor() {
       const currentTitle = docTitleRef.current;
 
       // Guard against saving if content has not actually changed
+      if (md === lastLoadedContentRef.current) return;
       const currentDoc = documents.find((d) => d.id === currentDocId);
       if (currentDoc && currentDoc.content === md) return;
 
+      lastLoadedContentRef.current = md;
       setMarkdownContent(md);
 
       // Auto-save to local state
@@ -613,6 +627,7 @@ export function SeleneEditor() {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
     if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+    if (docSwitchTimeoutRef.current) clearTimeout(docSwitchTimeoutRef.current);
 
     const target = documents.find((d) => d.id === id);
     if (!target) return;
@@ -625,10 +640,7 @@ export function SeleneEditor() {
         !cleanContent ||
         cleanContent.includes("\\n\\n") ||
         cleanContent.includes("\\n#") ||
-        cleanContent.includes("\\n```") ||
-        cleanContent.includes("49.0, 52.8)\\n") ||
-        id === "doc-scientific-showcase" ||
-        id === "doc-systems-showcase"
+        cleanContent.includes("\\n```")
       ) {
         cleanContent = canonicalStarter.content;
       }
@@ -648,6 +660,7 @@ export function SeleneEditor() {
     isSwitchingDocRef.current = true;
     activeDocIdRef.current = id;
     docTitleRef.current = target.title;
+    lastLoadedContentRef.current = cleanContent;
 
     setActiveDocId(id);
     setDocTitle(target.title);
@@ -657,9 +670,9 @@ export function SeleneEditor() {
     }
     loadRevisions(id);
 
-    setTimeout(() => {
+    docSwitchTimeoutRef.current = setTimeout(() => {
       isSwitchingDocRef.current = false;
-    }, 250);
+    }, 400);
   };
 
   // Handle document creation
@@ -668,6 +681,7 @@ export function SeleneEditor() {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
       if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+      if (docSwitchTimeoutRef.current) clearTimeout(docSwitchTimeoutRef.current);
 
       const newDoc: DocumentItem = {
         id: `doc-${Date.now()}`,
@@ -682,6 +696,7 @@ export function SeleneEditor() {
       isSwitchingDocRef.current = true;
       activeDocIdRef.current = newDoc.id;
       docTitleRef.current = newDoc.title;
+      lastLoadedContentRef.current = newDoc.content;
 
       setDocuments((prev) => {
         const nextDocs = [newDoc, ...prev];
@@ -695,9 +710,9 @@ export function SeleneEditor() {
         editor.commands.setContent(newDoc.content, { emitUpdate: false });
       }
 
-      setTimeout(() => {
+      docSwitchTimeoutRef.current = setTimeout(() => {
         isSwitchingDocRef.current = false;
-      }, 100);
+      }, 400);
 
       try {
         await apiFetch("/api/documents", {
@@ -718,6 +733,7 @@ export function SeleneEditor() {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (chronosTimeoutRef.current) clearTimeout(chronosTimeoutRef.current);
       if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
+      if (docSwitchTimeoutRef.current) clearTimeout(docSwitchTimeoutRef.current);
 
       const newDoc: DocumentItem = {
         id: `doc-${Date.now()}`,
@@ -732,6 +748,7 @@ export function SeleneEditor() {
       isSwitchingDocRef.current = true;
       activeDocIdRef.current = newDoc.id;
       docTitleRef.current = title;
+      lastLoadedContentRef.current = content;
 
       setDocuments((prev) => {
         const nextDocs = [newDoc, ...prev];
@@ -745,9 +762,9 @@ export function SeleneEditor() {
         editor.commands.setContent(content, { emitUpdate: false });
       }
 
-      setTimeout(() => {
+      docSwitchTimeoutRef.current = setTimeout(() => {
         isSwitchingDocRef.current = false;
-      }, 100);
+      }, 400);
 
       try {
         await apiFetch("/api/documents", {

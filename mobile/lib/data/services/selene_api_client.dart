@@ -18,14 +18,15 @@ class SeleneApiClient {
   });
 
   /// Computes the HMAC-SHA256 attestation headers required by Next.js middleware
-  Map<String, String> _generateAttestationHeaders(String path) {
+  Map<String, String> _generateAttestationHeaders(String path, {String method = 'GET'}) {
     final effectiveHwid = licenseService?.hwid ?? deviceHwid;
     final effectiveToken = (licenseService != null && licenseService!.licenseToken.isNotEmpty)
         ? licenseService!.licenseToken
         : 'TRIAL-ACTIVE-MOBILE-SEAT';
 
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final message = '$timestamp:$path:$effectiveHwid';
+    final timestamp = DateTime.now().toUtc().toIso8601String();
+    final normalizedMethod = method.toUpperCase();
+    final message = 'selene-titan-app-v1:$normalizedMethod:$path:$timestamp:$effectiveHwid';
     final key = utf8.encode(sharedSecret);
     final bytes = utf8.encode(message);
     final hmac = Hmac(sha256, key);
@@ -34,6 +35,7 @@ class SeleneApiClient {
     return {
       'Content-Type': 'application/json',
       'X-Selene-App-ID': 'selene-titan-app-v1',
+      'X-Selene-Client': 'mobile-android',
       'X-Selene-Timestamp': timestamp,
       'X-Selene-HWID': effectiveHwid,
       'X-Selene-Signature': signature,
@@ -45,7 +47,7 @@ class SeleneApiClient {
   Future<Map<String, dynamic>> checkHealth() async {
     try {
       final uri = Uri.parse('$baseUrl/api/health');
-      final res = await http.get(uri, headers: _generateAttestationHeaders('/api/health'));
+      final res = await http.get(uri, headers: _generateAttestationHeaders('/api/health', method: 'GET'));
       if (res.statusCode == 200) {
         return json.decode(res.body) as Map<String, dynamic>;
       }
@@ -65,7 +67,7 @@ class SeleneApiClient {
     try {
       final path = '/api/ai/complete';
       final uri = Uri.parse('$baseUrl$path');
-      final headers = _generateAttestationHeaders(path);
+      final headers = _generateAttestationHeaders(path, method: 'POST');
       final body = json.encode({
         'contextBefore': prompt.isNotEmpty ? prompt : context,
         'contextAfter': '',
@@ -97,7 +99,7 @@ class SeleneApiClient {
     try {
       final path = '/api/ai/fix';
       final uri = Uri.parse('$baseUrl$path');
-      final headers = _generateAttestationHeaders(path);
+      final headers = _generateAttestationHeaders(path, method: 'POST');
       final err = errorDetail ?? 'Code syntax or execution error';
       final body = json.encode({
         'code': code,
@@ -128,7 +130,7 @@ class SeleneApiClient {
     try {
       final path = '/api/ai/generate';
       final uri = Uri.parse('$baseUrl$path');
-      final headers = _generateAttestationHeaders(path);
+      final headers = _generateAttestationHeaders(path, method: 'POST');
       final body = json.encode({
         'prompt': prompt,
         'category': category,
@@ -152,7 +154,7 @@ class SeleneApiClient {
     try {
       final path = '/api/share';
       final uri = Uri.parse('$baseUrl$path');
-      final headers = _generateAttestationHeaders(path);
+      final headers = _generateAttestationHeaders(path, method: 'POST');
       final body = json.encode({
         'title': doc.title,
         'contentMarkdown': doc.content,

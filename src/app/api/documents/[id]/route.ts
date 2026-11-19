@@ -65,12 +65,15 @@ export async function PUT(req: Request, { params }: Params) {
       body.contentMarkdown !== undefined
         ? body.contentMarkdown
         : existing.contentMarkdown;
+    const newFolder =
+      body.folder !== undefined ? body.folder : existing.folder;
 
     await db
       .update(documents)
       .set({
         title: newTitle,
         contentMarkdown: newContent,
+        folder: newFolder,
         updatedAt: now,
       })
       .where(eq(documents.id, id));

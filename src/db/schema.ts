@@ -6,6 +6,7 @@ export const documents = sqliteTable("documents", {
   contentMarkdown: text("content_markdown").notNull(),
   contentJson: text("content_json"),
   icon: text("icon").default("📄"),
+  folder: text("folder").default("documents"),
   isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),

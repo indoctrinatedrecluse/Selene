@@ -1,11 +1,11 @@
-# 🐘 PHP & Laravel 11 Blade Engine Showcase
+`# 🐘 PHP & Laravel 11 Blade Engine Showcase
 
 Selene now features native, zero-config live render execution for **PHP 8.3 & Laravel Blade** templates! This engine compiles Blade directives in-memory and injects **Alpine.js 3.x** and **Tailwind CSS 3.4** inside an isolated sandbox.
 
 > [!NOTE]
 > ⚡ **Dual Execution Runtime**:
-> 1. **In-Browser Blade Engine**: Compiles `@php`, `@foreach`, `@if`, `{{ }}`, and Alpine.js reactivity with zero latency and 100% offline capability.
-> 2. **Artisan Serve Bridge**: Connect directly to your local `php artisan serve` instance running on port `8000` using the engine toggle in the block header.
+> 1. **In-Browser Blade Engine**: Compiles \`@php\`, \`@foreach\`, \`@if\`, \`{{ }}\`, and Alpine.js reactivity with zero latency and 100% offline capability.
+> 2. **Artisan Serve Bridge**: Connect directly to your local \`php artisan serve\` instance running on port \`8000\` using the engine toggle in the block header.
 
 ---
 
@@ -13,7 +13,7 @@ Selene now features native, zero-config live render execution for **PHP 8.3 & La
 
 Below is a live Blade component featuring variable scopes, nested associative arrays, loops, and Alpine.js interactive tabs:
 
-```blade
+\`\`\`blade
 @php
   $cluster = "Artemis-Prime-04";
   $uptime = "99.98%";
@@ -97,13 +97,13 @@ Below is a live Blade component featuring variable scopes, nested associative ar
     @endforeach
   </div>
 </div>
-```
+\`\`\`
 
 ---
 
 ## 📦 2. Eloquent Collection Table (Blade Directives)
 
-```blade
+\`\`\`blade
 @php
   $users = [
     ["id" => 1, "name" => "Selene Titan", "role" => "Celestial Admin", "status" => "online", "tokens" => "1.2M"],
@@ -116,7 +116,7 @@ Below is a live Blade component featuring variable scopes, nested associative ar
 <div class="p-6 max-w-xl mx-auto bg-slate-900 rounded-2xl border border-red-500/25 shadow-2xl text-slate-100 font-sans">
   <div class="flex items-center justify-between mb-4">
     <div>
-      <h3 class="text-base font-bold text-white">App\Models\CelestialTeam::all()</h3>
+      <h3 class="text-base font-bold text-white">App\\Models\\CelestialTeam::all()</h3>
       <p class="text-xs text-red-400/90 font-mono">Eloquent Collection • Dynamic Blade Directives</p>
     </div>
     <span class="text-xs font-mono px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-300">
@@ -157,4 +157,5 @@ Below is a live Blade component featuring variable scopes, nested associative ar
     </table>
   </div>
 </div>
-```
+\`\`\`
+`,

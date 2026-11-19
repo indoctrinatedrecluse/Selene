@@ -1,19 +1,19 @@
-# 🦀 Rust WebAssembly (Yew & Leptos) Engine Showcase
+`# 🦀 Rust WebAssembly (Yew & Leptos) Engine Showcase
 
-Selene brings native, high-performance live rendering for **Rust WebAssembly (`wasm32-unknown-unknown`)** components! This engine compiles and simulates Rust RSX macros (`html! { ... }` and `view! { ... }`), linear memory telemetry, and fine-grained reactive state inside an isolated sandbox with **Tailwind CSS 3.4**.
+Selene brings native, high-performance live rendering for **Rust WebAssembly (\`wasm32-unknown-unknown\`)** components! This engine compiles and simulates Rust RSX macros (\`html! { ... }\` and \`view! { ... }\`), linear memory telemetry, and fine-grained reactive state inside an isolated sandbox with **Tailwind CSS 3.4**.
 
 > [!NOTE]
 > ⚡ **Dual Execution Runtime**:
-> 1. **In-Browser WASM Engine**: Evaluates Rust RSX macros, hooks (`use_state`), signals (`create_signal`), and linear memory bounds with 0ms latency.
-> 2. **Trunk Server Bridge**: Connect directly to your local Trunk or Cargo development server (`trunk serve -p 8080`) using the engine switcher in the block header!
+> 1. **In-Browser WASM Engine**: Evaluates Rust RSX macros, hooks (\`use_state\`), signals (\`create_signal\`), and linear memory bounds with 0ms latency.
+> 2. **Trunk Server Bridge**: Connect directly to your local Trunk or Cargo development server (\`trunk serve -p 8080\`) using the engine switcher in the block header!
 
 ---
 
-## ⚡ 1. Rust Yew Microservice Telemetry Component (`yew`)
+## ⚡ 1. Rust Yew Microservice Telemetry Component (\`yew\`)
 
 Below is a live Rust Yew component featuring state hooks, thread-safe memory allocations, and visual property tweaking:
 
-```rust
+\`\`\`rust
 use yew::prelude::*;
 
 #[function_component(TelemetryApp)]
@@ -70,48 +70,5 @@ pub fn app() -> Html {
         </div>
     }
 }
-```
-
----
-
-## ⚡ 2. Leptos Fine-Grained Reactive Card (`leptos`)
-
-Selene also supports the modern Leptos framework for sub-millisecond, virtual-DOM-free WebAssembly reactivity:
-
-```leptos
-use leptos::*;
-
-#[component]
-pub fn LeptosCard() -> impl IntoView {
-    let (count, set_count) = create_signal(100);
-
-    view! {
-        <div class="p-6 max-w-sm mx-auto bg-slate-900 rounded-2xl border border-amber-500/30 shadow-2xl text-slate-100 font-sans">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                    { "LEPTOS 0.6" }
-                </span>
-                <span class="text-xs font-mono text-emerald-400 font-semibold">{ "Sub-Millisecond VDOM-Free" }</span>
-            </div>
-            <h3 class="text-base font-bold text-white mb-2">{ "Fine-Grained Reactive Rust" }</h3>
-            <p class="text-xs text-slate-400 leading-relaxed mb-4">
-                { "Compiles directly to WebAssembly with zero virtual-DOM overhead and fine-grained DOM pinpoint updates." }
-            </p>
-            <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                <button id="rust-counter-btn" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-md transition-all active:scale-95">
-                    { "Increment: " } <span id="rust-counter-val" class="font-mono">{ count }</span>
-                </button>
-                <span class="text-amber-400 font-mono">{ "wasm32" }</span>
-            </div>
-        </div>
-    }
-}
-```
-
----
-
-## 🛠️ How It Works Under The Hood
-
-- **Macro & RSX Parser**: Parses `html! { ... }` and `view! { ... }` token trees into sandboxed reactive HTML elements.
-- **Visual Property Tweaking**: Toggle the **Tweak Props** button to visually alter padding, rounded corners, accent colors, and surface themes with live two-way code updates.
-- **Local Trunk Bridge**: Run `trunk serve` on port `8080` and switch the engine mode to **Trunk Server** for full integration with real Rust compilations!
+\`\`\`
+`,

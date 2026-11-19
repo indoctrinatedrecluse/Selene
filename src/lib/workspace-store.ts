@@ -2578,7 +2578,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
   {
     id: "doc-elixir-showcase",
-    title: "16_elixir_phoenix_liveview_showcase.md",
+    title: "20_elixir_phoenix_liveview_showcase.md",
     icon: "🔥",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2587,7 +2587,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
   {
     id: "doc-swift-showcase",
-    title: "17_swift_swiftui_multiplatform_showcase.md",
+    title: "21_swift_swiftui_multiplatform_showcase.md",
     icon: "💨",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2596,7 +2596,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
   {
     id: "doc-hermes-showcase",
-    title: "18_hermes_relay_api_and_graphql_showcase.md",
+    title: "22_hermes_relay_api_and_graphql_showcase.md",
     icon: "⚡",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2605,7 +2605,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
   {
     id: "doc-chronos-showcase",
-    title: "19_chronos_timeline_revision_history_showcase.md",
+    title: "23_chronos_timeline_revision_history_showcase.md",
     icon: "⏳",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2614,7 +2614,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
   {
     id: "doc-orbit-showcase",
-    title: "20_orbit_link_p2p_collaboration_showcase.md",
+    title: "24_orbit_link_p2p_collaboration_showcase.md",
     icon: "🪐",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2623,7 +2623,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
   {
     id: "doc-systems-showcase",
-    title: "21_wavedrom_d2_and_wat_systems_showcase.md",
+    title: "25_wavedrom_d2_and_wat_systems_showcase.md",
     icon: "⚡",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2632,7 +2632,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
   {
     id: "doc-scientific-showcase",
-    title: "22_typst_webr_and_openscad_scientific_showcase.md",
+    title: "26_typst_webr_and_openscad_scientific_showcase.md",
     icon: "🔬",
     folder: "samples",
     createdAt: Date.now() - 3600000,
@@ -2641,8 +2641,9 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   },
 ];
 
-const STORAGE_KEY = "selene_documents_v18";
+const STORAGE_KEY = "selene_documents_v19";
 const LEGACY_STORAGE_KEYS = [
+  "selene_documents_v18",
   "selene_documents_v17",
   "selene_documents_v16",
   "selene_documents_v15",

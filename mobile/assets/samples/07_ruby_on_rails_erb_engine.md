@@ -1,11 +1,11 @@
-# 💎 Ruby on Rails 8.0 & ERB Engine Showcase
+`# 💎 Ruby on Rails 8.0 & ERB Engine Showcase
 
-Selene includes full native live rendering for **Ruby on Rails 8.0 & ERB** templates! The engine parses ERB scriptlets (`<% %>`), output tags (`<%= %>`), and evaluates Rails view helpers, Hotwire Turbo Frames, and Stimulus data controllers in real-time.
+Selene includes full native live rendering for **Ruby on Rails 8.0 & ERB** templates! The engine parses ERB scriptlets (\`<% %>\`), output tags (\`<%= %>\`), and evaluates Rails view helpers, Hotwire Turbo Frames, and Stimulus data controllers in real-time.
 
 > [!NOTE]
 > 🚀 **Dual Execution Runtime**:
-> 1. **In-Browser ERB & Hotwire Engine**: Compiles Ruby collections, `turbo_frame_tag`, Rails helpers, and Stimulus interactivity client-side with zero dependencies.
-> 2. **Puma Server Bridge**: Connect directly to your local Rails development server (`bin/rails server` on port `3000`) using the **Puma Server** toggle in the header.
+> 1. **In-Browser ERB & Hotwire Engine**: Compiles Ruby collections, \`turbo_frame_tag\`, Rails helpers, and Stimulus interactivity client-side with zero dependencies.
+> 2. **Puma Server Bridge**: Connect directly to your local Rails development server (\`bin/rails server\` on port \`3000\`) using the **Puma Server** toggle in the header.
 
 ---
 
@@ -13,7 +13,7 @@ Selene includes full native live rendering for **Ruby on Rails 8.0 & ERB** templ
 
 Below is an interactive Rails component rendering within a Turbo Frame and responding to Stimulus actions:
 
-```erb
+\`\`\`erb
 <%
   @cluster = "Olympus-Rails-08"
   @uptime = "99.99%"
@@ -96,13 +96,13 @@ Below is an interactive Rails component rendering within a Turbo Frame and respo
     </div>
   </div>
 <% end %>
-```
+\`\`\`
 
 ---
 
 ## 💎 2. ActiveRecord Relation Table (ERB Iteration)
 
-```erb
+\`\`\`erb
 <%
   @deployments = [
     { id: 104, commit: "8e35ea0", branch: "main", author: "Selene Titan", status: "deployed", latency: "14ms" },
@@ -158,4 +158,5 @@ Below is an interactive Rails component rendering within a Turbo Frame and respo
     </table>
   </div>
 </div>
-```
+\`\`\`
+`,

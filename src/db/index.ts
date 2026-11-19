@@ -42,11 +42,18 @@ export async function initDb() {
       content_markdown TEXT NOT NULL,
       content_json TEXT,
       icon TEXT DEFAULT '📄',
+      folder TEXT DEFAULT 'documents',
       is_favorite INTEGER DEFAULT 0,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
   `);
+
+  try {
+    await client.execute(`ALTER TABLE documents ADD COLUMN folder TEXT DEFAULT 'documents';`);
+  } catch {
+    // Column already exists
+  }
 
   await client.execute(`
     CREATE TABLE IF NOT EXISTS document_revisions (

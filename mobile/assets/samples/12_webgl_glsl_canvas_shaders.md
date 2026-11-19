@@ -1,11 +1,11 @@
-# 🌌 WebGL Canvas Shader Engine Showcase
+`# 🌌 WebGL Canvas Shader Engine Showcase
 
 Selene brings native, hardware-accelerated **WebGL & GLSL Canvas Shaders** directly into your technical markdown canvas! Render mathematical animations, procedural noise, raymarched 3D geometries, and generative art in real time.
 
 > [!NOTE]
 > ⚡ **Shader Engine Features**:
-> 1. **Hardware Accelerated**: Full GPU rendering via WebGL2/WebGL1 context on HTML5 `<canvas>`.
-> 2. **Standard Shader Inputs**: Automatically provides `u_time` (elapsed seconds), `u_resolution` (viewport dimensions), and `u_mouse` (normalized cursor coordinates).
+> 1. **Hardware Accelerated**: Full GPU rendering via WebGL2/WebGL1 context on HTML5 \`<canvas>\`.
+> 2. **Standard Shader Inputs**: Automatically provides \`u_time\` (elapsed seconds), \`u_resolution\` (viewport dimensions), and \`u_mouse\` (normalized cursor coordinates).
 > 3. **Animation Controls**: Play, pause, reset time, and live FPS counter.
 
 ---
@@ -14,7 +14,7 @@ Selene brings native, hardware-accelerated **WebGL & GLSL Canvas Shaders** direc
 
 The block below runs a Fractional Brownian Motion (FBM) plasma shader producing celestial nebula clouds:
 
-```glsl
+\`\`\`glsl
 // Selene WebGL Fragment Shader • Cosmic Nebula
 #ifdef GL_ES
 precision highp float;
@@ -46,7 +46,7 @@ void main() {
 
     gl_FragColor = vec4(col, 1.0);
 }
-```
+\`\`\`
 
 ---
 
@@ -54,7 +54,7 @@ void main() {
 
 Render a 3D raymarched sphere with diffuse lighting, rim glow, and camera ray tracing:
 
-```shader
+\`\`\`shader
 // Selene WebGL Fragment Shader • Raymarched Sphere
 #ifdef GL_ES
 precision highp float;
@@ -97,48 +97,5 @@ void main() {
 
     gl_FragColor = vec4(col, 1.0);
 }
-```
-
----
-
-## ⚡ 3. Cyber Grid Waves (`wgsl` / `glsl`)
-
-Procedural perspective grid with horizon fog and neon wave frequencies:
-
-```wgsl
-// Selene WebGL Fragment Shader • Neon Wave Grid
-#ifdef GL_ES
-precision highp float;
-#endif
-
-uniform float u_time;
-uniform vec2 u_resolution;
-uniform vec2 u_mouse;
-
-void main() {
-    vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / u_resolution.y;
-    float t = u_time * 1.5;
-
-    // Perspective floor transform
-    uv.y += 0.5;
-    if (uv.y <= 0.0) {
-        gl_FragColor = vec4(0.02, 0.03, 0.06, 1.0);
-        return;
-    }
-
-    float z = 1.0 / uv.y;
-    vec2 p = vec2(uv.x * z, z + t);
-
-    // Grid lines
-    vec2 grid = abs(fract(p - 0.5) - 0.5) / fwidth(p);
-    float line = min(grid.x, grid.y);
-    float c = 1.0 - min(line, 1.0);
-
-    // Neon purple/cyan horizon glow
-    vec3 col = vec3(c * 0.2, c * 0.6, c * 1.0);
-    col *= exp(-0.3 * z);
-    col += vec3(0.25, 0.05, 0.35) * (1.0 - uv.y);
-
-    gl_FragColor = vec4(col, 1.0);
-}
-```
+\`\`\`
+`,
