@@ -12,6 +12,7 @@ export interface CollabUser {
   color: string;
   avatar: string;
   personaId: string;
+  latencyMs?: number;
 }
 
 export interface CelestialPersona {

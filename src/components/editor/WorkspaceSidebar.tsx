@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useMemo } from "react";
-import { DocumentItem, getDocumentFolder } from "@/lib/workspace-store";
+import { DocumentItem, getDocumentFolder, STARTER_TEMPLATES } from "@/lib/workspace-store";
 import {
   Plus,
   Trash2,
@@ -28,7 +28,7 @@ import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 import { SeleneVersionBadge } from "@/components/brand/SeleneVersionBadge";
 import { parseIpynbToMarkdown } from "@/lib/ipynb-bridge";
 import { GitSourceControlDrawer } from "@/components/git/GitSourceControlDrawer";
-import { bindLocalFolder, getBoundFolderInfo, BoundFolderInfo } from "@/lib/disk-sync";
+import { bindLocalFolder, getBoundFolderInfo, isFolderBindingSupported, BoundFolderInfo } from "@/lib/disk-sync";
 
 interface WorkspaceSidebarProps {
   documents: DocumentItem[];
@@ -67,11 +67,44 @@ export function WorkspaceSidebar({
   const [boundFolder, setBoundFolder] = useState<BoundFolderInfo>(() => getBoundFolderInfo());
 
   const handleMountFolder = async () => {
+    if (!isFolderBindingSupported()) {
+      alert(
+        "Local Folder Binding requires a browser supporting the File System Access API (such as Chrome, Edge, or the native Selene Desktop App)."
+      );
+      return;
+    }
     const res = await bindLocalFolder();
     if (res) {
       setBoundFolder(res);
     }
   };
+
+  // Track count of uncommitted workspace changes
+  const gitChangedCount = useMemo(() => {
+    if (!documents || documents.length === 0) return 0;
+    let baselines: Record<string, { content: string; title: string }> = {};
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("selene_git_baselines");
+        if (raw) baselines = JSON.parse(raw);
+      } catch {
+        // ignore
+      }
+    }
+    let count = 0;
+    for (const doc of documents) {
+      const canonical = STARTER_TEMPLATES.find((s) => s.id === doc.id);
+      const baseline = baselines[doc.id];
+      if (baseline) {
+        if (doc.content !== baseline.content || doc.title !== baseline.title) count++;
+      } else if (canonical) {
+        if (doc.content !== canonical.content || doc.title !== canonical.title) count++;
+      } else {
+        count++;
+      }
+    }
+    return count;
+  }, [documents]);
 
   // Track expanded folder state (default: all expanded)
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
@@ -332,15 +365,17 @@ export function WorkspaceSidebar({
         >
           <GitBranch className="w-3.5 h-3.5" />
           <span>Git Source</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-400 font-mono">
-            3
-          </span>
+          {gitChangedCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-400 font-mono">
+              {gitChangedCount}
+            </span>
+          )}
         </button>
       </div>
 
       {sidebarTab === "git" ? (
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          <GitSourceControlDrawer branchName="main" />
+          <GitSourceControlDrawer branchName="main" documents={documents} />
         </div>
       ) : (
         <>

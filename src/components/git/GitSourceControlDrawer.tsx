@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   GitBranch,
   GitCommit,
@@ -12,7 +12,10 @@ import {
   FileDiff,
   X,
   UploadCloud,
+  CheckCircle2,
 } from "lucide-react";
+import { DocumentItem, STARTER_TEMPLATES } from "@/lib/workspace-store";
+import { saveChronosSnapshot, computeSemanticDiff, DiffLine } from "@/lib/chronos-store";
 
 export interface GitFileStatus {
   path: string;
@@ -20,17 +23,50 @@ export interface GitFileStatus {
   staged: boolean;
   oldContent?: string;
   newContent?: string;
+  docId?: string;
+}
+
+interface GitBaseline {
+  [docId: string]: {
+    content: string;
+    title: string;
+    commitHash: string;
+    timestamp: number;
+  };
 }
 
 interface GitSourceControlDrawerProps {
   branchName?: string;
-  onCommit?: (message: string) => Promise<boolean>;
+  documents?: DocumentItem[];
+  onCommit?: (message: string, stagedPaths: string[]) => Promise<boolean>;
   onPush?: () => Promise<boolean>;
   className?: string;
 }
 
+const BASELINES_KEY = "selene_git_baselines";
+
+function loadBaselines(): GitBaseline {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(BASELINES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveBaselines(baselines: GitBaseline): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(BASELINES_KEY, JSON.stringify(baselines));
+  } catch (err) {
+    console.error("Failed to persist git baselines", err);
+  }
+}
+
 export function GitSourceControlDrawer({
   branchName = "main",
+  documents = [],
   onCommit,
   onPush,
   className = "",
@@ -38,71 +74,130 @@ export function GitSourceControlDrawer({
   const [commitMessage, setCommitMessage] = useState("");
   const [isCommitting, setIsCommitting] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
-  const [commitSuccess, setCommitSuccess] = useState(false);
+  const [commitSuccessText, setCommitSuccessText] = useState<string | null>(null);
   const [selectedFileForDiff, setSelectedFileForDiff] = useState<GitFileStatus | null>(null);
+  const [stagedPaths, setStagedPaths] = useState<Set<string>>(new Set());
+  const [baselines, setBaselines] = useState<GitBaseline>(() => loadBaselines());
 
-  // Simulated live git working tree status for workspace files
-  const [files, setFiles] = useState<GitFileStatus[]>([
-    {
-      path: "src/components/render-engine/DeclarativeChartRenderer.tsx",
-      status: "added",
-      staged: true,
-      oldContent: "",
-      newContent: `export function DeclarativeChartRenderer() {\n  return <svg viewBox="0 0 800 360">...</svg>;\n}`,
-    },
-    {
-      path: "src/components/render-engine/DuckDbStudioRenderer.tsx",
-      status: "added",
-      staged: true,
-      oldContent: "",
-      newContent: `export function DuckDbStudioRenderer() {\n  // In-Browser Vector OLAP Engine\n}`,
-    },
-    {
-      path: "src/lib/workspace-store.ts",
-      status: "modified",
-      staged: false,
-      oldContent: `const STORAGE_KEY = "selene_documents_v11";`,
-      newContent: `const STORAGE_KEY = "selene_documents_v12";\n// Added Declarative Chart & DuckDB starter templates`,
-    },
-    {
-      path: "docs/architecture-v0.5.0.md",
-      status: "untracked",
-      staged: false,
-      oldContent: "",
-      newContent: `# Selene Deep Analytical Computing Architecture`,
-    },
-  ]);
+  // Reload baselines on mount
+  useEffect(() => {
+    setBaselines(loadBaselines());
+  }, []);
 
-  const stagedFiles = files.filter((f) => f.staged);
-  const unstagedFiles = files.filter((f) => !f.staged);
+  // Compute live file statuses from active workspace documents
+  const files: GitFileStatus[] = useMemo(() => {
+    if (!documents || documents.length === 0) return [];
+
+    const computed: GitFileStatus[] = [];
+
+    for (const doc of documents) {
+      const canonicalStarter = STARTER_TEMPLATES.find((s) => s.id === doc.id);
+      const baseline = baselines[doc.id];
+      const folder = doc.folder || "documents";
+      const docPath = `${folder}/${doc.title}`;
+
+      if (baseline) {
+        // Document has a committed baseline: compare against it
+        if (doc.content !== baseline.content || doc.title !== baseline.title) {
+          computed.push({
+            path: docPath,
+            status: "modified",
+            staged: stagedPaths.has(docPath),
+            oldContent: baseline.content,
+            newContent: doc.content,
+            docId: doc.id,
+          });
+        }
+      } else if (canonicalStarter) {
+        // Document is a starter template without custom commits
+        if (doc.content !== canonicalStarter.content || doc.title !== canonicalStarter.title) {
+          computed.push({
+            path: docPath,
+            status: "modified",
+            staged: stagedPaths.has(docPath),
+            oldContent: canonicalStarter.content,
+            newContent: doc.content,
+            docId: doc.id,
+          });
+        }
+      } else {
+        // Newly created user document
+        computed.push({
+          path: docPath,
+          status: "added",
+          staged: stagedPaths.has(docPath),
+          oldContent: "",
+          newContent: doc.content,
+          docId: doc.id,
+        });
+      }
+    }
+
+    return computed;
+  }, [documents, baselines, stagedPaths]);
+
+  const stagedFiles = useMemo(() => files.filter((f) => f.staged), [files]);
+  const unstagedFiles = useMemo(() => files.filter((f) => !f.staged), [files]);
 
   const toggleStageFile = (filePath: string) => {
-    setFiles((prev) =>
-      prev.map((f) => (f.path === filePath ? { ...f, staged: !f.staged } : f))
-    );
+    setStagedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(filePath)) {
+        next.delete(filePath);
+      } else {
+        next.add(filePath);
+      }
+      return next;
+    });
   };
 
   const stageAll = () => {
-    setFiles((prev) => prev.map((f) => ({ ...f, staged: true })));
+    setStagedPaths(new Set(files.map((f) => f.path)));
   };
 
   const unstageAll = () => {
-    setFiles((prev) => prev.map((f) => ({ ...f, staged: false })));
+    setStagedPaths(new Set());
   };
 
   const handleCommitAction = async () => {
     if (!commitMessage.trim() || stagedFiles.length === 0) return;
     setIsCommitting(true);
     try {
-      if (onCommit) {
-        await onCommit(commitMessage);
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 600));
+      const commitHash = Math.random().toString(16).substring(2, 9);
+
+      // Create Chronos snapshot milestones for each staged document
+      const updatedBaselines = { ...baselines };
+      for (const staged of stagedFiles) {
+        if (!staged.docId) continue;
+        const targetDoc = documents.find((d) => d.id === staged.docId);
+        if (targetDoc) {
+          saveChronosSnapshot(targetDoc.id, targetDoc.title, targetDoc.content, {
+            tag: `[git:${commitHash}] ${commitMessage.trim()}`,
+            isMilestone: true,
+            isManual: true,
+          });
+          updatedBaselines[targetDoc.id] = {
+            content: targetDoc.content,
+            title: targetDoc.title,
+            commitHash,
+            timestamp: Date.now(),
+          };
+        }
       }
-      setFiles((prev) => prev.filter((f) => !f.staged));
+
+      saveBaselines(updatedBaselines);
+      setBaselines(updatedBaselines);
+
+      if (onCommit) {
+        await onCommit(commitMessage, stagedFiles.map((f) => f.path));
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+
+      setStagedPaths(new Set());
       setCommitMessage("");
-      setCommitSuccess(true);
-      setTimeout(() => setCommitSuccess(false), 2500);
+      setCommitSuccessText(`[${branchName} ${commitHash}] ${commitMessage.slice(0, 20)}...`);
+      setTimeout(() => setCommitSuccessText(null), 3500);
     } finally {
       setIsCommitting(false);
     }
@@ -114,12 +209,21 @@ export function GitSourceControlDrawer({
       if (onPush) {
         await onPush();
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 600));
       }
     } finally {
       setIsPushing(false);
     }
   };
+
+  // Compute visual diff lines for the selected file
+  const diffSummary = useMemo(() => {
+    if (!selectedFileForDiff) return null;
+    return computeSemanticDiff(
+      selectedFileForDiff.oldContent || "",
+      selectedFileForDiff.newContent || ""
+    );
+  }, [selectedFileForDiff]);
 
   return (
     <div className={`flex flex-col h-full bg-[#080d1b] text-slate-300 select-none ${className}`}>
@@ -156,10 +260,10 @@ export function GitSourceControlDrawer({
             disabled={!commitMessage.trim() || stagedFiles.length === 0 || isCommitting}
             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-semibold text-xs transition-all shadow-md cursor-pointer"
           >
-            {commitSuccess ? (
+            {commitSuccessText ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-300" />
-                <span className="text-emerald-300">Committed!</span>
+                <span className="text-emerald-300 truncate">{commitSuccessText}</span>
               </>
             ) : isCommitting ? (
               <>
@@ -177,8 +281,8 @@ export function GitSourceControlDrawer({
           <button
             onClick={handlePushAction}
             disabled={isPushing}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
-            title="Push commits to origin/main"
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer"
+            title="Push commits to remote origin"
           >
             <UploadCloud className="w-4 h-4" />
           </button>
@@ -194,7 +298,7 @@ export function GitSourceControlDrawer({
             {stagedFiles.length > 0 && (
               <button
                 onClick={unstageAll}
-                className="text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                 title="Unstage all"
               >
                 <Minus className="w-3.5 h-3.5" />
@@ -230,7 +334,7 @@ export function GitSourceControlDrawer({
                     e.stopPropagation();
                     toggleStageFile(file.path);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
                   title="Unstage"
                 >
                   <Minus className="w-3 h-3" />
@@ -247,7 +351,7 @@ export function GitSourceControlDrawer({
             {unstagedFiles.length > 0 && (
               <button
                 onClick={stageAll}
-                className="text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                 title="Stage all"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -255,9 +359,17 @@ export function GitSourceControlDrawer({
             )}
           </div>
 
-          {unstagedFiles.length === 0 && (
-            <p className="px-2 py-1 text-[11px] text-slate-500 italic">Working tree clean</p>
-          )}
+          {unstagedFiles.length === 0 && files.length === 0 ? (
+            <div className="p-4 text-center space-y-2">
+              <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto opacity-75" />
+              <p className="text-xs text-slate-300 font-semibold">Working tree clean</p>
+              <p className="text-[10px] text-slate-500">
+                All workspace documents match committed baselines.
+              </p>
+            </div>
+          ) : unstagedFiles.length === 0 ? (
+            <p className="px-2 py-1 text-[11px] text-slate-500 italic">All changes are staged</p>
+          ) : null}
 
           {unstagedFiles.map((file) => (
             <div
@@ -283,7 +395,7 @@ export function GitSourceControlDrawer({
                     e.stopPropagation();
                     toggleStageFile(file.path);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
                   title="Stage"
                 >
                   <Plus className="w-3 h-3" />
@@ -295,45 +407,74 @@ export function GitSourceControlDrawer({
       </div>
 
       {/* Visual Diff Modal if a file is clicked */}
-      {selectedFileForDiff && (
+      {selectedFileForDiff && diffSummary && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="relative w-full max-w-3xl max-h-[85vh] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          <div className="relative w-full max-w-4xl max-h-[85vh] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-950">
               <div className="flex items-center gap-2">
                 <FileDiff className="w-4 h-4 text-sky-400" />
                 <span className="text-sm font-bold text-white font-mono">
                   {selectedFileForDiff.path}
                 </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  +{diffSummary.added}
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  -{diffSummary.removed}
+                </span>
               </div>
               <button
                 onClick={() => setSelectedFileForDiff(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-1 bg-slate-950/80">
-              {selectedFileForDiff.oldContent && (
-                <div className="p-2.5 rounded-lg bg-rose-950/30 border border-rose-500/30 text-rose-300">
-                  <div className="text-[10px] uppercase font-bold text-rose-400 mb-1">
-                    --- Original
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-0.5 bg-slate-950">
+              {diffSummary.lines.map((line: DiffLine, idx: number) => {
+                if (line.type === "add") {
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 px-2 py-0.5 bg-emerald-950/40 border-l-2 border-emerald-500 text-emerald-300"
+                    >
+                      <span className="w-8 shrink-0 select-none text-[10px] text-emerald-500/70 text-right">
+                        +{line.newLineNumber}
+                      </span>
+                      <pre className="whitespace-pre-wrap break-all flex-1">{line.content}</pre>
+                    </div>
+                  );
+                }
+                if (line.type === "remove") {
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 px-2 py-0.5 bg-rose-950/40 border-l-2 border-rose-500 text-rose-300"
+                    >
+                      <span className="w-8 shrink-0 select-none text-[10px] text-rose-500/70 text-right">
+                        -{line.oldLineNumber}
+                      </span>
+                      <pre className="whitespace-pre-wrap break-all flex-1">{line.content}</pre>
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 px-2 py-0.5 text-slate-400 hover:bg-slate-900/40"
+                  >
+                    <span className="w-8 shrink-0 select-none text-[10px] text-slate-600 text-right">
+                      {line.newLineNumber || line.oldLineNumber}
+                    </span>
+                    <pre className="whitespace-pre-wrap break-all flex-1">{line.content}</pre>
                   </div>
-                  <pre className="whitespace-pre-wrap">{selectedFileForDiff.oldContent}</pre>
-                </div>
-              )}
-              {selectedFileForDiff.newContent && (
-                <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-emerald-300">
-                  <div className="text-[10px] uppercase font-bold text-emerald-400 mb-1">
-                    +++ Modified (Working Tree)
-                  </div>
-                  <pre className="whitespace-pre-wrap">{selectedFileForDiff.newContent}</pre>
-                </div>
-              )}
+                );
+              })}
             </div>
             <div className="px-5 py-3 border-t border-slate-800 bg-slate-950 flex justify-end">
               <button
                 onClick={() => setSelectedFileForDiff(null)}
-                className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer"
               >
                 Close Inspector
               </button>

@@ -26,29 +26,16 @@ let boundFolderState: BoundFolderInfo = {
  */
 export function isFolderBindingSupported(): boolean {
   if (typeof window === "undefined") return false;
-  return "showDirectoryPicker" in window;
+  return typeof (window as unknown as { showDirectoryPicker?: unknown }).showDirectoryPicker === "function";
 }
 
 /**
  * Prompts user to select a local folder on disk and binds it to the Selene workspace.
  */
 export async function bindLocalFolder(): Promise<BoundFolderInfo | null> {
-  if (typeof window === "undefined" || !("showDirectoryPicker" in window)) {
-    // Fallback simulated binding for unsupported browsers/testing
-    boundFolderState = {
-      name: "Mounted Workspace Docs",
-      fileCount: 5,
-      lastSyncTimestamp: Date.now(),
-      isBound: true,
-      files: [
-        "01_selene_architecture_and_live_canvas.md",
-        "README.md",
-        "CHANGELOG.md",
-        "research_notes.ipynb",
-        "telemetry_metrics.sql",
-      ],
-    };
-    return boundFolderState;
+  if (typeof window === "undefined" || !isFolderBindingSupported()) {
+    console.warn("File System Access API (showDirectoryPicker) is not supported in this browser environment.");
+    return null;
   }
 
   try {
@@ -89,9 +76,7 @@ export async function saveFileToBoundFolder(
   content: string
 ): Promise<boolean> {
   if (!activeDirectoryHandle) {
-    // If simulated
-    boundFolderState.lastSyncTimestamp = Date.now();
-    return true;
+    return false;
   }
 
   try {
