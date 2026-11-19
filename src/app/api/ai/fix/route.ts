@@ -49,38 +49,41 @@ Diagnose the root cause of the error and output a valid JSON object strictly mat
 
 Output ONLY valid JSON without markdown wrapping or commentary.`;
 
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: promptInstruction }] }],
-              generationConfig: {
-                temperature: 0.1,
-                responseMimeType: "application/json",
-              },
-            }),
-          }
-        );
+      const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
+      for (const model of models) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: promptInstruction }] }],
+                generationConfig: {
+                  temperature: 0.1,
+                  responseMimeType: "application/json",
+                },
+              }),
+            }
+          );
 
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            const parsed = JSON.parse(rawText);
-            return NextResponse.json({
-              success: true,
-              explanation: parsed.explanation,
-              fixedCode: parsed.fixedCode,
-              changesSummary: parsed.changesSummary,
-              source: "gemini",
-            });
+          if (geminiRes.ok) {
+            const data = await geminiRes.json();
+            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              const parsed = JSON.parse(rawText);
+              return NextResponse.json({
+                success: true,
+                explanation: parsed.explanation,
+                fixedCode: parsed.fixedCode,
+                changesSummary: parsed.changesSummary,
+                source: `gemini-${model}`,
+              });
+            }
           }
+        } catch (err) {
+          console.warn(`Gemini (${model}) fix API failed:`, err);
         }
-      } catch (err) {
-        console.warn("Gemini fix API failed, falling back to heuristic repair engine:", err);
       }
     }
 

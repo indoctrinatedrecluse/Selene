@@ -29,6 +29,25 @@ export async function POST(req: Request) {
     }
 
     if (action === "start") {
+      const isServerlessOrProd = Boolean(
+        process.env.K_SERVICE ||
+        process.env.VERCEL ||
+        process.env.AWS_LAMBDA_FUNCTION_NAME ||
+        process.env.NODE_ENV === "production"
+      );
+
+      if (isServerlessOrProd) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Background dev server spawning is disabled in cloud production/serverless environments to protect container memory. Please run local dev servers directly on your development workstation or desktop wrapper.",
+            isProductionEnvironment: true,
+          },
+          { status: 403 }
+        );
+      }
+
       if (activeServerProcess && !activeServerProcess.killed) {
         return NextResponse.json({
           success: true,

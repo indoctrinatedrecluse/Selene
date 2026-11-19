@@ -47,43 +47,46 @@ Respond ONLY with the LaTeX formula enclosed in markdown code fences \`\`\`math 
         systemInstruction = `You are the Selene AI Canvas Copilot. Provide high quality technical markdown content. Respond directly without filler.`;
       }
 
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [{ text: `${systemInstruction}\n\nUser Request: ${prompt}` }],
+      const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
+      for (const model of models) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: "user",
+                    parts: [{ text: `${systemInstruction}\n\nUser Request: ${prompt}` }],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 2048,
                 },
-              ],
-              generationConfig: {
-                temperature: 0.2,
-                maxOutputTokens: 2048,
-              },
-            }),
-          }
-        );
+              }),
+            }
+          );
 
-        if (geminiRes.ok) {
-          const geminiData = await geminiRes.json();
-          const generatedText =
-            geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          if (geminiRes.ok) {
+            const geminiData = await geminiRes.json();
+            const generatedText =
+              geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-          if (generatedText) {
-            return NextResponse.json({
-              success: true,
-              generatedContent: generatedText.trim(),
-              provider: "gemini",
-              vaultSource: "Windows Registry AES-256-GCM Vault",
-            });
+            if (generatedText) {
+              return NextResponse.json({
+                success: true,
+                generatedContent: generatedText.trim(),
+                provider: `gemini-${model}`,
+                vaultSource: "Windows Registry AES-256-GCM Vault",
+              });
+            }
           }
+        } catch (err) {
+          console.warn(`Gemini (${model}) generation API failed:`, err);
         }
-      } catch (err) {
-        console.warn("Direct Gemini call error, falling back to smart heuristic:", err);
       }
     }
 

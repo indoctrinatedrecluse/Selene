@@ -43,44 +43,47 @@ RULES:
 3. Match the technical, elegant tone of the author.
 4. DO NOT provide conversational chatter or quotes around your response.`;
 
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    {
-                      text: `${promptInstruction}\n\n[CONTEXT BEFORE CURSOR]:\n${contextBefore}\n\n[CONTEXT AFTER CURSOR]:\n${contextAfter || ""}\n\n[COMPLETION]:`,
-                    },
-                  ],
+      const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
+      for (const model of models) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: "user",
+                    parts: [
+                      {
+                        text: `${promptInstruction}\n\n[CONTEXT BEFORE CURSOR]:\n${contextBefore}\n\n[CONTEXT AFTER CURSOR]:\n${contextAfter || ""}\n\n[COMPLETION]:`,
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 120,
                 },
-              ],
-              generationConfig: {
-                temperature: 0.2,
-                maxOutputTokens: 120,
-              },
-            }),
-          }
-        );
+              }),
+            }
+          );
 
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          let completion = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          // Strip any accidental markdown wrap
-          completion = completion.replace(/^```[a-z]*\n?/i, "").replace(/```$/, "").trimStart();
-          return NextResponse.json({
-            success: true,
-            completion,
-            source: "gemini",
-          });
+          if (geminiRes.ok) {
+            const data = await geminiRes.json();
+            let completion = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            // Strip any accidental markdown wrap
+            completion = completion.replace(/^```[a-z]*\n?/i, "").replace(/```$/, "").trimStart();
+            return NextResponse.json({
+              success: true,
+              completion,
+              source: `gemini-${model}`,
+            });
+          }
+        } catch (err) {
+          console.warn(`Gemini (${model}) API failed:`, err);
         }
-      } catch (err) {
-        console.warn("Gemini ghostwriting API failed, falling back to heuristic engine:", err);
       }
     }
 
