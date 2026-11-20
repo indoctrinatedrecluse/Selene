@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  experimental: {
+    agentUpgrade: "security",
+  } as any,
   async headers() {
     return [
       {
