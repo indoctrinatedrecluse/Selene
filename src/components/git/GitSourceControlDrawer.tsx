@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   GitBranch,
   GitCommit,
@@ -78,11 +78,6 @@ export function GitSourceControlDrawer({
   const [selectedFileForDiff, setSelectedFileForDiff] = useState<GitFileStatus | null>(null);
   const [stagedPaths, setStagedPaths] = useState<Set<string>>(new Set());
   const [baselines, setBaselines] = useState<GitBaseline>(() => loadBaselines());
-
-  // Reload baselines on mount
-  useEffect(() => {
-    setBaselines(loadBaselines());
-  }, []);
 
   // Compute live file statuses from active workspace documents
   const files: GitFileStatus[] = useMemo(() => {

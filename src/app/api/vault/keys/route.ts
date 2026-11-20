@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const provider = body.provider as AIProvider;
     const apiKey = (body.apiKey || "").trim();
+    const endpoint = typeof body.endpoint === "string" ? body.endpoint.trim() : undefined;
+    const model = typeof body.model === "string" ? body.model.trim() : undefined;
 
     if (!provider || !apiKey) {
       return NextResponse.json(
@@ -32,19 +34,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (provider !== "gemini" && provider !== "openai" && provider !== "anthropic") {
+    const validProviders: AIProvider[] = [
+      "gemini",
+      "openai",
+      "anthropic",
+      "deepseek",
+      "openrouter",
+      "custom",
+    ];
+
+    if (!validProviders.includes(provider)) {
       return NextResponse.json(
         { success: false, message: `Unsupported provider: ${provider}` },
         { status: 400 }
       );
     }
 
-    await storeAIKey(provider, apiKey);
+    await storeAIKey(provider, apiKey, endpoint, model);
     const updated = await getAIKeysMetadata();
 
     return NextResponse.json({
       success: true,
-      message: `Successfully encrypted and saved ${provider.toUpperCase()} API key to Windows Registry Vault!`,
+      message: `Successfully encrypted and anchored ${provider.toUpperCase()} credentials in the Selene Vault!`,
       keys: updated,
     });
   } catch (err: unknown) {

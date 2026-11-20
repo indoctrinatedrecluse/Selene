@@ -12,14 +12,29 @@ const VAULT_REGISTRY_PATH = "HKCU\\Software\\Selene\\Vault";
 const ROOT_REGISTRY_PATH = "HKCU\\Software\\Selene";
 const VAULT_SALT_PEPPER = "selene_titan_moon_aes256_gcm_vault_pepper_2026_abhishek_mitra";
 
-export type AIProvider = "gemini" | "openai" | "anthropic";
+export type AIProvider =
+  | "gemini"
+  | "openai"
+  | "anthropic"
+  | "deepseek"
+  | "openrouter"
+  | "custom";
 
 export interface AIKeyMetadata {
   provider: AIProvider;
   name: string;
   configured: boolean;
   masked: string;
+  endpoint?: string;
+  model?: string;
+  description?: string;
   lastUpdated?: string;
+}
+
+export interface AIKeyConfig {
+  apiKey: string;
+  endpoint?: string;
+  model?: string;
 }
 
 /**
@@ -280,22 +295,79 @@ export async function deleteVaultRegistry(key: string): Promise<void> {
 // AI KEY VAULT METHODS
 // ==========================================
 
-const PROVIDER_KEY_MAP: Record<AIProvider, { regKey: string; name: string }> = {
-  gemini: { regKey: "GeminiApiKey", name: "Google Gemini API" },
-  openai: { regKey: "OpenAIApiKey", name: "OpenAI API" },
-  anthropic: { regKey: "AnthropicApiKey", name: "Anthropic Claude API" },
+const PROVIDER_KEY_MAP: Record<
+  AIProvider,
+  {
+    regKey: string;
+    name: string;
+    defaultEndpoint?: string;
+    defaultModel?: string;
+    description: string;
+  }
+> = {
+  gemini: {
+    regKey: "GeminiApiKey",
+    name: "Google Gemini",
+    defaultModel: "gemini-2.5-flash",
+    description: "Titan Pythia • Multimodal & ultra-fast reasoning",
+  },
+  openai: {
+    regKey: "OpenAIApiKey",
+    name: "OpenAI GPT-4o",
+    defaultModel: "gpt-4o",
+    description: "Olympian Scribe • Frontier multimodal intelligence",
+  },
+  anthropic: {
+    regKey: "AnthropicApiKey",
+    name: "Anthropic Claude",
+    defaultModel: "claude-3-5-sonnet-20241022",
+    description: "Athena Synthesizer • Architectural depth & code elegance",
+  },
+  deepseek: {
+    regKey: "DeepSeekApiKey",
+    name: "DeepSeek R1 / V3",
+    defaultEndpoint: "https://api.deepseek.com",
+    defaultModel: "deepseek-chat",
+    description: "Daedalus Reasoner • Deep mathematical & logic proofs",
+  },
+  openrouter: {
+    regKey: "OpenRouterApiKey",
+    name: "OpenRouter Nexus",
+    defaultEndpoint: "https://openrouter.ai/api/v1",
+    defaultModel: "google/gemini-2.5-flash",
+    description: "Unified Gateway • 200+ frontier & open-weights models",
+  },
+  custom: {
+    regKey: "CustomApiKey",
+    name: "Custom OpenAI-Compatible",
+    defaultEndpoint: "http://localhost:11434/v1",
+    defaultModel: "llama3",
+    description: "Local / Sovereign • Ollama, LM Studio, vLLM, or private mesh",
+  },
 };
 
 /**
- * Stores an AI provider API key, encrypted with AES-256-GCM in the Windows Registry.
+ * Stores an AI provider API key, encrypted with AES-256-GCM in the Windows Registry/Vault.
  */
-export async function storeAIKey(provider: AIProvider, plaintextKey: string): Promise<void> {
+export async function storeAIKey(
+  provider: AIProvider,
+  plaintextKey: string,
+  endpoint?: string,
+  model?: string
+): Promise<void> {
   const meta = PROVIDER_KEY_MAP[provider];
   if (!meta) throw new Error(`Unsupported AI provider: ${provider}`);
 
   const encrypted = await encryptSecret(plaintextKey.trim());
   await writeVaultRegistry(meta.regKey, encrypted);
   await writeVaultRegistry(`${meta.regKey}_Updated`, new Date().toISOString());
+
+  if (endpoint !== undefined) {
+    await writeVaultRegistry(`${meta.regKey}_Endpoint`, endpoint.trim());
+  }
+  if (model !== undefined) {
+    await writeVaultRegistry(`${meta.regKey}_Model`, model.trim());
+  }
 }
 
 /**
@@ -312,7 +384,27 @@ export async function retrieveAIKey(provider: AIProvider): Promise<string | null
 }
 
 /**
- * Removes an AI API key from the vault.
+ * Retrieves full configuration for an AI provider (decrypted key, custom endpoint, model).
+ */
+export async function retrieveAIKeyConfig(provider: AIProvider): Promise<AIKeyConfig | null> {
+  const meta = PROVIDER_KEY_MAP[provider];
+  if (!meta) return null;
+
+  const apiKey = await retrieveAIKey(provider);
+  if (!apiKey) return null;
+
+  const customEndpoint = await readVaultRegistry(`${meta.regKey}_Endpoint`);
+  const customModel = await readVaultRegistry(`${meta.regKey}_Model`);
+
+  return {
+    apiKey,
+    endpoint: customEndpoint || meta.defaultEndpoint,
+    model: customModel || meta.defaultModel,
+  };
+}
+
+/**
+ * Removes an AI API key and custom config from the vault.
  */
 export async function removeAIKey(provider: AIProvider): Promise<void> {
   const meta = PROVIDER_KEY_MAP[provider];
@@ -320,6 +412,8 @@ export async function removeAIKey(provider: AIProvider): Promise<void> {
 
   await deleteVaultRegistry(meta.regKey);
   await deleteVaultRegistry(`${meta.regKey}_Updated`);
+  await deleteVaultRegistry(`${meta.regKey}_Endpoint`);
+  await deleteVaultRegistry(`${meta.regKey}_Model`);
 }
 
 /**
@@ -327,12 +421,21 @@ export async function removeAIKey(provider: AIProvider): Promise<void> {
  */
 export async function getAIKeysMetadata(): Promise<AIKeyMetadata[]> {
   const results: AIKeyMetadata[] = [];
-  const providers: AIProvider[] = ["gemini", "openai", "anthropic"];
+  const providers: AIProvider[] = [
+    "gemini",
+    "openai",
+    "anthropic",
+    "deepseek",
+    "openrouter",
+    "custom",
+  ];
 
   for (const p of providers) {
     const meta = PROVIDER_KEY_MAP[p];
     const encrypted = await readVaultRegistry(meta.regKey);
     const updated = await readVaultRegistry(`${meta.regKey}_Updated`);
+    const customEndpoint = await readVaultRegistry(`${meta.regKey}_Endpoint`);
+    const customModel = await readVaultRegistry(`${meta.regKey}_Model`);
 
     let masked = "";
     let configured = false;
@@ -350,6 +453,9 @@ export async function getAIKeysMetadata(): Promise<AIKeyMetadata[]> {
       name: meta.name,
       configured,
       masked,
+      endpoint: customEndpoint || meta.defaultEndpoint,
+      model: customModel || meta.defaultModel,
+      description: meta.description,
       lastUpdated: updated || undefined,
     });
   }

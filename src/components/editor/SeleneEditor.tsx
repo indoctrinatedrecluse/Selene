@@ -334,6 +334,9 @@ export function SeleneEditor() {
   const docTitleRef = useRef(docTitle);
   const docSwitchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastLoadedContentRef = useRef<string>(activeDoc?.content || "");
+  const ghostTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const chronosTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
@@ -351,10 +354,6 @@ export function SeleneEditor() {
   useEffect(() => {
     docTitleRef.current = docTitle;
   }, [docTitle]);
-
-  const ghostTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const chronosTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced DB persistence
   const debounceDbSave = useCallback((id: string, title: string, content: string) => {

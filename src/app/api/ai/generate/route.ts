@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveAIKey } from "@/lib/security/secure-vault";
+import { generateText } from "ai";
+import { resolveOracleModel } from "@/lib/ai/delphic-oracle";
+import { AIProvider } from "@/lib/security/secure-vault";
 
 export interface AiGenerateRequest {
   prompt: string;
   category: "ui" | "diagram" | "math" | "freeform";
   stack?: string;
   diagramType?: string;
+  preferredProvider?: AIProvider;
+  modelOverride?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -23,75 +27,54 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Hook into Hardware-Bound Secure Vault for Gemini API key
-    let apiKey = await retrieveAIKey("gemini");
-    if (!apiKey) {
-      apiKey = process.env.GEMINI_API_KEY || null;
-    }
+    // 1. Hook into Hardware-Bound Secure Vault for multi-provider BYOK via Vercel AI SDK
+    const oracle = await resolveOracleModel({
+      preferredProvider: body.preferredProvider,
+      modelOverride: body.modelOverride,
+    });
 
-    // 2. If Gemini API key is configured in Vault, call Google Gemini API
-    if (apiKey) {
+    if (oracle) {
       let systemInstruction = "";
       if (category === "ui") {
-        systemInstruction = `You are the Selene AI Canvas Copilot. The user wants a modern, production-grade UI component in '${stack}'.
-Use Tailwind CSS classes with modern dark lunar aesthetics (slate-900, sky/cyan/emerald/amber accents, rounded-2xl, border border-slate-800, backdrop-blur).
-Respond ONLY with the raw code enclosed in markdown code fences \`\`\`${stack} ... \`\`\`. Do not include conversational text or explanations.`;
+        systemInstruction = `You are the Selene Delphic Oracle & UI Living Canvas Copilot. The user requests a production-grade UI component in '${stack}'.
+Use Tailwind CSS classes with modern dark lunar aesthetics (slate-900/950, sky/cyan/emerald/amber accents, rounded-2xl, border border-slate-800, backdrop-blur).
+Respond ONLY with the complete runnable code enclosed in markdown code fences \`\`\`${stack} ... \`\`\`. Do not include conversational greetings.`;
       } else if (category === "diagram") {
-        systemInstruction = `You are the Selene AI Canvas Copilot. The user wants a clean, beautiful Mermaid diagram of type '${diagramType}'.
+        systemInstruction = `You are the Selene Delphic Oracle. The user requests a clean, beautiful Mermaid diagram of type '${diagramType}'.
 Respond ONLY with the raw mermaid diagram enclosed in markdown code fences \`\`\`mermaid ... \`\`\`.
 Only use standard diagram types (flowchart TD, sequenceDiagram, classDiagram, erDiagram, stateDiagram-v2). Quote labels containing parentheses.`;
       } else if (category === "math") {
-        systemInstruction = `You are the Selene AI Canvas Copilot. The user wants a clean LaTeX / KaTeX formula.
+        systemInstruction = `You are the Selene Delphic Oracle. The user requests a clean LaTeX / KaTeX formula.
 Respond ONLY with the LaTeX formula enclosed in markdown code fences \`\`\`math ... \`\`\` or display math $$ ... $$.`;
       } else {
-        systemInstruction = `You are the Selene AI Canvas Copilot. Provide high quality technical markdown content. Respond directly without filler.`;
+        systemInstruction = `You are the Selene Delphic Oracle. Provide high quality, elegant technical markdown content. Respond directly without conversational fluff.`;
       }
 
-      const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
-      for (const model of models) {
-        try {
-          const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    role: "user",
-                    parts: [{ text: `${systemInstruction}\n\nUser Request: ${prompt}` }],
-                  },
-                ],
-                generationConfig: {
-                  temperature: 0.2,
-                  maxOutputTokens: 2048,
-                },
-              }),
-            }
-          );
+      try {
+        const { text } = await generateText({
+          model: oracle.model,
+          system: systemInstruction,
+          prompt: `User Request: ${prompt}`,
+          temperature: 0.2,
+        });
 
-          if (geminiRes.ok) {
-            const geminiData = await geminiRes.json();
-            const generatedText =
-              geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-            if (generatedText) {
-              return NextResponse.json({
-                success: true,
-                generatedContent: generatedText.trim(),
-                provider: `gemini-${model}`,
-                vaultSource: "Windows Registry AES-256-GCM Vault",
-              });
-            }
-          }
-        } catch (err) {
-          console.warn(`Gemini (${model}) generation API failed:`, err);
+        if (text && text.trim()) {
+          const generatedContent = text.trim();
+          return NextResponse.json({
+            success: true,
+            generatedContent,
+            content: generatedContent,
+            code: generatedContent,
+            provider: `${oracle.provider}-${oracle.modelId}`,
+            vaultSource: oracle.source === "vault" ? "Selene Hardware Vault" : "Environment Variable",
+          });
         }
+      } catch (err) {
+        console.warn(`Oracle generator (${oracle.provider}/${oracle.modelId}) error:`, err);
       }
     }
 
-    // 3. Fallback: Offline Smart Heuristic Template Generator
-    // This allows Selene to work seamlessly out of the box even before the user inputs their Gemini key!
+    // 2. Fallback: Offline Smart Heuristic Template Generator
     let fallbackCode = "";
 
     if (category === "diagram") {
@@ -244,8 +227,10 @@ export default function Component() {
     return NextResponse.json({
       success: true,
       generatedContent: fallbackCode,
+      content: fallbackCode,
+      code: fallbackCode,
       provider: "offline-heuristic",
-      note: apiKey ? undefined : "Tip: Save your Google Gemini API key in License & Vault settings to enable unrestricted live generative AI!",
+      note: "Tip: Save your API key in License & Vault settings to enable unrestricted live generative AI across DeepSeek, OpenRouter, Gemini, and OpenAI!",
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

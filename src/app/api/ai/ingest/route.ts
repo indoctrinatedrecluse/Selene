@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveAIKey } from "@/lib/security/secure-vault";
+import { generateText } from "ai";
+import { resolveOracleModel } from "@/lib/ai/delphic-oracle";
+import { AIProvider } from "@/lib/security/secure-vault";
 
 export interface AiIngestRequest {
   fileData: string; // Base64 data or raw text
   mimeType: string;
   documentName?: string;
+  preferredProvider?: AIProvider;
+  modelOverride?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -26,15 +30,14 @@ export async function POST(req: NextRequest) {
       fileData = fileData.split(",")[1];
     }
 
-    // 1. Vault Key Retrieval
-    let apiKey = await retrieveAIKey("gemini");
-    if (!apiKey) {
-      apiKey = process.env.GEMINI_API_KEY || null;
-    }
+    // 1. Resolve active AI model via Vercel AI SDK (with BYOK cascading)
+    const oracle = await resolveOracleModel({
+      preferredProvider: body.preferredProvider,
+      modelOverride: body.modelOverride,
+    });
 
-    // 2. Multimodal Gemini Vision Extraction
-    if (apiKey) {
-      const promptText = `You are Selene Paper-to-Canvas Multimodal Ingestion Engine.
+    if (oracle) {
+      const promptText = `You are the Hermes Alexandrian Papyrus & Multimodal Ingestion Engine of Selene.
 Transcribe and structure the uploaded document/image into hypermodern literate technical Markdown for the Selene Canvas.
 
 CRITICAL FORMATTING INSTRUCTIONS:
@@ -53,51 +56,38 @@ flowchart TD
 6. Output: Respond ONLY with the resulting Markdown content. No conversational intro or outro.`;
 
       try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
+        const imageBuffer = Buffer.from(fileData, "base64");
+        const { text } = await generateText({
+          model: oracle.model,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: promptText },
                 {
-                  role: "user",
-                  parts: [
-                    { text: promptText },
-                    {
-                      inlineData: {
-                        mimeType,
-                        data: fileData,
-                      },
-                    },
-                  ],
+                  type: "image",
+                  image: imageBuffer,
+                  mediaType: mimeType,
                 },
               ],
-              generationConfig: {
-                temperature: 0.2,
-                maxOutputTokens: 4096,
-              },
-            }),
-          }
-        );
+            },
+          ],
+          temperature: 0.2,
+        });
 
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          const markdown = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (markdown) {
-            return NextResponse.json({
-              success: true,
-              markdown,
-              source: "gemini",
-            });
-          }
+        if (text && text.trim()) {
+          return NextResponse.json({
+            success: true,
+            markdown: text.trim(),
+            source: `${oracle.provider}-${oracle.modelId}`,
+          });
         }
       } catch (err) {
-        console.warn("Gemini multimodal ingest failed, falling back to structured template:", err);
+        console.warn(`Hermes Ingestion (${oracle.provider}/${oracle.modelId}) error:`, err);
       }
     }
 
-    // 3. Fallback Structured Ingestion Scaffold
+    // 2. Fallback Structured Ingestion Scaffold
     const fallbackMarkdown = `# 📄 Ingested Document: ${docName}
 
 > [!NOTE]

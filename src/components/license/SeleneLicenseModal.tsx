@@ -21,6 +21,9 @@ import {
   Bot,
   Cpu,
   Save,
+  Globe,
+  Server,
+  Zap,
 } from "lucide-react";
 import { SeleneTitanLogo } from "@/components/brand/SeleneTitanLogo";
 import type { LicenseStatus, LicenseTier } from "@/lib/licensing/license-service";
@@ -59,9 +62,18 @@ export function SeleneLicenseModal({
   const [geminiInput, setGeminiInput] = useState("");
   const [openaiInput, setOpenaiInput] = useState("");
   const [anthropicInput, setAnthropicInput] = useState("");
+  const [deepseekInput, setDeepseekInput] = useState("");
+  const [openrouterInput, setOpenrouterInput] = useState("");
+  const [customInput, setCustomInput] = useState("");
+  const [customEndpointInput, setCustomEndpointInput] = useState("");
+  const [customModelInput, setCustomModelInput] = useState("");
+
   const [revealGemini, setRevealGemini] = useState(false);
   const [revealOpenai, setRevealOpenai] = useState(false);
   const [revealAnthropic, setRevealAnthropic] = useState(false);
+  const [revealDeepseek, setRevealDeepseek] = useState(false);
+  const [revealOpenrouter, setRevealOpenrouter] = useState(false);
+  const [revealCustom, setRevealCustom] = useState(false);
   const [savingProvider, setSavingProvider] = useState<string | null>(null);
 
   // Auto-detect tier prefix as user types
@@ -84,6 +96,11 @@ export function SeleneLicenseModal({
     setGeminiInput("");
     setOpenaiInput("");
     setAnthropicInput("");
+    setDeepseekInput("");
+    setOpenrouterInput("");
+    setCustomInput("");
+    setCustomEndpointInput("");
+    setCustomModelInput("");
     onClose();
   };
 
@@ -101,7 +118,12 @@ export function SeleneLicenseModal({
     }
   };
 
-  const handleSaveAiKey = async (provider: AIProvider, keyVal: string) => {
+  const handleSaveAiKey = async (
+    provider: AIProvider,
+    keyVal: string,
+    endpoint?: string,
+    model?: string
+  ) => {
     if (!keyVal.trim()) return;
     setSavingProvider(provider);
     setFeedback(null);
@@ -110,7 +132,12 @@ export function SeleneLicenseModal({
       const res = await apiFetch("/api/vault/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: keyVal.trim() }),
+        body: JSON.stringify({
+          provider,
+          apiKey: keyVal.trim(),
+          endpoint: endpoint?.trim() || undefined,
+          model: model?.trim() || undefined,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -119,6 +146,13 @@ export function SeleneLicenseModal({
         if (provider === "gemini") setGeminiInput("");
         if (provider === "openai") setOpenaiInput("");
         if (provider === "anthropic") setAnthropicInput("");
+        if (provider === "deepseek") setDeepseekInput("");
+        if (provider === "openrouter") setOpenrouterInput("");
+        if (provider === "custom") {
+          setCustomInput("");
+          setCustomEndpointInput("");
+          setCustomModelInput("");
+        }
       } else {
         setFeedback({ type: "error", message: data.message || "Failed to save key in vault." });
       }
@@ -264,8 +298,11 @@ export function SeleneLicenseModal({
 
   const isCurrentPaid = status && status.type !== "TRIAL";
   const geminiMeta = aiKeys.find((k) => k.provider === "gemini");
+  const deepseekMeta = aiKeys.find((k) => k.provider === "deepseek");
+  const openrouterMeta = aiKeys.find((k) => k.provider === "openrouter");
   const openaiMeta = aiKeys.find((k) => k.provider === "openai");
   const anthropicMeta = aiKeys.find((k) => k.provider === "anthropic");
+  const customMeta = aiKeys.find((k) => k.provider === "custom");
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
@@ -729,6 +766,216 @@ export function SeleneLicenseModal({
                       onClick={() => handleDeleteAiKey("anthropic")}
                       className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900 border border-rose-500/30 text-rose-300"
                       title="Delete Claude Key"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* DeepSeek R1 / V3 Provider Card */}
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-blue-400" />
+                    <div>
+                      <span className="text-xs font-semibold text-white">DeepSeek R1 / V3 (Daedalus)</span>
+                      <p className="text-[10px] text-slate-400">Endpoint: https://api.deepseek.com</p>
+                    </div>
+                  </div>
+                  {deepseekMeta?.configured ? (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-[10px]">
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span>{deepseekMeta.masked}</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-mono">Not Configured</span>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={revealDeepseek ? "text" : "password"}
+                      value={deepseekInput}
+                      onChange={(e) => setDeepseekInput(e.target.value)}
+                      placeholder={deepseekMeta?.configured ? "Enter new key to update..." : "sk-..."}
+                      className="w-full px-3 py-1.5 pr-8 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRevealDeepseek(!revealDeepseek)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      title={revealDeepseek ? "Hide key" : "Reveal key"}
+                    >
+                      {revealDeepseek ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveAiKey("deepseek", deepseekInput)}
+                    disabled={!deepseekInput.trim() || savingProvider === "deepseek"}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save</span>
+                  </button>
+                  {deepseekMeta?.configured && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAiKey("deepseek")}
+                      className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900 border border-rose-500/30 text-rose-300"
+                      title="Delete DeepSeek Key"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* OpenRouter Nexus Provider Card */}
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-cyan-400" />
+                    <div>
+                      <span className="text-xs font-semibold text-white">OpenRouter Nexus Gateway</span>
+                      <p className="text-[10px] text-slate-400">Endpoint: https://openrouter.ai/api/v1 (200+ models)</p>
+                    </div>
+                  </div>
+                  {openrouterMeta?.configured ? (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-[10px]">
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span>{openrouterMeta.masked}</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-mono">Not Configured</span>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={revealOpenrouter ? "text" : "password"}
+                      value={openrouterInput}
+                      onChange={(e) => setOpenrouterInput(e.target.value)}
+                      placeholder={openrouterMeta?.configured ? "Enter new key to update..." : "sk-or-v1-..."}
+                      className="w-full px-3 py-1.5 pr-8 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRevealOpenrouter(!revealOpenrouter)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      title={revealOpenrouter ? "Hide key" : "Reveal key"}
+                    >
+                      {revealOpenrouter ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveAiKey("openrouter", openrouterInput)}
+                    disabled={!openrouterInput.trim() || savingProvider === "openrouter"}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save</span>
+                  </button>
+                  {openrouterMeta?.configured && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAiKey("openrouter")}
+                      className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900 border border-rose-500/30 text-rose-300"
+                      title="Delete OpenRouter Key"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Custom OpenAI-Compatible / Sovereign Mesh Card */}
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Server className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <span className="text-xs font-semibold text-white">Custom OpenAI-Compatible / Local (Ollama/vLLM)</span>
+                      <p className="text-[10px] text-slate-400">BYOK: LM Studio, Ollama, vLLM, or private self-hosted endpoint</p>
+                    </div>
+                  </div>
+                  {customMeta?.configured ? (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-[10px]">
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span>{customMeta.masked}</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-mono">Not Configured</span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="text-[10px] text-slate-400 block mb-1">Base URL Endpoint</label>
+                    <input
+                      type="text"
+                      value={customEndpointInput}
+                      onChange={(e) => setCustomEndpointInput(e.target.value)}
+                      placeholder={customMeta?.endpoint || "http://localhost:11434/v1"}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-[11px] focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 block mb-1">Model Identifier</label>
+                    <input
+                      type="text"
+                      value={customModelInput}
+                      onChange={(e) => setCustomModelInput(e.target.value)}
+                      placeholder={customMeta?.model || "llama3"}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-[11px] focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={revealCustom ? "text" : "password"}
+                      value={customInput}
+                      onChange={(e) => setCustomInput(e.target.value)}
+                      placeholder={customMeta?.configured ? "Enter new API key to update..." : "API key (or leave empty if local)"}
+                      className="w-full px-3 py-1.5 pr-8 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRevealCustom(!revealCustom)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      title={revealCustom ? "Hide key" : "Reveal key"}
+                    >
+                      {revealCustom ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSaveAiKey(
+                        "custom",
+                        customInput || "local-bearer-token",
+                        customEndpointInput,
+                        customModelInput
+                      )
+                    }
+                    disabled={savingProvider === "custom"}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save</span>
+                  </button>
+                  {customMeta?.configured && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAiKey("custom")}
+                      className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900 border border-rose-500/30 text-rose-300"
+                      title="Delete Custom Config"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

@@ -246,11 +246,12 @@ export function MnemosyneKnowledgeGraphModal({
   }, [documents]);
 
   const [nodes, setNodes] = useState<MeshNode[]>(initialNodes);
+  const [prevInitialNodes, setPrevInitialNodes] = useState<MeshNode[]>(initialNodes);
 
-  // Keep state in sync with updated documents
-  useEffect(() => {
+  if (initialNodes !== prevInitialNodes) {
+    setPrevInitialNodes(initialNodes);
     setNodes(initialNodes);
-  }, [initialNodes]);
+  }
 
   // Force-directed celestial physics simulation
   useEffect(() => {

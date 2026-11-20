@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveAIKey } from "@/lib/security/secure-vault";
+import { generateObject } from "ai";
+import { resolveOracleModel } from "@/lib/ai/delphic-oracle";
+import { HephaestusAutoFixSchema } from "@/lib/ai/schemas";
+import { AIProvider } from "@/lib/security/secure-vault";
 
 export interface AiFixRequest {
   code: string;
   language: string;
   errorMessage: string;
   stackContext?: string;
+  preferredProvider?: AIProvider;
+  modelOverride?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -22,15 +27,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Vault Key Retrieval
-    let apiKey = await retrieveAIKey("gemini");
-    if (!apiKey) {
-      apiKey = process.env.GEMINI_API_KEY || null;
-    }
+    // 1. Resolve active AI model via Vercel AI SDK (with BYOK cascading)
+    const oracle = await resolveOracleModel({
+      preferredProvider: body.preferredProvider,
+      modelOverride: body.modelOverride,
+    });
 
-    // 2. Call Gemini API if available
-    if (apiKey) {
-      const promptInstruction = `You are the Selene Diagnostic & Auto-Fix Copilot. The user has an error in their ${language} code block.
+    if (oracle) {
+      const prompt = `You are the Hephaestus Divine Blacksmith & Code Auto-Fix Copilot of Selene. The user has encountered an error in their ${language} living canvas sandbox block.
+
 ERROR MESSAGE:
 "${errorMessage}"
 
@@ -39,55 +44,29 @@ ORIGINAL CODE:
 ${code}
 \`\`\`
 
-TASK:
-Diagnose the root cause of the error and output a valid JSON object strictly matching this schema:
-{
-  "explanation": "Clear, concise 1-2 sentence explanation of the bug and why the fix works.",
-  "fixedCode": "The exact full code snippet with the error corrected, ready to drop into the sandbox.",
-  "changesSummary": "Brief phrase describing what was changed (e.g., 'Imported React useState hook', 'Added precision qualifier')."
-}
+Diagnose the root cause of the error. Output the corrected, runnable code block, an explanation of the resolution, and a concise changes summary.`;
 
-Output ONLY valid JSON without markdown wrapping or commentary.`;
+      try {
+        const { object } = await generateObject({
+          model: oracle.model,
+          schema: HephaestusAutoFixSchema,
+          prompt,
+          temperature: 0.1,
+        });
 
-      const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
-      for (const model of models) {
-        try {
-          const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: promptInstruction }] }],
-                generationConfig: {
-                  temperature: 0.1,
-                  responseMimeType: "application/json",
-                },
-              }),
-            }
-          );
-
-          if (geminiRes.ok) {
-            const data = await geminiRes.json();
-            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (rawText) {
-              const parsed = JSON.parse(rawText);
-              return NextResponse.json({
-                success: true,
-                explanation: parsed.explanation,
-                fixedCode: parsed.fixedCode,
-                changesSummary: parsed.changesSummary,
-                source: `gemini-${model}`,
-              });
-            }
-          }
-        } catch (err) {
-          console.warn(`Gemini (${model}) fix API failed:`, err);
-        }
+        return NextResponse.json({
+          success: true,
+          explanation: object.explanation,
+          fixedCode: object.fixedCode,
+          changesSummary: object.changesSummary,
+          source: `${oracle.provider}-${oracle.modelId}`,
+        });
+      } catch (err) {
+        console.warn(`Hephaestus Auto-Fix (${oracle.provider}/${oracle.modelId}) error:`, err);
       }
     }
 
-    // 3. Fallback Heuristic Diagnostic Repair Engine
+    // 2. Fallback Heuristic Diagnostic Repair Engine
     const heuristicResult = generateHeuristicFix(code, language, errorMessage);
     return NextResponse.json({
       success: true,
@@ -137,7 +116,7 @@ function generateHeuristicFix(
   if (lang === "tsx" || lang === "jsx" || lang === "react") {
     let fixed = code;
     if (lowerErr.includes("usestate is not defined") || (!fixed.includes("useState") && fixed.includes("useState("))) {
-      if (!fixed.includes('import React')) {
+      if (!fixed.includes("import React")) {
         fixed = `import React, { useState } from "react";\n${fixed}`;
       } else {
         fixed = fixed.replace(/import React.*from "react";/, `import React, { useState } from "react";`);

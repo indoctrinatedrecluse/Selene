@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     agentUpgrade: "security",
-  } as any,
+  } as unknown as NextConfig["experimental"],
   async headers() {
     return [
       {

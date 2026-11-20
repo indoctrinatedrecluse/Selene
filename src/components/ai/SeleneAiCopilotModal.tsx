@@ -83,8 +83,10 @@ export function SeleneAiCopilotModal({
   const [stack, setStack] = useState("tsx");
   const [diagramType, setDiagramType] = useState("flowchart");
   const [prompt, setPrompt] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<string>("auto");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedOutput, setGeneratedOutput] = useState("");
+  const [generatedSource, setGeneratedSource] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [vaultKeyConfigured, setVaultKeyConfigured] = useState(false);
   const [noteMessage, setNoteMessage] = useState<string | null>(null);
@@ -96,8 +98,8 @@ export function SeleneAiCopilotModal({
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          const gemini = data.find((k) => k.provider === "gemini");
-          setVaultKeyConfigured(!!gemini?.configured);
+          const hasAny = data.some((k) => k.configured);
+          setVaultKeyConfigured(hasAny);
         }
       })
       .catch(() => setVaultKeyConfigured(false));
@@ -109,6 +111,7 @@ export function SeleneAiCopilotModal({
     if (!prompt.trim()) return;
     setIsGenerating(true);
     setNoteMessage(null);
+    setGeneratedSource(null);
 
     try {
       const res = await apiFetch("/api/ai/generate", {
@@ -119,12 +122,14 @@ export function SeleneAiCopilotModal({
           category,
           stack,
           diagramType,
+          preferredProvider: selectedProvider === "auto" ? undefined : selectedProvider,
         }),
       });
 
       const data = await res.json();
       if (data.success && data.generatedContent) {
         setGeneratedOutput(data.generatedContent);
+        if (data.provider) setGeneratedSource(data.provider);
         if (data.note) setNoteMessage(data.note);
       } else {
         setGeneratedOutput(`// Error: ${data.message || "Failed to generate"}`);
@@ -240,6 +245,24 @@ export function SeleneAiCopilotModal({
             <Zap className="w-3.5 h-3.5" />
             <span>Free-form Prompt</span>
           </button>
+
+          {/* Model / Engine Dropdown */}
+          <div className="flex items-center gap-1.5 ml-auto text-xs pb-1.5">
+            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">Engine:</span>
+            <select
+              value={selectedProvider}
+              onChange={(e) => setSelectedProvider(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs px-2 py-1 focus:outline-none focus:border-sky-500 font-mono cursor-pointer"
+            >
+              <option value="auto">Auto (Vault Priority)</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="deepseek">DeepSeek R1/V3</option>
+              <option value="openrouter">OpenRouter Nexus</option>
+              <option value="openai">OpenAI GPT-4o</option>
+              <option value="anthropic">Anthropic Claude</option>
+              <option value="custom">Custom / Local</option>
+            </select>
+          </div>
         </div>
 
         {/* Content & Inputs */}
@@ -338,10 +361,17 @@ export function SeleneAiCopilotModal({
           {generatedOutput && (
             <div className="space-y-2 pt-2 border-t border-slate-800">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span>Oracle Divination Inscription</span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-amber-400" />
+                    <span>Oracle Divination Inscription</span>
+                  </span>
+                  {generatedSource && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                      ⚡ {generatedSource}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"

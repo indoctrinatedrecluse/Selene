@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveAIKey } from "@/lib/security/secure-vault";
+import { generateText } from "ai";
+import { resolveOracleModel } from "@/lib/ai/delphic-oracle";
+import { AIProvider } from "@/lib/security/secure-vault";
 
 export interface AiCompleteRequest {
   contextBefore: string;
   contextAfter?: string;
   language?: string;
   mode?: "prose" | "code";
+  preferredProvider?: AIProvider;
+  modelOverride?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: AiCompleteRequest = await req.json();
-    const contextBefore = (body.contextBefore || "").slice(-2000); // Last 2000 characters
+    const contextBefore = (body.contextBefore || "").slice(-2000);
     const contextAfter = (body.contextAfter || "").slice(0, 500);
     const language = (body.language || "markdown").toLowerCase();
     const mode = body.mode || (language === "markdown" ? "prose" : "code");
@@ -20,74 +24,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, completion: "" });
     }
 
-    // 1. Vault Key Retrieval
-    let apiKey = await retrieveAIKey("gemini");
-    if (!apiKey) {
-      apiKey = process.env.GEMINI_API_KEY || null;
-    }
+    // 1. Resolve active AI model via Vercel AI SDK (with BYOK cascading)
+    const oracle = await resolveOracleModel({
+      preferredProvider: body.preferredProvider,
+      modelOverride: body.modelOverride,
+    });
 
-    // 2. Call Gemini API if key is available
-    if (apiKey) {
+    if (oracle) {
       const promptInstruction =
         mode === "code"
-          ? `You are Selene Inline Code Autocomplete. Provide the next 1 to 5 lines of code in ${language} that naturally continues the given code.
+          ? `You are Selene Inline Code Autocomplete (Athena Scribe). Provide the next 1 to 5 lines of code in ${language} that naturally continues the given code.
 RULES:
 1. Output ONLY the completion text that continues directly from the end of the context.
 2. DO NOT repeat the context before.
 3. DO NOT wrap your answer in markdown code fences (\`\`\`).
 4. DO NOT provide any conversational greeting or explanations.`
-          : `You are Selene Inline Ghostwriter. Provide the next 1 to 2 sentences that naturally and fluently continues the technical text.
+          : `You are Selene Inline Ghostwriter (Pythian Scribe). Provide the next 1 to 2 sentences that naturally and fluently continues the technical text.
 RULES:
 1. Output ONLY the continuation text that continues directly from the end of the context.
 2. DO NOT repeat the context.
 3. Match the technical, elegant tone of the author.
 4. DO NOT provide conversational chatter or quotes around your response.`;
 
-      const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
-      for (const model of models) {
-        try {
-          const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    role: "user",
-                    parts: [
-                      {
-                        text: `${promptInstruction}\n\n[CONTEXT BEFORE CURSOR]:\n${contextBefore}\n\n[CONTEXT AFTER CURSOR]:\n${contextAfter || ""}\n\n[COMPLETION]:`,
-                      },
-                    ],
-                  },
-                ],
-                generationConfig: {
-                  temperature: 0.2,
-                  maxOutputTokens: 120,
-                },
-              }),
-            }
-          );
+      const prompt = `${promptInstruction}\n\n[CONTEXT BEFORE CURSOR]:\n${contextBefore}\n\n[CONTEXT AFTER CURSOR]:\n${contextAfter || ""}\n\n[COMPLETION]:`;
 
-          if (geminiRes.ok) {
-            const data = await geminiRes.json();
-            let completion = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            // Strip any accidental markdown wrap
-            completion = completion.replace(/^```[a-z]*\n?/i, "").replace(/```$/, "").trimStart();
-            return NextResponse.json({
-              success: true,
-              completion,
-              source: `gemini-${model}`,
-            });
-          }
-        } catch (err) {
-          console.warn(`Gemini (${model}) API failed:`, err);
-        }
+      try {
+        const { text } = await generateText({
+          model: oracle.model,
+          prompt,
+          temperature: 0.2,
+        });
+
+        let completion = text || "";
+        // Strip any accidental markdown wrap
+        completion = completion.replace(/^```[a-z]*\n?/i, "").replace(/```$/, "").trimStart();
+
+        return NextResponse.json({
+          success: true,
+          completion,
+          source: `${oracle.provider}-${oracle.modelId}`,
+        });
+      } catch (err) {
+        console.warn(`Oracle model (${oracle.provider}/${oracle.modelId}) generation error:`, err);
       }
     }
 
-    // 3. High-Quality Offline Heuristic Autocompletion Engine
+    // 2. High-Quality Offline Heuristic Autocompletion Engine (Fallback)
     const completion = generateOfflineHeuristicCompletion(contextBefore, language, mode);
     return NextResponse.json({
       success: true,
@@ -120,7 +102,7 @@ function generateOfflineHeuristicCompletion(
       if (lastLine.includes("return (")) {
         return `\n    <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-white shadow-xl">\n      <h2 className="text-lg font-bold">Component Preview</h2>\n    </div>\n  );`;
       }
-      if (lastLine.includes("function ") || lastLine.includes("const ") && lastLine.includes("=> {")) {
+      if (lastLine.includes("function ") || (lastLine.includes("const ") && lastLine.includes("=> {"))) {
         return `\n  const [active, setActive] = React.useState(true);\n  return <div className="p-4">{/* Render UI */}</div>;\n}`;
       }
       if (lastLine.endsWith("{")) {

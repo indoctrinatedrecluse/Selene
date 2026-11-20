@@ -291,17 +291,12 @@ export function ApollosLyreAudioModal({
     };
   }, [isOpen]);
 
-  // Cleanup and stop all audio playback immediately when modal closes or unmounts
+  // Cleanup and stop all audio playback nodes when modal closes
   useEffect(() => {
     if (!isOpen) {
       if (sonifyTimeoutRef.current) {
         clearTimeout(sonifyTimeoutRef.current);
         sonifyTimeoutRef.current = null;
-      }
-      setIsSonifying(false);
-
-      if (isPlayingDrone) {
-        setIsPlayingDrone(false);
       }
 
       if (droneGainRef.current && audioCtxRef.current) {
@@ -340,7 +335,7 @@ export function ApollosLyreAudioModal({
         }
       }
     }
-  }, [isOpen, isPlayingDrone]);
+  }, [isOpen]);
 
   // General unmount cleanup
   useEffect(() => {
