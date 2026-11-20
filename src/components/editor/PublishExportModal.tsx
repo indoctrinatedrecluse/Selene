@@ -30,6 +30,7 @@ import { exportMarkdownToSsg, SsgTarget } from "@/lib/ssg-export";
 import { exportStandaloneSlideDeck } from "@/lib/slide-deck-export";
 import { generateHtmlEmbedCode, generateReactEmbedCode } from "@/lib/embed-generator";
 import { generateQrCodeSvg } from "@/lib/qr-code";
+import { apiFetch } from "@/lib/api-client";
 
 interface PublishExportModalProps {
   isOpen: boolean;
@@ -157,7 +158,7 @@ export function PublishExportModal({
     try {
       setShareError(null);
       setIsPublishingShare(true);
-      const res = await fetch("/api/share", {
+      const res = await apiFetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

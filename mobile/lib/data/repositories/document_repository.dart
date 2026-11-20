@@ -192,6 +192,39 @@ class DocumentRepository extends ChangeNotifier {
     await _persistToDisk();
   }
 
+  /// Bidirectional cloud sync with the Selene Cloud Vault
+  Future<bool> syncWithCloud() async {
+    try {
+      final remoteDocs = await apiClient.fetchRemoteDocuments();
+      if (remoteDocs.isNotEmpty) {
+        for (final remote in remoteDocs) {
+          final idx = _documents.indexWhere((d) => d.id == remote.id);
+          if (idx != -1) {
+            if (remote.updatedAt.isAfter(_documents[idx].updatedAt)) {
+              _documents[idx] = remote;
+            }
+          } else {
+            _documents.add(remote);
+          }
+        }
+        await _persistToDisk();
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Cloud sync error: $e');
+      return false;
+    }
+  }
+
+  /// Pushes the currently active document to the Cloud Vault
+  Future<bool> pushActiveDocumentToCloud() async {
+    final doc = activeDocument;
+    if (doc == null) return false;
+    return await apiClient.pushDocumentToCloud(doc);
+  }
+
   Future<void> _persistToDisk() async {
     try {
       final prefs = await SharedPreferences.getInstance();

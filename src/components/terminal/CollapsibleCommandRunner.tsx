@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { apiFetch } from "@/lib/api-client";
 import {
   Terminal as TerminalIcon,
   Play,
@@ -97,7 +98,7 @@ export function CollapsibleCommandRunner({
       // Dispatch to the backend terminal execution bridge
       let executed = false;
       try {
-        const res = await fetch("/api/terminal/exec", {
+        const res = await apiFetch("/api/terminal/exec", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ command: cleanCmd }),

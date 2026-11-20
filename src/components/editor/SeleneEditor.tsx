@@ -469,7 +469,7 @@ export function SeleneEditor() {
               const textBefore = editor.state.doc.textBetween(Math.max(0, from - 800), from, "\n");
               if (!textBefore || textBefore.trim().length < 8) return;
 
-              const res = await fetch("/api/ai/complete", {
+              const res = await apiFetch("/api/ai/complete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

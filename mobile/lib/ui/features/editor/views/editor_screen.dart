@@ -857,6 +857,22 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                     ),
                   ),
                   IconButton(
+                    icon: const Icon(Icons.cloud_sync_outlined, color: SeleneTheme.goldAccent, size: 21),
+                    tooltip: 'Sync Cloud Vault',
+                    onPressed: () async {
+                      _flushActiveDocument();
+                      final success = await repo.syncWithCloud();
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(success ? '✨ Cloud Vault Synchronized!' : '☁️ Cloud Vault connected & up to date'),
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.note_add_outlined, color: SeleneTheme.lunarCyan, size: 22),
                     tooltip: 'New Scroll',
                     onPressed: () {

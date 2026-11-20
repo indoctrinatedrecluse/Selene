@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/api-client";
 import {
   Sparkles,
   X,
@@ -91,7 +92,7 @@ export function SeleneAiCopilotModal({
   // Check vault status on open
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/vault/keys")
+    apiFetch("/api/vault/keys")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -110,7 +111,7 @@ export function SeleneAiCopilotModal({
     setNoteMessage(null);
 
     try {
-      const res = await fetch("/api/ai/generate", {
+      const res = await apiFetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

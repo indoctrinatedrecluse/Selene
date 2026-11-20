@@ -179,4 +179,63 @@ class SeleneApiClient {
       return null;
     }
   }
+
+  /// Fetches all active documents from the cloud vault
+  Future<List<DocumentModel>> fetchRemoteDocuments() async {
+    try {
+      final path = '/api/documents';
+      final uri = Uri.parse('$baseUrl$path');
+      final headers = _generateAttestationHeaders(path, method: 'GET');
+      final res = await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final List data = json.decode(res.body);
+        return data.map((item) {
+          final map = item as Map<String, dynamic>;
+          final createdMs = map['createdAt'] is int ? map['createdAt'] as int : 0;
+          final updatedMs = map['updatedAt'] is int ? map['updatedAt'] as int : 0;
+          return DocumentModel(
+            id: map['id']?.toString() ?? '',
+            title: map['title']?.toString() ?? 'Untitled Document',
+            content: (map['contentMarkdown'] ?? map['content'] ?? '').toString(),
+            createdAt: createdMs > 0 ? DateTime.fromMillisecondsSinceEpoch(createdMs) : DateTime.now(),
+            updatedAt: updatedMs > 0 ? DateTime.fromMillisecondsSinceEpoch(updatedMs) : DateTime.now(),
+            tags: [if (map['folder'] != null) map['folder'].toString() else 'documents'],
+          );
+        }).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Pushes a document update or new document to the cloud vault
+  Future<bool> pushDocumentToCloud(DocumentModel doc) async {
+    try {
+      final path = '/api/documents/${doc.id}';
+      final uri = Uri.parse('$baseUrl$path');
+      final headers = _generateAttestationHeaders(path, method: 'PUT');
+      final body = json.encode({
+        'id': doc.id,
+        'title': doc.title,
+        'contentMarkdown': doc.content,
+        'folder': doc.tags.isNotEmpty ? doc.tags.first : 'documents',
+      });
+      final res = await http.put(uri, headers: headers, body: body).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return true;
+      }
+      // If document does not exist remotely yet, create it via POST
+      if (res.statusCode == 404) {
+        final createPath = '/api/documents';
+        final createUri = Uri.parse('$baseUrl$createPath');
+        final createHeaders = _generateAttestationHeaders(createPath, method: 'POST');
+        final createRes = await http.post(createUri, headers: createHeaders, body: body).timeout(const Duration(seconds: 10));
+        return createRes.statusCode == 200 || createRes.statusCode == 201;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
 }

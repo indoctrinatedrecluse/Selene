@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Sparkles, Check, AlertTriangle, ArrowRight, RefreshCw, X } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 interface SandboxAutoFixLensProps {
   code: string;
@@ -32,7 +33,7 @@ export function SandboxAutoFixLens({
   const handleRequestFix = async () => {
     setIsFixing(true);
     try {
-      const res = await fetch("/api/ai/fix", {
+      const res = await apiFetch("/api/ai/fix", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

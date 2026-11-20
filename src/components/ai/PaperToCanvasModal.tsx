@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { apiFetch } from "@/lib/api-client";
 import {
   X,
   Upload,
@@ -107,7 +108,7 @@ export function PaperToCanvasModal({
     }, 900);
 
     try {
-      const res = await fetch("/api/ai/ingest", {
+      const res = await apiFetch("/api/ai/ingest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

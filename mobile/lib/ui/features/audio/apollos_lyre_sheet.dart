@@ -99,7 +99,14 @@ class _ApollosLyreSheetState extends State<ApollosLyreSheet>
       _activeStringIndex = index;
     });
 
-    HapticFeedback.lightImpact();
+    // Frequency-graded harmonic haptic feedback
+    if (index <= 1) {
+      HapticFeedback.heavyImpact();
+    } else if (index <= 4) {
+      HapticFeedback.mediumImpact();
+    } else {
+      HapticFeedback.lightImpact();
+    }
     SystemSound.play(SystemSoundType.click);
 
     Future.delayed(const Duration(milliseconds: 350), () {

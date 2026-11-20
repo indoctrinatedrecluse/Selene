@@ -3,6 +3,14 @@
   "identifier": "default",
   "description": "Default capability for the Selene desktop window",
   "windows": ["main"],
+  "remote": {
+    "urls": [
+      "https://selene-h5zdysrkqa-uc.a.run.app",
+      "https://selene-h5zdysrkqa-uc.a.run.app/*",
+      "http://localhost:*",
+      "http://localhost:*/*"
+    ]
+  },
   "permissions": [
     "core:default",
     "shell:default",
