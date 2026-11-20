@@ -1,4 +1,4 @@
-`# 📐 Selene Multi-Document Dual View & Whiteboard Annotation Suite
+# 📐 Selene Multi-Document Dual View & Whiteboard Annotation Suite
 
 Welcome to the **Ergonomic Workspace Suite** in Selene Titan Edition. This specification details how engineering teams harness multi-document split-screen dual view and persistent whiteboard sketching overlays to compare RFC architectures while simultaneously writing implementation code.
 
@@ -12,7 +12,7 @@ Welcome to the **Ergonomic Workspace Suite** in Selene Titan Edition. This speci
 
 Selene's split-screen architecture isolates rendering contexts while synchronizing scroll telemetry between documents:
 
-\`\`\`mermaid
+```mermaid
 flowchart LR
     subgraph Primary["Primary Editor Pane"]
         DocA["Active Specification (Doc A)"]
@@ -32,7 +32,7 @@ flowchart LR
     TipTap <--> ScrollBus
     ScrollBus <--> Renderer
     Renderer --> DocB
-\`\`\`
+```
 
 ### Dual-View Capabilities:
 1. **Vertical (Side-by-Side) & Horizontal (Stacked) Layouts**: Toggle layout orientation instantly with the split icon in the secondary pane header.
@@ -65,7 +65,7 @@ Selene includes a zero-latency drawing canvas overlay accessible at any time via
 
 Below is a declarative chart demonstrating team velocity improvements measured across 100 enterprise engineering sprints when using Dual-View specification referencing:
 
-\`\`\`chart
+```chart
 {
   "type": "bar",
   "title": "Engineering Velocity With Dual-View Referencing",
@@ -80,7 +80,7 @@ Below is a declarative chart demonstrating team velocity improvements measured a
   "colors": ["#f43f5e", "#38bdf8"],
   "stacked": false
 }
-\`\`\`
+```
 
 ---
 
@@ -93,4 +93,3 @@ Below is a declarative chart demonstrating team velocity improvements measured a
 | **Undo Markup** | <kbd>Ctrl+Z</kbd> | Undo last whiteboard stroke or shape |
 | **Redo Markup** | <kbd>Ctrl+Y</kbd> | Redo undone whiteboard stroke |
 | **Exit Whiteboard** | <kbd>Esc</kbd> | Dismiss whiteboard overlay and return to editor |
-`,

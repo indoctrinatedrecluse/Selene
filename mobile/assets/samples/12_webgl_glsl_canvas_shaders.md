@@ -1,11 +1,11 @@
-`# 🌌 WebGL Canvas Shader Engine Showcase
+# 🌌 WebGL Canvas Shader Engine Showcase
 
 Selene brings native, hardware-accelerated **WebGL & GLSL Canvas Shaders** directly into your technical markdown canvas! Render mathematical animations, procedural noise, raymarched 3D geometries, and generative art in real time.
 
 > [!NOTE]
 > ⚡ **Shader Engine Features**:
-> 1. **Hardware Accelerated**: Full GPU rendering via WebGL2/WebGL1 context on HTML5 \`<canvas>\`.
-> 2. **Standard Shader Inputs**: Automatically provides \`u_time\` (elapsed seconds), \`u_resolution\` (viewport dimensions), and \`u_mouse\` (normalized cursor coordinates).
+> 1. **Hardware Accelerated**: Full GPU rendering via WebGL2/WebGL1 context on HTML5 `<canvas>`.
+> 2. **Standard Shader Inputs**: Automatically provides `u_time` (elapsed seconds), `u_resolution` (viewport dimensions), and `u_mouse` (normalized cursor coordinates).
 > 3. **Animation Controls**: Play, pause, reset time, and live FPS counter.
 
 ---
@@ -14,7 +14,7 @@ Selene brings native, hardware-accelerated **WebGL & GLSL Canvas Shaders** direc
 
 The block below runs a Fractional Brownian Motion (FBM) plasma shader producing celestial nebula clouds:
 
-\`\`\`glsl
+```glsl
 // Selene WebGL Fragment Shader • Cosmic Nebula
 #ifdef GL_ES
 precision highp float;
@@ -46,7 +46,7 @@ void main() {
 
     gl_FragColor = vec4(col, 1.0);
 }
-\`\`\`
+```
 
 ---
 
@@ -54,7 +54,7 @@ void main() {
 
 Render a 3D raymarched sphere with diffuse lighting, rim glow, and camera ray tracing:
 
-\`\`\`shader
+```shader
 // Selene WebGL Fragment Shader • Raymarched Sphere
 #ifdef GL_ES
 precision highp float;
@@ -97,5 +97,4 @@ void main() {
 
     gl_FragColor = vec4(col, 1.0);
 }
-\`\`\`
-`,
+```

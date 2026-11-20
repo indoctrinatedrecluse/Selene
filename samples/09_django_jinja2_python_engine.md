@@ -130,11 +130,3 @@ Selene also supports FastAPI, Flask, and Jinja2 templates:
   </div>
 </div>
 ```
-
----
-
-## 🛠️ How It Works Under The Hood
-
-- **Parser Engine**: Evaluates `{{ var }}`, filters (`|upper`, `|length`, `|lower`), `{% for x in list %}` iterations, and `{% if %}` blocks directly inside Selene's client-side sandbox.
-- **Visual Property Tweaking**: Toggle the **Tweak Props** button to visually alter padding, rounded corners, accent colors, and surface themes with live two-way code updates.
-- **Local Server Bridge**: Run `python manage.py runserver 8000` or `uvicorn main:app --port 8000` and switch the engine mode to **Django Server** for direct interaction with live backend code!

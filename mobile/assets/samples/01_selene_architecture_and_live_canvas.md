@@ -1,4 +1,4 @@
-`# 🌙 Selene Technical Specification & Live Canvas
+# 🌙 Selene Technical Specification & Live Canvas
 
 Welcome to **Selene** — the hypermodern technical document & code canvas where markdown prose seamlessly integrates with live code execution and vector graphics! ✨
 
@@ -12,7 +12,7 @@ Welcome to **Selene** — the hypermodern technical document & code canvas where
 
 Below is an interactive live React component. Click **Tweak Props** in the header above the sandbox to adjust theme colors, corner radiuses, and padding visually with no-code controls!
 
-\`\`\`tsx
+```tsx
 import React, { useState } from "react";
 
 export default function LiveInteractiveCard() {
@@ -44,7 +44,7 @@ export default function LiveInteractiveCard() {
     </div>
   );
 }
-\`\`\`
+```
 
 ---
 
@@ -52,7 +52,7 @@ export default function LiveInteractiveCard() {
 
 Text-based diagrams compile into responsive SVG graphics dynamically:
 
-\`\`\`mermaid
+```mermaid
 sequenceDiagram
     autonumber
     actor User as 👤 Developer
@@ -70,7 +70,7 @@ sequenceDiagram
     else LaTeX Formula
         Engine->>Canvas: Typeset KaTeX Equation
     end
-\`\`\`
+```
 
 ---
 
@@ -78,9 +78,9 @@ sequenceDiagram
 
 Equations typeset in sub-millisecond speeds:
 
-\`\`\`math
-\\mathcal{L}_{\\text{total}} = \\lambda_1 \\mathcal{L}_{\\text{fidelity}} + \\lambda_2 \\sum_{i=1}^N \\| \\hat{y}_i - y_i \\|^2 + \\mathbb{E}_{x \\sim p_{\\text{data}}}[\\log D(x)]
-\`\`\`
+```math
+\mathcal{L}_{\text{total}} = \lambda_1 \mathcal{L}_{\text{fidelity}} + \lambda_2 \sum_{i=1}^N \| \hat{y}_i - y_i \|^2 + \mathbb{E}_{x \sim p_{\text{data}}}[\log D(x)]
+```
 
 ---
 
@@ -88,7 +88,7 @@ Equations typeset in sub-millisecond speeds:
 
 Render vector line, bar, area, scatter, donut, and heatmap graphics directly using declarative specifications:
 
-\`\`\`chart
+```chart
 {
   "type": "area",
   "title": "Selene Distributed Inferences & Latency",
@@ -102,7 +102,7 @@ Render vector line, bar, area, scatter, donut, and heatmap graphics directly usi
     { "epoch": "E4", "throughput": 560, "efficiency": 230 }
   ]
 }
-\`\`\`
+```
 
 ---
 
@@ -110,7 +110,7 @@ Render vector line, bar, area, scatter, donut, and heatmap graphics directly usi
 
 Query thousands of rows locally with sub-10ms in-memory SIMD execution:
 
-\`\`\`duckdb
+```duckdb
 SELECT 
   region,
   COUNT(*) AS count,
@@ -118,5 +118,4 @@ SELECT
 FROM telemetry_logs
 GROUP BY region
 ORDER BY mean_latency ASC;
-\`\`\`
-`,
+```

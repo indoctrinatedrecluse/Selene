@@ -68,11 +68,3 @@ FROM crew_manifest c
 INNER JOIN celestial_missions m ON c.mission_id = m.id
 ORDER BY c.rank DESC, c.full_name ASC;
 ```
-
----
-
-## 🛠️ How It Works Under The Hood
-
-- **In-Memory LibSQL Engine**: Runs completely client-side with zero network calls and sub-millisecond execution.
-- **Relational Tables Pre-seeded**: Includes `celestial_missions`, `telemetry_nodes`, and `crew_manifest`.
-- **Export Ready**: Download query results as CSV for immediate analysis in Excel or Python.

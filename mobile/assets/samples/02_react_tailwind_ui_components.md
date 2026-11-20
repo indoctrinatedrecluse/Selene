@@ -1,10 +1,10 @@
-`# 🎨 React & Multi-Stack Web UI Playground
+# 🎨 React & Multi-Stack Web UI Playground
 
 Test multiple web framework stacks side-by-side with zero CSS leakage.
 
 ## 1. Metric Counter Card (React + Tailwind)
 
-\`\`\`tsx
+```tsx
 import React, { useState } from "react";
 
 export default function MetricCard() {
@@ -29,11 +29,11 @@ export default function MetricCard() {
     </div>
   );
 }
-\`\`\`
+```
 
 ## 2. Reactive SFC Card (Vue 3 + Scoped CSS)
 
-\`\`\`vue
+```vue
 <template>
   <div class="vue-card p-6 bg-slate-900 rounded-2xl border border-emerald-500/40 text-white shadow-2xl text-center max-w-sm mx-auto backdrop-blur-md">
     <div class="flex items-center justify-center gap-2.5 mb-3">
@@ -77,11 +77,11 @@ const count = ref(10);
   letter-spacing: 0.05em;
 }
 </style>
-\`\`\`
+```
 
 ## 3. Reactive Declarations (Svelte + Scoped CSS)
 
-\`\`\`svelte
+```svelte
 <script>
   let count = 15;
   $: doubled = count * 2;
@@ -123,25 +123,25 @@ const count = ref(10);
     letter-spacing: 0.05em;
   }
 </style>
-\`\`\`
+```
 
 ## 4. Gradient Banner (Vanilla HTML & Tailwind)
 
-\`\`\`html
+```html
 <div class="p-6 bg-gradient-to-r from-violet-600 via-indigo-600 to-sky-600 rounded-2xl text-white shadow-2xl text-center max-w-sm mx-auto">
   <h2 class="text-xl font-black">Zero-Leak Web Canvas</h2>
   <p class="text-sm opacity-90 mt-1">Tailwind utility classes render directly in isolated iframe contexts.</p>
 </div>
-\`\`\`
+```
 
 ## 5. Angular Component (Ivy + Scoped Encapsulation)
 
-\`\`\`angular
+```angular
 import { Component } from "@angular/core";
 
 @Component({
   selector: "app-root",
-  template: \`
+  template: `
     <div class="angular-card">
       <div class="header">
         <div class="badge">NG</div>
@@ -160,8 +160,8 @@ import { Component } from "@angular/core";
         <span class="encapsulation">Emulated Scoped CSS</span>
       </div>
     </div>
-  \`,
-  styles: [\`
+  `,
+  styles: [`
     .angular-card {
       background: #0f172a;
       border: 1px solid rgba(225, 29, 72, 0.4);
@@ -242,7 +242,7 @@ import { Component } from "@angular/core";
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-  \`]
+  `]
 })
 export class AppComponent {
   count = 7;
@@ -250,11 +250,11 @@ export class AppComponent {
     this.count++;
   }
 }
-\`\`\`
+```
 
 ## 6. Flutter Mobile Widget (CanvasKit / Skia WASM)
 
-\`\`\`flutter
+```flutter
 import 'package:flutter/material.dart';
 
 void main() => runApp(const SeleneFlutterApp());
@@ -364,7 +364,7 @@ class _CounterScreenState extends State<CounterScreen> {
               ElevatedButton.icon(
                 onPressed: _increment,
                 icon: const Icon(Icons.bolt, size: 18),
-                label: Text('Taps: \${_counter} (\${_counter * 10} pts)'),
+                label: Text('Taps: ${_counter} (${_counter * 10} pts)'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0284C7),
                   foregroundColor: Colors.white,
@@ -381,5 +381,4 @@ class _CounterScreenState extends State<CounterScreen> {
     );
   }
 }
-\`\`\`
-`,
+```

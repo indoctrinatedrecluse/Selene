@@ -1,19 +1,19 @@
-`# 🐹 Go Template & Hugo Engine Showcase
+# 🐹 Go Template & Hugo Engine Showcase
 
-Selene brings native, high-performance live rendering for **Go 1.23 \`html/template\`** and **Hugo Static Site** templates! This engine compiles Go template directives in-memory with instant feedback, complete with mock context extraction, scoped conditionals, range iterations, and **Tailwind CSS 3.4** integration.
+Selene brings native, high-performance live rendering for **Go 1.23 `html/template`** and **Hugo Static Site** templates! This engine compiles Go template directives in-memory with instant feedback, complete with mock context extraction, scoped conditionals, range iterations, and **Tailwind CSS 3.4** integration.
 
 > [!NOTE]
 > ⚡ **Dual Execution Runtime**:
-> 1. **In-Browser Go Template Engine**: Evaluates \`{{ .Property }}\`, \`{{ range .Collection }}\`, \`{{ if eq .Field "val" }}\`, pipeline functions (\`upper\`, \`len\`, \`lower\`), and embedded JSON context with 0ms latency.
-> 2. **Go HTTP Server Bridge**: Connect seamlessly to your local Go server (\`http.ListenAndServe(":8080", ...)\`) or Hugo dev server (\`hugo server -p 1313\`) via the engine switcher in the header!
+> 1. **In-Browser Go Template Engine**: Evaluates `{{ .Property }}`, `{{ range .Collection }}`, `{{ if eq .Field "val" }}`, pipeline functions (`upper`, `len`, `lower`), and embedded JSON context with 0ms latency.
+> 2. **Go HTTP Server Bridge**: Connect seamlessly to your local Go server (`http.ListenAndServe(":8080", ...)`) or Hugo dev server (`hugo server -p 1313`) via the engine switcher in the header!
 
 ---
 
-## ⚡ 1. Microservice Distributed Telemetry Dashboard (\`html/template\`)
+## ⚡ 1. Microservice Distributed Telemetry Dashboard (`html/template`)
 
 The block below demonstrates a Go template with embedded mock context, pipeline filters, service loop iteration, and visual property tweaking:
 
-\`\`\`go
+```go
 {{/* Context:
 {
   "Cluster": "Artemis-Golang-10",
@@ -96,15 +96,15 @@ The block below demonstrates a Go template with embedded mock context, pipeline 
     <span id="go-sync-msg" class="text-xs text-slate-400 font-mono">Standby</span>
   </div>
 </div>
-\`\`\`
+```
 
 ---
 
-## 🚀 2. Hugo Static Component / Content Widget (\`hugo\`)
+## 🚀 2. Hugo Static Component / Content Widget (`hugo`)
 
 Selene also supports Hugo site generators and shortcodes, parsing templates seamlessly:
 
-\`\`\`gotemplate
+```gotemplate
 {{/* Context:
 {
   "Title": "High-Throughput Go Pipelines",
@@ -131,5 +131,4 @@ Selene also supports Hugo site generators and shortcodes, parsing templates seam
     <span class="text-sky-400 font-mono">⭐ {{ .Stars }}</span>
   </div>
 </div>
-\`\`\`
-`,
+```

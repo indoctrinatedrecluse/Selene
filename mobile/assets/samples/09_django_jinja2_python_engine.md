@@ -1,19 +1,19 @@
-`# 🐍 Django & Jinja2 Template Engine Showcase
+# 🐍 Django & Jinja2 Template Engine Showcase
 
-Selene brings native, high-performance live rendering for **Python 3.12**, **Django Template Language (DTL)**, and **Jinja2**! This engine compiles Django & Jinja2 templates in-memory with instant feedback, complete with mock context extraction, filters (\`|upper\`, \`|length\`, \`|lower\`), tags (\`{% for %}\`, \`{% if %}\`), and **Tailwind CSS 3.4** integration.
+Selene brings native, high-performance live rendering for **Python 3.12**, **Django Template Language (DTL)**, and **Jinja2**! This engine compiles Django & Jinja2 templates in-memory with instant feedback, complete with mock context extraction, filters (`|upper`, `|length`, `|lower`), tags (`{% for %}`, `{% if %}`), and **Tailwind CSS 3.4** integration.
 
 > [!NOTE]
 > ⚡ **Dual Execution Runtime**:
-> 1. **In-Browser Jinja2 / DTL Engine**: Evaluates \`{{ var }}\`, \`{% for item in col %}\`, \`{% if cond %}\`, pipeline filters (\`|upper\`, \`|length\`), and embedded JSON context with 0ms latency.
-> 2. **Django / FastAPI Server Bridge**: Connect seamlessly to your local Django server (\`python manage.py runserver 8000\`) or FastAPI/Flask dev server (\`uvicorn app:app --port 8000\`) via the engine switcher in the block header!
+> 1. **In-Browser Jinja2 / DTL Engine**: Evaluates `{{ var }}`, `{% for item in col %}`, `{% if cond %}`, pipeline filters (`|upper`, `|length`), and embedded JSON context with 0ms latency.
+> 2. **Django / FastAPI Server Bridge**: Connect seamlessly to your local Django server (`python manage.py runserver 8000`) or FastAPI/Flask dev server (`uvicorn app:app --port 8000`) via the engine switcher in the block header!
 
 ---
 
-## ⚡ 1. Django ASGI Microservice Telemetry Card (\`django\`)
+## ⚡ 1. Django ASGI Microservice Telemetry Card (`django`)
 
 The block below demonstrates a Django template with embedded mock context, template filters, service loop iteration, and visual property tweaking:
 
-\`\`\`django
+```django
 {# Context:
 {
   "cluster": "Artemis-Django-11",
@@ -94,15 +94,15 @@ The block below demonstrates a Django template with embedded mock context, templ
     <span id="django-purge-msg" class="text-xs text-slate-400 font-mono">Idle</span>
   </div>
 </div>
-\`\`\`
+```
 
 ---
 
-## 🐍 2. Jinja2 / FastAPI Modern Card (\`jinja2\`)
+## 🐍 2. Jinja2 / FastAPI Modern Card (`jinja2`)
 
 Selene also supports FastAPI, Flask, and Jinja2 templates:
 
-\`\`\`jinja2
+```jinja2
 {# Context:
 {
   "title": "FastAPI High Performance Async Service",
@@ -129,5 +129,4 @@ Selene also supports FastAPI, Flask, and Jinja2 templates:
     <span class="text-emerald-400 font-mono">⭐ {{ stars }}</span>
   </div>
 </div>
-\`\`\`
-`,
+```

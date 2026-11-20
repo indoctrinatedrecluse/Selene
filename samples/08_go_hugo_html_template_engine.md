@@ -132,11 +132,3 @@ Selene also supports Hugo site generators and shortcodes, parsing templates seam
   </div>
 </div>
 ```
-
----
-
-## 🛠️ How It Works Under The Hood
-
-- **Parser Engine**: Parses `{{ .Field }}` variables, pipeline functions (`upper`, `lower`, `len`), `{{ range }}...{{ end }}` loops, and `{{ if }}...{{ else }}...{{ end }}` conditionals directly inside Selene's JavaScript engine.
-- **Visual Property Tweaking**: Toggle the **Tweak Props** button to visually alter padding, rounded corners, accent colors, and surface themes with real-time code synchronization.
-- **Local Server Bridge**: Run `go run main.go` on port `8080` and switch the engine mode to **Go Server** for full live integration with real Go backends!

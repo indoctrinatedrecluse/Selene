@@ -1,1 +1,179 @@
-"# ⚡ WaveDrom, D2 & WebAssembly Text (WAT) Systems Showcase\n\n> *Hardware timing analysis, cloud topology DAGs, and bare-metal WASM stack execution within Selene's unified document canvas.*\n\n---\n\n## 1. WaveDrom Digital Timing Waveforms\n\nWaveDrom renders high-precision digital clock cycles, bus transitions, and SPI/I2C protocol timing directly from declarative JSON specifications.\n\n```wavedrom\n{\n  \"signal\": [\n    { \"name\": \"CLK\",   \"wave\": \"p.......|...\" },\n    { \"name\": \"CS#\",   \"wave\": \"10......|..1\" },\n    { \"name\": \"MOSI\",  \"wave\": \"x3.4.5..|..x\", \"data\": [\"0x03\", \"ADDR_HI\", \"ADDR_LO\"] },\n    { \"name\": \"MISO\",  \"wave\": \"z...6.7.|.z.\", \"data\": [\"BYTE_0\", \"BYTE_1\"] },\n    { \"name\": \"READY\", \"wave\": \"0...1...|0..\" }\n  ],\n  \"head\": { \"text\": \"SPI Flash 4-Byte Burst Read Timing (Fast Read Mode)\" },\n  \"foot\": { \"text\": \"T0       T1       T2       T3       T4       T5       T6       T7\" }\n}\n```\n\n### Hardware Register Bitfield Map (`regview`)\nDocument memory-mapped I/O (MMIO) and peripheral registers with bit ranges and access permissions:\n\n```regview\n{\n  \"reg\": [\n    { \"name\": \"ENABLE\", \"bits\": 1, \"attr\": \"RW\" },\n    { \"name\": \"MODE\",   \"bits\": 3, \"attr\": \"RW\", \"type\": 2 },\n    { \"bits\": 4 },\n    { \"name\": \"STATUS\", \"bits\": 8, \"attr\": \"RO\", \"type\": 3 },\n    { \"name\": \"DIVIDER\",\"bits\": 16, \"attr\": \"RW\", \"type\": 5 }\n  ],\n  \"config\": { \"bits\": 32, \"name\": \"TIMER_CTRL_REG\" }\n}\n```\n\n---\n\n## 2. D2 Modern System Architecture Language\n\nD2 is a modern declarative language designed specifically for cloud topologies, microservice architectures, and system dataflow DAGs.\n\n```d2\ndirection: right\n\nclient: Client Tier {\n  web: Next.js Web App {\n    shape: circle\n  }\n  mobile: Flutter Mobile {\n    shape: circle\n  }\n}\n\ngateway: Selene API Gateway {\n  shape: hexagon\n  style.stroke: \"#38bdf8\"\n}\n\nservices: Microservices Core {\n  style.fill: \"#091224\"\n  \n  auth: Guardian Auth {\n    shape: package\n  }\n  engine: Computation Engine {\n    shape: cylinder\n  }\n  relay: Hermes Relay Hub {\n    shape: queue\n  }\n}\n\nstorage: Data Layer {\n  db: Primary PostgreSQL {\n    shape: cylinder\n  }\n  cache: Redis Cluster {\n    shape: cylinder\n  }\n}\n\nclient.web -> gateway: HTTPS GraphQL\nclient.mobile -> gateway: WebRTC CRDT\ngateway -> services.auth: Validate JWT\ngateway -> services.engine: Query Document\nservices.engine -> storage.cache: Cache Read (0.4ms)\nservices.engine -> storage.db: ACID Commit\nservices.engine -> services.relay: Broadcast Update\n```\n\n---\n\n## 3. WebAssembly Text Format (WAT) Stack Evaluator\n\nWebAssembly Text (`.wat`) compiles to binary bytecode and executes stack instructions with microsecond latency.\n\n```wat\n(module\n  ;; Pure WebAssembly Text: High-Performance Mathematical Invariants\n  (func $add (param $a i32) (param $b i32) (result i32)\n    local.get $a\n    local.get $b\n    i32.add\n  )\n\n  (func $hypot_squared (param $x i32) (param $y i32) (result i32)\n    local.get $x\n    local.get $x\n    i32.mul\n    local.get $y\n    local.get $y\n    i32.mul\n    i32.add\n  )\n\n  (func $fibonacci (param $n i32) (result i32)\n    (local $a i32)\n    (local $b i32)\n    (local $temp i32)\n    (local $i i32)\n\n    local.get $n\n    i32.const 2\n    i32.lt_s\n    if (result i32)\n      local.get $n\n      return\n    end\n\n    i32.const 0\n    local.set $a\n    i32.const 1\n    local.set $b\n    i32.const 2\n    local.set $i\n\n    block $break\n      loop $loop\n        local.get $i\n        local.get $n\n        i32.gt_s\n        br_if $break\n\n        local.get $a\n        local.get $b\n        i32.add\n        local.set $temp\n\n        local.get $b\n        local.set $a\n        local.get $temp\n        local.set $b\n\n        local.get $i\n        i32.const 1\n        i32.add\n        local.set $i\n        br $loop\n      end\n    end\n\n    local.get $b\n  )\n\n  (memory (export \"memory\") 1)\n  (export \"add\" (func $add))\n  (export \"hypot_squared\" (func $hypot_squared))\n  (export \"fibonacci\" (func $fibonacci))\n)\n```\n\n---\n\n*Compiled and rendered live via Selene's Phase 1 Multi-Language Engine.*\n",
+# ⚡ WaveDrom, D2 & WebAssembly Text (WAT) Systems Showcase
+
+> *Hardware timing analysis, cloud topology DAGs, and bare-metal WASM stack execution within Selene's unified document canvas.*
+
+---
+
+## 1. WaveDrom Digital Timing Waveforms
+
+WaveDrom renders high-precision digital clock cycles, bus transitions, and SPI/I2C protocol timing directly from declarative JSON specifications.
+
+```wavedrom
+{
+  "signal": [
+    { "name": "CLK",   "wave": "p.......|..." },
+    { "name": "CS#",   "wave": "10......|..1" },
+    { "name": "MOSI",  "wave": "x3.4.5..|..x", "data": ["0x03", "ADDR_HI", "ADDR_LO"] },
+    { "name": "MISO",  "wave": "z...6.7.|.z.", "data": ["BYTE_0", "BYTE_1"] },
+    { "name": "READY", "wave": "0...1...|0.." }
+  ],
+  "head": { "text": "SPI Flash 4-Byte Burst Read Timing (Fast Read Mode)" },
+  "foot": { "text": "T0       T1       T2       T3       T4       T5       T6       T7" }
+}
+```
+
+### Hardware Register Bitfield Map (`regview`)
+Document memory-mapped I/O (MMIO) and peripheral registers with bit ranges and access permissions:
+
+```regview
+{
+  "reg": [
+    { "name": "ENABLE", "bits": 1, "attr": "RW" },
+    { "name": "MODE",   "bits": 3, "attr": "RW", "type": 2 },
+    { "bits": 4 },
+    { "name": "STATUS", "bits": 8, "attr": "RO", "type": 3 },
+    { "name": "DIVIDER","bits": 16, "attr": "RW", "type": 5 }
+  ],
+  "config": { "bits": 32, "name": "TIMER_CTRL_REG" }
+}
+```
+
+---
+
+## 2. D2 Modern System Architecture Language
+
+D2 is a modern declarative language designed specifically for cloud topologies, microservice architectures, and system dataflow DAGs.
+
+```d2
+direction: right
+
+client: Client Tier {
+  web: Next.js Web App {
+    shape: circle
+  }
+  mobile: Flutter Mobile {
+    shape: circle
+  }
+}
+
+gateway: Selene API Gateway {
+  shape: hexagon
+  style.stroke: "#38bdf8"
+}
+
+services: Microservices Core {
+  style.fill: "#091224"
+  
+  auth: Guardian Auth {
+    shape: package
+  }
+  engine: Computation Engine {
+    shape: cylinder
+  }
+  relay: Hermes Relay Hub {
+    shape: queue
+  }
+}
+
+storage: Data Layer {
+  db: Primary PostgreSQL {
+    shape: cylinder
+  }
+  cache: Redis Cluster {
+    shape: cylinder
+  }
+}
+
+client.web -> gateway: HTTPS GraphQL
+client.mobile -> gateway: WebRTC CRDT
+gateway -> services.auth: Validate JWT
+gateway -> services.engine: Query Document
+services.engine -> storage.cache: Cache Read (0.4ms)
+services.engine -> storage.db: ACID Commit
+services.engine -> services.relay: Broadcast Update
+```
+
+---
+
+## 3. WebAssembly Text Format (WAT) Stack Evaluator
+
+WebAssembly Text (`.wat`) compiles to binary bytecode and executes stack instructions with microsecond latency.
+
+```wat
+(module
+  ;; Pure WebAssembly Text: High-Performance Mathematical Invariants
+  (func $add (param $a i32) (param $b i32) (result i32)
+    local.get $a
+    local.get $b
+    i32.add
+  )
+
+  (func $hypot_squared (param $x i32) (param $y i32) (result i32)
+    local.get $x
+    local.get $x
+    i32.mul
+    local.get $y
+    local.get $y
+    i32.mul
+    i32.add
+  )
+
+  (func $fibonacci (param $n i32) (result i32)
+    (local $a i32)
+    (local $b i32)
+    (local $temp i32)
+    (local $i i32)
+
+    local.get $n
+    i32.const 2
+    i32.lt_s
+    if (result i32)
+      local.get $n
+      return
+    end
+
+    i32.const 0
+    local.set $a
+    i32.const 1
+    local.set $b
+    i32.const 2
+    local.set $i
+
+    block $break
+      loop $loop
+        local.get $i
+        local.get $n
+        i32.gt_s
+        br_if $break
+
+        local.get $a
+        local.get $b
+        i32.add
+        local.set $temp
+
+        local.get $b
+        local.set $a
+        local.get $temp
+        local.set $b
+
+        local.get $i
+        i32.const 1
+        i32.add
+        local.set $i
+        br $loop
+      end
+    end
+
+    local.get $b
+  )
+
+  (memory (export "memory") 1)
+  (export "add" (func $add))
+  (export "hypot_squared" (func $hypot_squared))
+  (export "fibonacci" (func $fibonacci))
+)
+```
+
+---
+
+*Compiled and rendered live via Selene's Phase 1 Multi-Language Engine.*

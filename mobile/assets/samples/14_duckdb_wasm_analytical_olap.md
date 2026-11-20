@@ -1,4 +1,4 @@
-`# 🦆 DuckDB-WASM In-Browser Analytical OLAP Engine
+# 🦆 DuckDB-WASM In-Browser Analytical OLAP Engine
 
 Welcome to the **DuckDB-WASM Analytical OLAP Studio**! Selene brings true vectorized columnar SQL querying directly into your browser, allowing you to run aggregations, percentiles, and complex group-by analytical queries over multi-thousand row datasets in **single-digit milliseconds**.
 
@@ -15,7 +15,7 @@ Welcome to the **DuckDB-WASM Analytical OLAP Studio**! Selene brings true vector
 
 Run the query below to calculate mean latency, CPU utilization, and request volume grouped across global cloud regions:
 
-\`\`\`duckdb
+```duckdb
 -- In-Browser Analytical OLAP Query
 SELECT 
   region,
@@ -27,15 +27,15 @@ FROM telemetry_logs
 WHERE latency_ms > 25
 GROUP BY region
 ORDER BY mean_latency_ms ASC;
-\`\`\`
+```
 
 ---
 
 ## ⚡ 2. High-Frequency Fintech Volume-Weighted Analysis
 
-Switch the dataset to \`fintech_orders\` to analyze volume-weighted average price (VWAP) across major tickers:
+Switch the dataset to `fintech_orders` to analyze volume-weighted average price (VWAP) across major tickers:
 
-\`\`\`duckdb
+```duckdb
 SELECT 
   ticker,
   exchange,
@@ -48,5 +48,4 @@ WHERE volume > 200
 GROUP BY ticker, exchange
 ORDER BY total_shares DESC
 LIMIT 20;
-\`\`\`
-`,
+```

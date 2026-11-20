@@ -1,6 +1,6 @@
-`# 📊 Declarative Charting & Data Plotting Engine
+# 📊 Declarative Charting & Data Plotting Engine
 
-Selene introduces a native **Declarative Charting Engine** (\`chart\` / \`plot\`) allowing data scientists, engineers, and researchers to author interactive vector charts directly inside markdown canvases.
+Selene introduces a native **Declarative Charting Engine** (`chart` / `plot`) allowing data scientists, engineers, and researchers to author interactive vector charts directly inside markdown canvases.
 
 > [!NOTE]
 > 📈 **Declarative Vector Graphics**:
@@ -14,7 +14,7 @@ Selene introduces a native **Declarative Charting Engine** (\`chart\` / \`plot\`
 
 Below is a declarative line plot tracking inference throughput across global clusters:
 
-\`\`\`chart
+```chart
 {
   "type": "line",
   "title": "Global Neural Cluster Throughput",
@@ -31,13 +31,13 @@ Below is a declarative line plot tracking inference throughput across global clu
     { "month": "Jun", "us_east": 142, "eu_west": 105, "ap_southeast": 98 }
   ]
 }
-\`\`\`
+```
 
 ---
 
 ## ⚡ 2. Grouped Bar & Cost Efficiency Breakdown
 
-\`\`\`chart
+```chart
 {
   "type": "bar",
   "title": "Cloud Compute vs On-Premises Cost (USD/M Tokens)",
@@ -52,13 +52,13 @@ Below is a declarative line plot tracking inference throughput across global clu
     { "model": "Gemini-2.5", "cloud_gpu": 0.95, "local_fpga": 0.65, "optimized_npu": 0.38 }
   ]
 }
-\`\`\`
+```
 
 ---
 
 ## ⚡ 3. Donut Market Share Distribution
 
-\`\`\`chart
+```chart
 {
   "type": "donut",
   "title": "Global Model Ingestion Distribution",
@@ -73,5 +73,4 @@ Below is a declarative line plot tracking inference throughput across global clu
     { "modality": "Technical Code Docs", "volume_share": 12 }
   ]
 }
-\`\`\`
-`,
+```

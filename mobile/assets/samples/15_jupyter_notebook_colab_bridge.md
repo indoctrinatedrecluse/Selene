@@ -1,11 +1,11 @@
-`# 📓 Jupyter Notebook & Google Colab Bridge
+# 📓 Jupyter Notebook & Google Colab Bridge
 
-Selene features seamless bi-directional integration with **Jupyter Notebooks (\`.ipynb\`)**, **Google Colab**, and computational data science environments. Import raw notebook JSON, render live markdown equations and interactive Python cells, and export publication-ready notebooks with a single click!
+Selene features seamless bi-directional integration with **Jupyter Notebooks (`.ipynb`)**, **Google Colab**, and computational data science environments. Import raw notebook JSON, render live markdown equations and interactive Python cells, and export publication-ready notebooks with a single click!
 
 > [!NOTE]
 > ⚡ **Jupyter Bridge Capabilities**:
-> - **Bi-Directional Conversion**: Converts between \`.ipynb\` v4 notebook JSON and clean, human-readable Selene Markdown with code fences and output metadata.
-> - **Drag-and-Drop Ingestion**: Simply drag any \`.ipynb\` file from your desktop directly onto the Selene canvas or workspace sidebar.
+> - **Bi-Directional Conversion**: Converts between `.ipynb` v4 notebook JSON and clean, human-readable Selene Markdown with code fences and output metadata.
+> - **Drag-and-Drop Ingestion**: Simply drag any `.ipynb` file from your desktop directly onto the Selene canvas or workspace sidebar.
 > - **Zero Python Dependencies**: Parse, transform, and export notebook ASTs completely in-browser with zero server requirements.
 > - **Live Execution**: Run data science cells client-side via Pyodide or DuckDB-WASM, capturing cell outputs and inline plots.
 
@@ -15,7 +15,7 @@ Selene features seamless bi-directional integration with **Jupyter Notebooks (\`
 
 Execute the computational cell below to simulate a free-return lunar transfer orbit:
 
-\`\`\`python
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -27,7 +27,7 @@ velocity_vector = np.sqrt(earth_orbit**2 + lunar_orbit**2)
 
 print(f"Computed {len(t)} orbital trajectory waypoints.")
 print(f"Apogee velocity: {velocity_vector.max():.3f} km/s | Perigee: {velocity_vector.min():.3f} km/s")
-\`\`\`
+```
 
 ---
 
@@ -35,7 +35,7 @@ print(f"Apogee velocity: {velocity_vector.max():.3f} km/s | Perigee: {velocity_v
 
 Combine Python logic with vectorized DuckDB-WASM queries within the same computational notebook:
 
-\`\`\`duckdb
+```duckdb
 SELECT 
   region,
   COUNT(*) AS total_samples,
@@ -45,7 +45,7 @@ FROM telemetry_logs
 WHERE latency_ms > 20
 GROUP BY region
 ORDER BY mean_latency_ms ASC;
-\`\`\`
+```
 
 ---
 
@@ -53,7 +53,7 @@ ORDER BY mean_latency_ms ASC;
 
 Render publication-ready vector charts embedded directly within the notebook workflow:
 
-\`\`\`chart
+```chart
 {
   "type": "area",
   "title": "Orbital Telemetry Trajectory Stability",
@@ -69,14 +69,13 @@ Render publication-ready vector charts embedded directly within the notebook wor
     { "phase": "Polar Orbit", "snr_db": 47.3, "beacon_strength": 94.8 }
   ]
 }
-\`\`\`
+```
 
 ---
 
 ## 💾 4. 1-Click Colab / JupyterLab Export
 
-Export this document at any time as an \`.ipynb\` file using the **Export Notebook** option in the canvas toolbar. You can immediately open the resulting file in:
+Export this document at any time as an `.ipynb` file using the **Export Notebook** option in the canvas toolbar. You can immediately open the resulting file in:
 1. **Google Colab**: Open in Colab with GPU/TPU acceleration.
 2. **VS Code**: Native Jupyter notebook viewer with interactive variables.
 3. **JupyterLab / Classic Notebook**: Full Jupyter server compatibility.
-`,

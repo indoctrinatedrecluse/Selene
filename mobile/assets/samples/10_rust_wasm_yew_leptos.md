@@ -1,19 +1,19 @@
-`# 🦀 Rust WebAssembly (Yew & Leptos) Engine Showcase
+# 🦀 Rust WebAssembly (Yew & Leptos) Engine Showcase
 
-Selene brings native, high-performance live rendering for **Rust WebAssembly (\`wasm32-unknown-unknown\`)** components! This engine compiles and simulates Rust RSX macros (\`html! { ... }\` and \`view! { ... }\`), linear memory telemetry, and fine-grained reactive state inside an isolated sandbox with **Tailwind CSS 3.4**.
+Selene brings native, high-performance live rendering for **Rust WebAssembly (`wasm32-unknown-unknown`)** components! This engine compiles and simulates Rust RSX macros (`html! { ... }` and `view! { ... }`), linear memory telemetry, and fine-grained reactive state inside an isolated sandbox with **Tailwind CSS 3.4**.
 
 > [!NOTE]
 > ⚡ **Dual Execution Runtime**:
-> 1. **In-Browser WASM Engine**: Evaluates Rust RSX macros, hooks (\`use_state\`), signals (\`create_signal\`), and linear memory bounds with 0ms latency.
-> 2. **Trunk Server Bridge**: Connect directly to your local Trunk or Cargo development server (\`trunk serve -p 8080\`) using the engine switcher in the block header!
+> 1. **In-Browser WASM Engine**: Evaluates Rust RSX macros, hooks (`use_state`), signals (`create_signal`), and linear memory bounds with 0ms latency.
+> 2. **Trunk Server Bridge**: Connect directly to your local Trunk or Cargo development server (`trunk serve -p 8080`) using the engine switcher in the block header!
 
 ---
 
-## ⚡ 1. Rust Yew Microservice Telemetry Component (\`yew\`)
+## ⚡ 1. Rust Yew Microservice Telemetry Component (`yew`)
 
 Below is a live Rust Yew component featuring state hooks, thread-safe memory allocations, and visual property tweaking:
 
-\`\`\`rust
+```rust
 use yew::prelude::*;
 
 #[function_component(TelemetryApp)]
@@ -70,5 +70,4 @@ pub fn app() -> Html {
         </div>
     }
 }
-\`\`\`
-`,
+```

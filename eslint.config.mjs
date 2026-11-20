@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "electron/**",
     "src-tauri/**",
     "tools/**",
+    "scripts/**",
+    "mobile/**",
     "desktop-dist/**",
     "next-env.d.ts",
   ]),

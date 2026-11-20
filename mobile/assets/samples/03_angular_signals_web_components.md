@@ -1,10 +1,10 @@
-`# 🅰️ Angular Ivy & Signals Showcase
+# 🅰️ Angular Ivy & Signals Showcase
 
 Selene includes full first-class live rendering for **Angular** components running through an optimized Ivy in-memory compiler with real-time template compilation, emulated view encapsulation, dependency injection, and Tailwind utility class integration!
 
 > [!NOTE]
 > **Zero Configuration & In-Memory Ivy Compilation**:
-> Standard TypeScript code fences with language \`angular\` compile directly inside Selene's isolated Sandpack Ivy engine. You can also connect to a local Angular CLI project (\`ng serve\` on port \`4200\`) using the **Engine Switcher** at the top right.
+> Standard TypeScript code fences with language `angular` compile directly inside Selene's isolated Sandpack Ivy engine. You can also connect to a local Angular CLI project (`ng serve` on port `4200`) using the **Engine Switcher** at the top right.
 
 ---
 
@@ -12,12 +12,12 @@ Selene includes full first-class live rendering for **Angular** components runni
 
 This component demonstrates reactive state binding, dynamic calculations, badge state transitions, and component-scoped CSS:
 
-\`\`\`angular
+```angular
 import { Component } from "@angular/core";
 
 @Component({
   selector: "app-root",
-  template: \`
+  template: `
     <div class="mission-card">
       <div class="card-header">
         <div class="logo-badge">
@@ -65,8 +65,8 @@ import { Component } from "@angular/core";
         <span>Reactive Ivy Runtime</span>
       </div>
     </div>
-  \`,
-  styles: [\`
+  `,
+  styles: [`
     .mission-card {
       background: #090d16;
       border: 1px solid rgba(244, 63, 94, 0.35);
@@ -205,7 +205,7 @@ import { Component } from "@angular/core";
       color: #64748b;
       font-family: monospace;
     }
-  \`]
+  `]
 })
 export class AppComponent {
   velocity = 7.68;
@@ -226,14 +226,13 @@ export class AppComponent {
     }
   }
 }
-\`\`\`
+```
 
 ---
 
 ## 🔬 2. Angular CLI Dev Server Integration
 
 When working on a real Angular workspace:
-1. Run \`ng serve\` in your project directory (defaults to port \`4200\`).
+1. Run `ng serve` in your project directory (defaults to port `4200`).
 2. In Selene, switch the header **Engine Switcher** to **Project Server**.
-3. Selene maps any code files matching \`src/app/.../*.component.ts\` to the corresponding Angular route with instant live preview.
-`,
+3. Selene maps any code files matching `src/app/.../*.component.ts` to the corresponding Angular route with instant live preview.

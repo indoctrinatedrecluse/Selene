@@ -109,12 +109,117 @@ const OpenScadRenderer = dynamic(
   { ssr: false, loading: () => <RendererSkeleton name="OpenSCAD 3D CSG" /> }
 );
 
-const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static"];
+const LIVE_WEB_LANGUAGES = ["tsx", "jsx", "react", "vue", "svelte", "angular", "html", "static", "vanilla"];
+
+/**
+ * Auto-detect language when code block has no explicit language tag
+ */
+function detectLanguageFromCode(code: string): string {
+  const trimmed = code.trim();
+  if (trimmed.startsWith("(module") || trimmed.includes("(func $") || trimmed.includes("(param ") || trimmed.includes("(result i32")) {
+    return "wat";
+  }
+  if (trimmed.includes('"signal":') || trimmed.includes('"wave":')) {
+    return "wavedrom";
+  }
+  if (trimmed.includes('"reg":') && trimmed.includes('"bits":')) {
+    return "regview";
+  }
+  if (trimmed.startsWith("#set page") || trimmed.includes("#set text(") || trimmed.includes("#rect(")) {
+    return "typst";
+  }
+  if (trimmed.includes("difference()") || (trimmed.includes("cube([") && trimmed.includes("cylinder("))) {
+    return "openscad";
+  }
+  if (trimmed.includes("library(") || trimmed.includes("summary(model)") || trimmed.includes("lm(")) {
+    return "r";
+  }
+  if (trimmed.startsWith("sequenceDiagram") || trimmed.startsWith("graph ") || trimmed.startsWith("flowchart ") || trimmed.startsWith("classDiagram") || trimmed.startsWith("erDiagram")) {
+    return "mermaid";
+  }
+  if (trimmed.includes("\\mathcal") || trimmed.includes("\\sum_") || trimmed.includes("\\int_") || trimmed.includes("\\frac{") || trimmed.includes("\\oint_")) {
+    return "math";
+  }
+  if (trimmed.includes("precision mediump") || trimmed.includes("void mainImage(") || trimmed.includes("gl_FragColor")) {
+    return "glsl";
+  }
+  if (trimmed.includes("import SwiftUI") || (trimmed.includes(": View {") && trimmed.includes("var body: some View"))) {
+    return "swift";
+  }
+  if (trimmed.includes('~H"""') || (trimmed.includes("<%#") && trimmed.includes("phx-click="))) {
+    return "heex";
+  }
+  if (trimmed.includes("@Component(") || (trimmed.includes("signals()") && trimmed.includes("Component"))) {
+    return "angular";
+  }
+  if (trimmed.includes("StatelessWidget") || trimmed.includes("StatefulWidget") || trimmed.includes("import 'package:flutter")) {
+    return "flutter";
+  }
+  if (trimmed.includes("import React") || trimmed.includes("export default function") || (trimmed.includes("useState(") && trimmed.includes("return ("))) {
+    return "tsx";
+  }
+  if (trimmed.includes("<template>") || trimmed.includes("<script setup>") || trimmed.includes("createApp(")) {
+    return "vue";
+  }
+  if (trimmed.includes("$state(") || trimmed.includes("$derived(")) {
+    return "svelte";
+  }
+  if (trimmed.includes("@php") || trimmed.includes("@blade") || trimmed.includes("@extends") || trimmed.includes("@section")) {
+    return "blade";
+  }
+  if (trimmed.includes("<%= turbo_frame_tag") || (trimmed.includes("<%=") && trimmed.includes("<%#"))) {
+    return "erb";
+  }
+  if (trimmed.includes("{{ range") || (trimmed.includes("{{ .") && trimmed.includes("}}"))) {
+    return "go";
+  }
+  if (trimmed.includes("{% for") || trimmed.includes("{% if") || trimmed.includes("{% block")) {
+    return "django";
+  }
+  if (trimmed.includes("fn main()") || trimmed.includes("use yew::") || trimmed.includes("#[component]") || (trimmed.includes("struct ") && trimmed.includes("impl "))) {
+    return "rust";
+  }
+  if (trimmed.includes("read_parquet") || (trimmed.includes("duckdb") && trimmed.includes("SELECT"))) {
+    return "duckdb";
+  }
+  if (trimmed.includes("SELECT ") && trimmed.includes("FROM ")) {
+    return "sql";
+  }
+  if (trimmed.includes("def ") || trimmed.includes("import pandas") || trimmed.includes("import numpy") || trimmed.includes("plt.")) {
+    return "python";
+  }
+  if (trimmed.startsWith("curl ") || trimmed.includes("curl -X")) {
+    return "curl";
+  }
+  if (trimmed.startsWith("GET /") || trimmed.startsWith("POST /") || trimmed.includes("HTTP/1.1")) {
+    return "http";
+  }
+  if (trimmed.startsWith("query ") || trimmed.startsWith("mutation ") || (trimmed.includes("query") && trimmed.includes("{"))) {
+    return "graphql";
+  }
+  if (trimmed.includes("direction:") && (trimmed.includes("->") || trimmed.includes("style.fill"))) {
+    return "d2";
+  }
+  if (trimmed.includes('"xKey"') || (trimmed.includes('"type":') && (trimmed.includes('"bar"') || trimmed.includes('"line"') || trimmed.includes('"donut"')))) {
+    return "chart";
+  }
+  if (trimmed.startsWith("<!DOCTYPE html>") || (trimmed.includes("<div") && trimmed.includes("</div>"))) {
+    return "html";
+  }
+  if (trimmed.includes("export interface ") || trimmed.includes("export type ")) {
+    return "typescript";
+  }
+  return "plaintext";
+}
 
 export function LiveCodeBlockView(props: NodeViewProps) {
   const { node, updateAttributes, editor, getPos } = props;
-  const language = (node.attrs.language || "typescript").toLowerCase();
   const rawCode = node.textContent;
+  const rawLang = (node.attrs.language || "").toLowerCase().trim();
+  let language = rawLang.split(/[\s{]/)[0] || "";
+  if (!language || language === "plaintext") {
+    language = detectLanguageFromCode(rawCode);
+  }
 
   const [copied, setCopied] = useState(false);
   const [showLiveRender, setShowLiveRender] = useState(true);
@@ -130,8 +235,8 @@ export function LiveCodeBlockView(props: NodeViewProps) {
   const isSql = language === "sql" || language === "sqlite" || language === "libsql";
   const isShader = language === "glsl" || language === "wgsl" || language === "shader" || language === "cpp";
   const isMermaid = language === "mermaid";
-  const isMath = language === "math" || language === "latex";
-  const isChart = language === "chart" || language === "plot";
+  const isMath = language === "math" || language === "latex" || language === "katex";
+  const isChart = language === "chart" || language === "plot" || language === "vega" || language === "vegalite";
   const isDuckDb = language === "duckdb" || language === "olap" || language === "parquet";
   const isPhoenixLiveView = language === "heex" || language === "liveview" || language === "elixir" || language === "phoenix";
   const isSwiftUi = language === "swift" || language === "swiftui";
@@ -524,7 +629,7 @@ export function LiveCodeBlockView(props: NodeViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isRustWasm || isChart || isDuckDb || isSql || isShader || isPhoenixLiveView || isSwiftUi || isHermesRelay) && (
+          {(LIVE_WEB_LANGUAGES.includes(language) || isFlutter || isPython || isPhpLaravel || isRubyRails || isGoTemplate || isDjangoJinja || isRustWasm || isChart || isDuckDb || isSql || isShader || isPhoenixLiveView || isSwiftUi || isHermesRelay || isWaveDrom || isD2 || isWat || isTypst || isR || isOpenScad) && (
             <button
               onClick={() => setShowLiveRender(true)}
               className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"

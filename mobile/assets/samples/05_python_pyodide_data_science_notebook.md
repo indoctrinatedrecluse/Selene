@@ -1,9 +1,9 @@
-`# 🐍 In-Browser Data Science & Computational Notebooks
+# 🐍 In-Browser Data Science & Computational Notebooks
 
 Welcome to Selene's high-performance **WebAssembly Python Kernel**, powered by Pyodide v0.26! Execute Python, compute matrix algebra with **NumPy**, analyze telemetry with **Pandas**, and render publication-grade scientific figures with **Matplotlib** — 100% in-browser with zero backend servers or containers.
 
 > [!TIP]
-> ⚡ **Zero-Install Python**: Press **Run Cell** (or \`Ctrl+Enter\` inside the cell) to download the WASM binary and execute client-side. The kernel automatically parses \`import\` statements and loads required scientific libraries on-demand.
+> ⚡ **Zero-Install Python**: Press **Run Cell** (or `Ctrl+Enter` inside the cell) to download the WASM binary and execute client-side. The kernel automatically parses `import` statements and loads required scientific libraries on-demand.
 
 ---
 
@@ -11,7 +11,7 @@ Welcome to Selene's high-performance **WebAssembly Python Kernel**, powered by P
 
 Simulate a Trans-Lunar Injection (TLI) transfer orbit from Earth (*Gaia*) to the Moon (*Selene*) with Apollo/Artemis free-return orbital mechanics:
 
-\`\`\`python
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -45,7 +45,7 @@ plt.show()
 
 print("✓ Orbital mechanics computation completed with 500 integration steps.")
 print("✓ Target lunar insertion delta-V: 1,024 m/s (Nominal).")
-\`\`\`
+```
 
 ---
 
@@ -53,7 +53,7 @@ print("✓ Target lunar insertion delta-V: 1,024 m/s (Nominal).")
 
 High-speed vectorized statistical sampling directly in browser WebAssembly:
 
-\`\`\`python
+```python
 import numpy as np
 
 # Estimate Pi and Crater Impact Density using 200,000 Monte Carlo samples
@@ -73,7 +73,7 @@ print(f"Estimated Value of π : {pi_estimate:.6f}")
 print(f"True Value of π      : {np.pi:.6f}")
 print(f"Relative Error       : {error_pct:.4f}%")
 print(f"Crater Density Score : {np.sum(inside_circle):,} impacts within lunar disk")
-\`\`\`
+```
 
 ---
 
@@ -81,7 +81,7 @@ print(f"Crater Density Score : {np.sum(inside_circle):,} impacts within lunar di
 
 Real-time sensor telemetry processing with Pandas DataFrames and descriptive statistics:
 
-\`\`\`python
+```python
 import pandas as pd
 import numpy as np
 
@@ -94,3 +94,10 @@ telemetry = pd.DataFrame({
     "Radiation (mSv/h)": np.random.uniform(0.02, 0.05, 6).round(3),
     "Battery SoC (%)": [98, 95, 91, 88, 86, 82],
     "Rover Subsystem": ["Core", "Nav", "Drill", "Radio", "Camera", "Spectro"]
+}, index=timestamps)
+
+print("=== LUNAR ROVER ARTEMIS IV TELEMETRY LOG ===")
+print(telemetry.to_string())
+print("\nDescriptive Statistics Summary:")
+print(telemetry.describe().round(2).to_string())
+```

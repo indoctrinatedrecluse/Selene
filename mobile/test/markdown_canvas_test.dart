@@ -156,5 +156,61 @@ cube([40, 40, 40], center=true);
       expect(find.text('APOLLO WEBR / R 4.4'), findsOneWidget);
       expect(find.text('DAEDALUS 3D OPENSCAD CSG'), findsOneWidget);
     });
+
+    testWidgets('HTML and TypeScript engines render and auto-detection works', (tester) async {
+      tester.view.physicalSize = const Size(1000, 3000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      const markdown = '''
+# Polyglot Engines
+```html
+<div class="card"><h3>DOM Component</h3></div>
+```
+
+```typescript
+export interface LunarTelemetry {
+  sequence_id: number;
+  timestamp: string;
+}
+```
+
+```
+(module
+  (func \$add (param \$a i32) (param \$b i32) (result i32)
+    local.get \$a
+    local.get \$b
+    i32.add
+  )
+)
+```
+''';
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: MarkdownCanvas(content: markdown),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // HTML and TypeScript have Run Engine action
+      expect(find.text('HTML'), findsOneWidget);
+      expect(find.text('TYPESCRIPT'), findsOneWidget);
+
+      // Tap Run Engine on TypeScript block
+      await tester.tap(find.text('Run Engine').last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('TypeScript 5.8 AST & Type Diagnostic Suite'), findsOneWidget);
+
+      // Auto-detection recognized the untagged WAT block as WAT (a visual format)
+      expect(find.text('WAT'), findsOneWidget);
+      expect(find.text('WASM32 TEXT BYTECODE STACK RUNNER • 0.01ms'), findsOneWidget);
+    });
   });
 }

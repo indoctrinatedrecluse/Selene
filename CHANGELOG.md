@@ -61,6 +61,21 @@ This major milestone modernizes Selene's artificial intelligence architecture wi
   - **CI/CD Action Upgrade**: Upgraded `actions/setup-java@v4` to `actions/setup-java@v5` with Temurin JDK 21.
   - **Showcase Test Alignment**: Updated `sample_service_test.dart` to assert all 26 canonical showcase samples.
 
+#### 🎨 7. Canonical 26 Sample Showcases & Universal Engine Parity (PC & Mobile)
+- **Resolved Escaped Markdown Code Fence Corruptions**:
+  - Fixed an issue where samples 01 through 19 had escaped backticks (`\`\`\`` and `\``) and stray leading backticks, preventing markdown AST parsers from recognizing code blocks.
+  - Fixed an issue where samples 20 through 26 had unexpanded `\n` string escape sequences and surrounding string quotes on disk, restoring standard multi-line markdown formatting.
+- **Synchronized 26 Canonical Showcases Across PC & Mobile**:
+  - Unified both `samples/` (PC) and `mobile/assets/samples/` (Android) with all 26 canonical technical exhibits, cataloged in `README.md`.
+- **Top-Notch AST Recognition & Universal Fallback Pipeline**:
+  - Enhanced language extraction in both Next.js (`LiveCodeBlockView.tsx`) and Flutter (`_CodeBlockBuilder` in `markdown_canvas.dart`) with whitespace/curly-brace argument sanitization.
+  - Implemented heuristic language auto-detection from code content for untagged or plaintext fences across WAT, WaveDrom, RegView, Typst, OpenSCAD, R, Mermaid, KaTeX, GLSL, SwiftUI, Phoenix LiveView, Angular, Flutter, React, Vue, Svelte, Blade, ERB, Go, Django, Rust, DuckDB, SQL, Python, cURL, HTTP, GraphQL, D2, Chart, HTML, and TypeScript.
+- **New Mobile Engines for HTML & TypeScript**:
+  - Added `HTML5 & Tailwind Isolated DOM Sandbox` with live shadow DOM component preview, tag metrics, and CSS isolation.
+  - Added `TypeScript 5.8 AST & Type Diagnostic Suite` with interface extraction, property counters, type coverage badges, and strict soundness checks.
+- **Syntax Highlighting Grammar Mapping**:
+  - Implemented `_mapHighlightLanguage` in Flutter mobile to ensure polyglot languages (`heex`, `blade`, `erb`, `d2`, `wat`, `typst`, `openscad`, `chart`, `duckdb`) always map to a valid highlight.js grammar and never fail or render as unhighlighted text.
+
 ---
 
 ## [0.5.0] - 2026-10-26
