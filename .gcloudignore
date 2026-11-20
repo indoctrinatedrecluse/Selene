@@ -1,5 +1,6 @@
 # .gcloudignore for Selene Google Cloud Run deployment
 .gcloudignore
+.dockerignore
 .git
 .gitignore
 .github
@@ -8,10 +9,23 @@ node_modules/
 mobile/
 src-tauri/
 desktop-dist/
+dist-mobile/
 electron/
 data/
+tools/
+docs/
 *.log
 *.zip
+*.apk
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.deb
 .system_generated/
 tests/
 __tests__/
+*.md
+tsconfig.tsbuildinfo
+.idea/
+.vscode/
