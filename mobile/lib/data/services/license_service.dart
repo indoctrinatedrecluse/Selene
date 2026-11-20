@@ -464,7 +464,7 @@ class LicenseService extends ChangeNotifier {
         'hwid': hwid,
         'machine_name': 'Android Mobile',
         'platform': 'android-flutter',
-        'app_version': '0.5.0',
+        'app_version': '0.6.0',
       };
 
       if (tier != 'ADMIN') {

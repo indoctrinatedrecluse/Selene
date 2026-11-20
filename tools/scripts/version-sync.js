@@ -345,8 +345,11 @@ try {
 
     if (prev !== targetVersion) {
       readme = readme.replace(
-        /Release-v[0-9.]+\(Titan_Edition\)/g,
-        `Release-v${targetVersion}_(Titan_Edition)`
+        /Release-v[0-9._]+(?=\(Titan_Edition\))/g,
+        `Release-v${targetVersion}_`
+      ).replace(
+        /Release v[0-9.]+ —/g,
+        `Release v${targetVersion} —`
       ).replace(
         /git tag -a v[0-9.]+ -m/g,
         `git tag -a v${targetVersion} -m`

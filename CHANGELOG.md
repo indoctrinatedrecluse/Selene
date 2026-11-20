@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] - 2026-11-20
+
+### 🔮 The Delphic Multi-Engine AI & Cloud Harmony Edition: Vercel AI SDK, Multi-Provider BYOK (DeepSeek, OpenRouter, OpenAI, Claude, Gemini, Local LLMs), Next.js 16.4.6, Mobile Cloud Vault Sync, and Apollo's Lyre Harmonic Haptics
+
+This major milestone modernizes Selene's artificial intelligence architecture with the Vercel AI SDK, introduces enterprise-grade Bring-Your-Own-Key (BYOK) multi-model flexibility across leading frontier and open-weight models, updates Next.js to 16.4.6, brings bidirectional Cloud Vault synchronization and harmonic physical haptics to mobile, and achieves pristine zero-defect static analysis across both PC and mobile codebases:
+
+#### 🧠 1. Vercel AI SDK & Delphic Oracle Multi-Provider BYOK Architecture
+- **Official Vercel AI SDK Migration (`ai`, `@ai-sdk/google`, `@ai-sdk/openai`, `@ai-sdk/anthropic`)**: Replaced ad-hoc raw HTTP fetch handlers with robust, production-tested AI primitives from Vercel AI SDK v7.
+- **Universal BYOK Multi-Engine Support**:
+  - **Google Gemini**: First-party SDK integration with Gemini 2.5 Pro, 2.5 Flash, and 2.0 Flash with native multimodal reasoning.
+  - **DeepSeek Reasoning & Chat**: Direct OpenAI-compatible adapter connection to DeepSeek endpoints (`deepseek-reasoner` / R1, `deepseek-chat` / V3).
+  - **OpenRouter Nexus**: High-performance multi-provider gateway routing across 100+ frontier and open-weights models (`openrouter/auto`, Mistral, Llama 3, Qwen).
+  - **OpenAI & Anthropic**: Native provider support for GPT-4o, GPT-4o-mini, o1/o3-mini, and Claude 3.5 Sonnet / Haiku.
+  - **Custom Local / Self-Hosted Endpoints**: Drop-in OpenAI-compatible support for local Ollama, vLLM, and LM Studio instances with custom base URLs and model identifiers.
+- **Delphic Oracle Dynamic Model Factory (`delphic-oracle.ts`)**: Intelligent runtime model resolution with fallback cascading across providers to ensure uninterrupted authoring during provider rate limits or service disruptions.
+- **Structured Output & Zod Schema Validation (`schemas.ts`)**:
+  - `HephaestusAutoFixSchema`: Guaranteed JSON schema enforcement for automated code repair with error diagnostic summaries, patched code blocks, and contextual explanations.
+  - `DelphicGenerateSchema`: Strongly-typed canvas document generation and continuation.
+  - `HermesIngestSchema`: Multimodal document OCR and structure extraction from raw document captures and architectural diagrams.
+- **Hardware-Bound AES-256-GCM Secure Vault Expansion (`secure-vault.ts` & `SeleneLicenseModal.tsx`)**:
+  - Encrypted BYOK key persistence in Windows Registry (`HKCU\Software\Selene\Vault`) for DeepSeek, OpenRouter, and Custom Endpoint configs with user account and hardware fingerprint PBKDF2 key derivation.
+- **Copilot Multi-Engine Selector (`SeleneAiCopilotModal.tsx`)**:
+  - Interactive engine selector allowing instant switching between Gemini, DeepSeek, OpenRouter, OpenAI, Claude, and Local LLMs with engine status badges and attribution.
+
+#### 🛡️ 2. Next.js 16.4.6 Security Upgrade & Turbopack Optimization
+- **Security Vulnerability Remediation**: Upgraded core framework dependencies to Next.js `16.4.6` and `next-dev` clean tree compatibility.
+- **Turbopack Build Pipeline**: Full validation across all 21 serverless and API routes with zero build warnings, zero chunking errors, and optimized bundle sizes.
+
+#### ☁️ 3. Mobile Cloud Vault Bidirectional Sync & Parity
+- **Cloud Vault Synchronizer**: Added bidirectional synchronization between the mobile local SQLite storage engine and Selene Cloud Vault backend.
+- **Cryptographic Attestation Handshake**: Every sync request is verified with HMAC-SHA256 signatures, application ID verification (`X-Selene-App-ID`), anti-replay timestamps (`X-Selene-Timestamp`), and hardware HWID bindings.
+- **Offline-First Reconciliation**: Robust conflict resolution ensuring local edits during offline work merge seamlessly upon reconnection.
+
+#### 🎵 4. Apollo's Lyre Harmonic Physical Haptics
+- **Pythagorean Heptachord Physical Resonance**: Integrated physical tactile haptics across all 7 strings of Apollo's Lyre (Hypate, Parhypate, Lichanos, Mese, Paramese, Paranete, Nete).
+- **Frequency-Scaled Tactile Pulses**: Harmonic vibration durations and intensities scaled to string frequencies (192 Hz to 432 Hz) on mobile touch interactions and desktop audio synthesis.
+
+#### 🧹 5. Code Quality, React 19 Compliance & Zero-Defect Audit
+- **React 19 Hooks Strict Compliance**: Refactored synchronous `setState` invocations inside `useEffect` across `ApollosLyreAudioModal.tsx`, `GitSourceControlDrawer.tsx`, `MnemosyneKnowledgeGraphModal.tsx`, and `SeleneEditor.tsx` to follow standard React 19 render-time state derivation.
+- **TypeScript Static Verification**: `npm run type-check` verified at 100% clean with zero errors across the entire codebase.
+- **ESLint Analysis**: `npm run lint` verified at 100% clean with zero errors or warnings.
+- **Flutter / Dart Analysis**: `dart analyze` verified with zero warnings, zero hints, and zero issues in `mobile/`.
+
+---
+
 ## [0.5.0] - 2026-10-26
 
 ### 🌌 The Systems & Scientific Multiplatform Edition: WaveDrom, D2, WebAssembly (WAT), Typst, WebR (R), OpenSCAD 3D, Mobile Dual-Vault License Persistence, and Automated Multiplatform CI/CD

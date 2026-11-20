@@ -68,7 +68,7 @@ RED='\033[0;31m'
 GRAY='\033[0;90m'
 NC='\033[0m'
 
-APP_VERSION="0.5.0"
+APP_VERSION="0.6.0"
 if [ -f "${PROJECT_ROOT}/package.json" ]; then
     APP_VERSION=$(node -e "console.log(require('./package.json').version || '0.5.0')" 2>/dev/null || echo "0.5.0")
 fi

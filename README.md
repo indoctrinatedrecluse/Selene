@@ -3,7 +3,7 @@
 > **The Hypermodern Technical Document & Polyglot Code Canvas**  
 > *Where literate technical authoring meets 20 real-time execution sandboxes, peer-to-peer collaborative harmony, and the timeless elegance of Greek mythology.* 🚀✨
 
-[![Release](https://img.shields.io/badge/Release-v0.5.0_(Titan_Edition)-sky?style=for-the-badge&logo=rocket)](https://github.com/indoctrinatedrecluse/Selene/releases)
+[![Release](https://img.shields.io/badge/Release-v0.6.0_(Titan_Edition)-sky?style=for-the-badge&logo=rocket)](https://github.com/indoctrinatedrecluse/Selene/releases)
 [![Cloud Run Live](https://img.shields.io/badge/Google_Cloud_Run-Production_Live-4285F4?style=for-the-badge&logo=googlecloud)](https://selene-h5zdysrkqa-uc.a.run.app)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.x_(Turbopack)-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React 19](https://img.shields.io/badge/React-19.x-blue?style=for-the-badge&logo=react)](https://react.dev/)
@@ -386,11 +386,11 @@ git status
 # 2. Synchronize all version strings across the repository
 node tools/scripts/version-sync.js
 
-# 3. Create a semantic version tag (e.g., v0.5.0)
-git tag -a v0.5.0 -m "Release v0.5.0 — Pan-Hellenic Titan Edition"
+# 3. Create a semantic version tag (e.g., v0.6.0)
+git tag -a v0.6.0 -m "Release v0.6.0 — Pan-Hellenic Titan Edition"
 
 # 4. Push tag to GitHub
-git push origin v0.5.0
+git push origin v0.6.0
 ```
 
 GitHub Actions will automatically:
@@ -414,7 +414,7 @@ Selene features an industry-grade cryptographic licensing subsystem backed by **
   - 💻 **Developer Edition (`DEV-xxxx-xxxx-xxxx`)**: Elevated developer edition featuring neon badge styling and engine inspection tools.
   - 👑 **Titan Administrator (`ADM-xxxx-xxxx-xxxx`)**: Celestial gold badge status with master privileges, automatic HWID node-locking, and zero password prompt requirements.
 - **Device Node-Locking (HWID)**: Machine hardware fingerprints (MachineGuid + CPU architecture + host parameters) bind licenses securely to designated seats.
-- **Hardware-Bound AES-256-GCM Secure Vault**: License keys and AI credentials (**Google Gemini**, **OpenAI**, **Anthropic Claude**) are encrypted with authenticated AES-256-GCM using keys derived via PBKDF2 (100,000 rounds SHA-512) keyed to the machine's hardware fingerprint and Windows user account. Persists permanently in `HKCU\Software\Selene\Vault`.
+- **Hardware-Bound AES-256-GCM Secure Vault**: License keys and AI credentials (**Google Gemini**, **DeepSeek**, **OpenRouter**, **OpenAI**, **Anthropic Claude**, and custom local OpenAI-compatible endpoints) are encrypted with authenticated AES-256-GCM using keys derived via PBKDF2 (100,000 rounds SHA-512) keyed to the machine's hardware fingerprint and Windows user account. Persists permanently in `HKCU\Software\Selene\Vault`.
 - **License & Vault Manager**: Accessible directly from the top header or **Help -> Manage License & Device...** to manage keys, toggle digit masking, view seat duration, configure AI keys, or revert to trial.
 - **Client App Attestation & API Gatekeeper** (`src/middleware.ts`):
   - Every API request from the client app carries a cryptographic HMAC-SHA256 signature (`X-Selene-Signature`), application attestation ID (`X-Selene-App-ID`), anti-replay timestamp (`X-Selene-Timestamp`), HWID (`X-Selene-HWID`), and a cryptographically signed license attestation token (`X-Selene-License-Token`).

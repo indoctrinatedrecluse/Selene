@@ -1264,7 +1264,7 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Selene v0.5.0 • Titan Edition',
+                      'Selene v0.6.0 • Titan Edition',
                       style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
                     ),
                   ),
