@@ -17,6 +17,7 @@ import 'package:selene_mobile/ui/features/collaboration/orbit_link_sheet.dart';
 import 'package:selene_mobile/ui/features/export/hermes_courier_sheet.dart';
 import 'package:selene_mobile/ui/features/mesh/mnemosyne_mesh_sheet.dart';
 import 'package:selene_mobile/ui/features/oracle/athena_neural_copilot_sheet.dart';
+import 'package:selene_mobile/ui/features/updates/hermes_update_sheet.dart';
 import 'package:selene_mobile/ui/features/editor/widgets/keyboard_accessory_bar.dart';
 import 'package:selene_mobile/ui/features/editor/widgets/markdown_canvas.dart';
 
@@ -1248,31 +1249,44 @@ class _EditorScreenState extends State<EditorScreen> with WidgetsBindingObserver
                       _showLoreDialog();
                     },
                   ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.system_update_rounded, size: 18, color: SeleneTheme.lunarCyan),
+                    title: const Text('Check for Updates', style: TextStyle(color: SeleneTheme.textPrimary, fontSize: 13)),
+                    subtitle: const Text('Hermes release oracle & direct APK installer', style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      HermesUpdateSheet.show(context);
+                    },
+                  ),
                 ],
               ),
             ),
 
-            // Scriptorium Footer
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: SeleneTheme.border)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.shield_outlined, size: 14, color: SeleneTheme.emeraldSuccess),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Selene v0.6.0 • Titan Edition',
-                      style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+            // Scriptorium Footer (Tap to check updates)
+            InkWell(
+              onTap: () => HermesUpdateSheet.show(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: SeleneTheme.border)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield_outlined, size: 14, color: SeleneTheme.emeraldSuccess),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Selene v0.6.0 • Titan Edition',
+                        style: TextStyle(color: SeleneTheme.textMuted, fontSize: 11),
+                      ),
                     ),
-                  ),
-                  Text(
-                    licenseStatus.hwid.length > 12 ? licenseStatus.hwid.substring(0, 12) : licenseStatus.hwid,
-                    style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 9.5, fontFamily: 'monospace'),
-                  ),
-                ],
+                    Text(
+                      licenseStatus.hwid.length > 12 ? licenseStatus.hwid.substring(0, 12) : licenseStatus.hwid,
+                      style: const TextStyle(color: SeleneTheme.textMuted, fontSize: 9.5, fontFamily: 'monospace'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

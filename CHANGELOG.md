@@ -50,6 +50,17 @@ This major milestone modernizes Selene's artificial intelligence architecture wi
 - **ESLint Analysis**: `npm run lint` verified at 100% clean with zero errors or warnings.
 - **Flutter / Dart Analysis**: `dart analyze` verified with zero warnings, zero hints, and zero issues in `mobile/`.
 
+#### 🚀 6. Hermes Celestial Herald Auto-Updater (PC & Mobile) & Android Build Hardening
+- **Universal Cross-Platform Auto-Updater**:
+  - **PC (Web, Electron & Tauri)**: Added `/api/updates/check` API endpoint querying GitHub Releases with semver diff analysis, platform-specific asset categorization (Windows MSI/EXE, macOS DMG, Linux AppImage/DEB, Android APK), and interactive `SeleneUpdateModal.tsx` ("Hermes Celestial Herald").
+  - **Native Desktop Menu Integration**: Added "Check for Updates..." to the Electron Help menu with bidirectional IPC dispatching to the in-canvas updater modal.
+  - **Mobile (Android / Flutter)**: Implemented `UpdateService.dart` and `HermesUpdateSheet.dart` with automatic release checks, version comparison, one-click direct APK downloads via `url_launcher`, and GitHub release explorer. Integrated directly into the Scriptorium drawer and footer. Configured with a future toggle for Google Play Store redirection.
+- **Android Build & CI/CD Hardening**:
+  - **Package Modernization**: Migrated deprecated `flutter_markdown` to `flutter_markdown_plus: ^1.0.12` and added `url_launcher: ^6.3.3`.
+  - **Analyzer & Lint Resilience**: Configured `mobile/analysis_options.yaml` to ignore bleeding-edge Flutter SDK `deprecated_member_use` notices and added `--no-fatal-infos --no-fatal-warnings` to release workflow.
+  - **CI/CD Action Upgrade**: Upgraded `actions/setup-java@v4` to `actions/setup-java@v5` with Temurin JDK 21.
+  - **Showcase Test Alignment**: Updated `sample_service_test.dart` to assert all 26 canonical showcase samples.
+
 ---
 
 ## [0.5.0] - 2026-10-26

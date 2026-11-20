@@ -175,6 +175,10 @@ function buildMenu() {
           click: () => mainWindow?.webContents.send("selene:menu-command", "open-license"),
         },
         {
+          label: "Check for Updates...",
+          click: () => mainWindow?.webContents.send("selene:menu-command", "open-updates"),
+        },
+        {
           label: "GitHub Repository",
           click: () => shell.openExternal("https://github.com/indoctrinatedrecluse/Selene"),
         },

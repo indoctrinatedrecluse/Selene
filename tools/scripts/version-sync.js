@@ -433,7 +433,7 @@ try {
 }
 
 // -----------------------------------------------------------------------------
-// 12. mobile/lib/data/services/license_service.dart
+// 12. mobile/lib/data/services/license_service.dart & update_service.dart
 // -----------------------------------------------------------------------------
 try {
   const mobileLicensePath = path.join(rootDir, 'mobile/lib/data/services/license_service.dart');
@@ -455,6 +455,28 @@ try {
   }
 } catch (err) {
   recordResult('Mobile License', 'mobile/lib/data/services/license_service.dart', 'FAILED', 'unknown', targetVersion, err.message);
+}
+
+try {
+  const mobileUpdatePath = path.join(rootDir, 'mobile/lib/data/services/update_service.dart');
+  if (fs.existsSync(mobileUpdatePath)) {
+    let content = fs.readFileSync(mobileUpdatePath, 'utf8');
+    const match = content.match(/currentAppVersion\s*=\s*'([^']+)'/);
+    const prev = match ? match[1] : 'unknown';
+    if (prev !== targetVersion) {
+      content = content.replace(/currentAppVersion\s*=\s*'[^']+'/, `currentAppVersion = '${targetVersion}'`);
+      if (!isDryRun) {
+        fs.writeFileSync(mobileUpdatePath, content, 'utf8');
+      }
+      recordResult('Mobile Updater', 'mobile/lib/data/services/update_service.dart', 'UPDATED', prev, targetVersion, 'Mobile update service version identifier');
+    } else {
+      recordResult('Mobile Updater', 'mobile/lib/data/services/update_service.dart', 'IN_SYNC', prev, prev, 'Matches target version');
+    }
+  } else {
+    recordResult('Mobile Updater', 'mobile/lib/data/services/update_service.dart', 'SKIPPED', 'N/A', 'N/A', 'File not found');
+  }
+} catch (err) {
+  recordResult('Mobile Updater', 'mobile/lib/data/services/update_service.dart', 'FAILED', 'unknown', targetVersion, err.message);
 }
 
 // -----------------------------------------------------------------------------

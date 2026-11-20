@@ -20,6 +20,7 @@ import {
 import { ChronosTimelineDrawer } from "@/components/timeline/ChronosTimelineDrawer";
 import { saveChronosSnapshot } from "@/lib/chronos-store";
 import { SeleneAiCopilotModal } from "@/components/ai/SeleneAiCopilotModal";
+import { SeleneUpdateModal } from "@/components/updates/SeleneUpdateModal";
 import {
   loadDocuments,
   saveDocuments,
@@ -109,6 +110,7 @@ import {
   Link2,
   Share2,
   Music,
+  RefreshCw,
 } from "lucide-react";
 import { AthenaTipsModal } from "@/components/guidance/AthenaTipsModal";
 import { CollapsibleCommandRunner } from "@/components/terminal/CollapsibleCommandRunner";
@@ -205,6 +207,7 @@ export function SeleneEditor() {
   const [isGhostwritingEnabled, setIsGhostwritingEnabled] = useState(true);
   const [ghostSuggestion, setGhostSuggestion] = useState<string | null>(null);
   const [isPaperToCanvasOpen, setIsPaperToCanvasOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   // Phase 5: Dual View & Whiteboard Overlay States
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
@@ -909,6 +912,8 @@ export function SeleneEditor() {
         handleOpenLore("about");
       } else if (command === "open-license") {
         setIsLicenseModalOpen(true);
+      } else if (command === "open-updates") {
+        setIsUpdateModalOpen(true);
       }
     });
 
@@ -1179,6 +1184,14 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
                 >
                   <HelpCircle className="w-2.5 h-2.5 text-sky-400" />
                   <span>About ({SELENE_VERSION_DISPLAY})</span>
+                </button>
+                <button
+                  onClick={() => setIsUpdateModalOpen(true)}
+                  className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono transition-all cursor-pointer"
+                  title="Check for Updates & Release Notes"
+                >
+                  <RefreshCw className="w-2.5 h-2.5 text-cyan-400" />
+                  <span>Updates</span>
                 </button>
                 <SeleneLicenseBadge
                   status={licenseStatus}
@@ -1755,6 +1768,12 @@ f(x) = \\int_{-\\infty}^{\\infty} \\hat{f}(\\xi)\\,e^{2 \\pi i \\xi x}\\,d\\xi
         onCreateNewDoc={(title, md) => {
           handleImportDoc(title, md, "documents");
         }}
+      />
+
+      {/* Hermes Celestial Herald Auto-Updater Modal */}
+      <SeleneUpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
       />
 
       {/* Floating Ghostwriter Suggestion Bar */}
